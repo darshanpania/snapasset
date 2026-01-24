@@ -1,87 +1,155 @@
-import { useState, useEffect } from 'react'
-import { supabase } from './services/supabase'
+import { useState } from 'react'
 import './App.css'
+import PromptInput from './components/PromptInput'
+import PresetSelector from './components/PresetSelector'
+import ResultsGrid from './components/ResultsGrid'
+import { generateImages } from './services/api'
 
 function App() {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [prompt, setPrompt] = useState('')
+  const [selectedPresets, setSelectedPresets] = useState([])
+  const [results, setResults] = useState([])
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [error, setError] = useState(null)
 
-  useEffect(() => {
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
+  const handleGenerate = async () => {
+    if (!prompt.trim()) {
+      setError('Please enter a prompt for image generation')
+      return
+    }
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
+    if (selectedPresets.length === 0) {
+      setError('Please select at least one platform preset')
+      return
+    }
 
-    return () => subscription.unsubscribe()
-  }, [])
+    setError(null)
+    setIsGenerating(true)
 
-  if (loading) {
-    return (
-      <div className="app">
-        <div className="loading">Loading...</div>
-      </div>
-    )
+    try {
+      const response = await generateImages({
+        prompt: prompt.trim(),
+        presets: selectedPresets
+      })
+
+      setResults(response.images || [])
+    } catch (err) {
+      console.error('Generation error:', err)
+      setError(err.message || 'Failed to generate images. Please try again.')
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  const handleClearResults = () => {
+    setResults([])
+    setError(null)
   }
 
   return (
     <div className="app">
       <header className="header">
         <h1>📸 SnapAsset</h1>
-        <p>Multi-Platform Image Generator</p>
+        <p>AI-Powered Multi-Platform Image Generator</p>
       </header>
       
       <main className="main">
         <div className="container">
-          <div className="hero">
-            <h2>Welcome to SnapAsset!</h2>
-            <p>
-              Generate perfectly-sized image assets for various platforms
-              including social media, app stores, and web applications.
-            </p>
-            {user ? (
-              <div className="user-info">
-                <p>✅ Logged in as: {user.email}</p>
-                <button onClick={() => supabase.auth.signOut()}>
-                  Sign Out
-                </button>
-              </div>
-            ) : (
-              <div className="auth-section">
-                <p>🔒 Please sign in to start creating assets</p>
-                <button onClick={() => console.log('Auth implementation pending')}>
-                  Sign In
-                </button>
+          {/* Input Section */}
+          <div className="input-section">
+            <PromptInput
+              value={prompt}
+              onChange={setPrompt}
+              onGenerate={handleGenerate}
+              isGenerating={isGenerating}
+            />
+
+            <PresetSelector
+              selectedPresets={selectedPresets}
+              onChange={setSelectedPresets}
+              disabled={isGenerating}
+            />
+
+            {error && (
+              <div className="error-message">
+                <span>⚠️</span>
+                <p>{error}</p>
               </div>
             )}
+
+            <div className="action-buttons">
+              <button
+                className="generate-button"
+                onClick={handleGenerate}
+                disabled={isGenerating || !prompt.trim() || selectedPresets.length === 0}
+              >
+                {isGenerating ? (
+                  <>
+                    <span className="spinner"></span>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <span>✨</span>
+                    Generate Images
+                  </>
+                )}
+              </button>
+
+              {results.length > 0 && (
+                <button
+                  className="clear-button"
+                  onClick={handleClearResults}
+                  disabled={isGenerating}
+                >
+                  Clear Results
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="features">
-            <div className="feature-card">
-              <h3>🎨 Multi-Platform</h3>
-              <p>Support for Instagram, Twitter, Facebook, iOS, Android, and more</p>
+          {/* Results Section */}
+          {results.length > 0 && (
+            <ResultsGrid
+              results={results}
+              prompt={prompt}
+            />
+          )}
+
+          {/* Info Section */}
+          {results.length === 0 && !isGenerating && (
+            <div className="info-section">
+              <div className="info-card">
+                <h3>🎨 How it works</h3>
+                <ol>
+                  <li>Enter a detailed description of the image you want to create</li>
+                  <li>Select the platforms where you'll use the image</li>
+                  <li>Click "Generate Images" and let AI do the magic</li>
+                  <li>Download individual images or all at once</li>
+                </ol>
+              </div>
+
+              <div className="features">
+                <div className="feature-card">
+                  <h3>🚀 AI-Powered</h3>
+                  <p>Generate unique images using DALL-E AI technology</p>
+                </div>
+                <div className="feature-card">
+                  <h3>📐 Perfect Sizes</h3>
+                  <p>Automatically resized for each platform's requirements</p>
+                </div>
+                <div className="feature-card">
+                  <h3>⚡ Fast & Easy</h3>
+                  <p>Generate multiple platform assets in seconds</p>
+                </div>
+              </div>
             </div>
-            <div className="feature-card">
-              <h3>⚡ Fast Processing</h3>
-              <p>Lightning-fast image generation and optimization</p>
-            </div>
-            <div className="feature-card">
-              <h3>☁️ Cloud Storage</h3>
-              <p>Secure storage powered by Supabase</p>
-            </div>
-          </div>
+          )}
         </div>
       </main>
 
       <footer className="footer">
-        <p>Built with React + Vite | Powered by Supabase</p>
+        <p>Built with React + Vite | Powered by DALL-E & Supabase</p>
         <p>© 2026 SnapAsset by Darshan Pania</p>
       </footer>
     </div>
