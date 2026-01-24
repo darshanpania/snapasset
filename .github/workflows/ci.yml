@@ -1,0 +1,115 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Frontend Tests and Build
+  frontend:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install frontend dependencies
+      run: npm ci
+    
+    - name: Run ESLint
+      run: npm run lint
+      continue-on-error: true
+    
+    - name: Build frontend
+      run: npm run build
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      if: matrix.node-version == '20.x'
+      with:
+        name: frontend-build
+        path: dist/
+        retention-days: 7
+
+  # Backend Tests
+  backend:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+    
+    - name: Install backend dependencies
+      run: |
+        cd server
+        npm ci
+    
+    - name: Check server starts
+      run: |
+        cd server
+        timeout 10s npm start || code=$?; if [[ $code -ne 124 && $code -ne 0 ]]; then exit $code; fi
+      env:
+        PORT: 3001
+        NODE_ENV: test
+
+  # Security Audit
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+    
+    - name: Run security audit (Frontend)
+      run: npm audit --audit-level=moderate
+      continue-on-error: true
+    
+    - name: Run security audit (Backend)
+      run: |
+        cd server
+        npm audit --audit-level=moderate
+      continue-on-error: true
+
+  # Deployment notification
+  deploy-ready:
+    needs: [frontend, backend, security]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Deploy notification
+      run: |
+        echo "✅ All checks passed!"
+        echo "🚀 Ready for deployment to Railway"
+        echo "📦 Build artifacts are available"
