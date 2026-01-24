@@ -6,7 +6,11 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "test:verbose": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.3",
@@ -21,7 +25,10 @@
     "sharp": "^0.33.2"
   },
   "devDependencies": {
-    "nodemon": "^3.0.3"
+    "@jest/globals": "^29.7.0",
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.3",
+    "supertest": "^6.3.4"
   },
   "engines": {
     "node": ">=18.0.0"
