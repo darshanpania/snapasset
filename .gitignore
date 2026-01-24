@@ -7,7 +7,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Dependencies
 node_modules
 dist
 dist-ssr
@@ -27,18 +26,22 @@ dist-ssr
 # Environment variables
 .env
 .env.local
-.env.production
-.env.development
-server/.env
-
-# Production builds
-build
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Testing
 coverage
 .nyc_output
+*.lcov
 
-# Misc
+# Vitest
+.vitest
+
+# Build files
+build
+
+# Temporary files
+*.tmp
+*.temp
 .cache
-.temp
-.tmp

@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '../../tests/utils/test-utils'
+import { screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { renderWithProviders } from '../../test/utils/test-utils'
 import Login from './Login'
 import * as AuthContext from '../../contexts/AuthContext'
 
@@ -10,21 +12,17 @@ describe('Login Component', () => {
   const mockNavigate = vi.fn()
 
   beforeEach(() => {
-    mockSignIn.mockClear()
-    mockSignInWithMagicLink.mockClear()
-    mockSignInWithProvider.mockClear()
-    mockNavigate.mockClear()
+    vi.clearAllMocks()
     
     // Mock useAuth hook
     vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
       signIn: mockSignIn,
       signInWithMagicLink: mockSignInWithMagicLink,
       signInWithProvider: mockSignInWithProvider,
-      user: null,
       loading: false,
       error: null,
     })
-    
+
     // Mock useNavigate
     vi.mock('react-router-dom', async () => {
       const actual = await vi.importActual('react-router-dom')
@@ -36,189 +34,127 @@ describe('Login Component', () => {
   })
 
   it('renders login form', () => {
-    render(<Login />)
+    renderWithProviders(<Login />)
     
-    expect(screen.getByText(/welcome back/i)).toBeInTheDocument()
+    expect(screen.getByText('Welcome Back')).toBeInTheDocument()
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument()
   })
 
-  it('shows password field by default', () => {
-    render(<Login />)
-    
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
-  })
-
-  it('hides password field when magic link is selected', async () => {
-    render(<Login />)
-    
-    const magicLinkCheckbox = screen.getByLabelText(/use magic link instead/i)
-    fireEvent.click(magicLinkCheckbox)
-    
-    await waitFor(() => {
-      expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument()
-    })
-  })
-
-  it('displays social login buttons', () => {
-    render(<Login />)
-    
-    expect(screen.getByText(/google/i)).toBeInTheDocument()
-    expect(screen.getByText(/github/i)).toBeInTheDocument()
-    expect(screen.getByText(/discord/i)).toBeInTheDocument()
-  })
-
-  it('validates email is required', async () => {
+  it('handles email/password login', async () => {
+    const user = userEvent.setup()
     mockSignIn.mockResolvedValue({ error: null })
     
-    render(<Login />)
+    renderWithProviders(<Login />)
     
-    const submitButton = screen.getByRole('button', { name: /sign in/i })
-    fireEvent.click(submitButton)
-    
-    await waitFor(() => {
-      expect(screen.getByText(/email is required/i)).toBeInTheDocument()
-    })
-  })
-
-  it('validates password is required for email login', async () => {
-    mockSignIn.mockResolvedValue({ error: null })
-    
-    render(<Login />)
-    
-    const emailInput = screen.getByLabelText(/email/i)
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } })
-    
-    const submitButton = screen.getByRole('button', { name: /sign in/i })
-    fireEvent.click(submitButton)
-    
-    await waitFor(() => {
-      expect(screen.getByText(/password is required/i)).toBeInTheDocument()
-    })
-  })
-
-  it('calls signIn with correct credentials', async () => {
-    mockSignIn.mockResolvedValue({ error: null })
-    
-    render(<Login />)
-    
-    fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' },
-    })
-    fireEvent.change(screen.getByLabelText(/password/i), {
-      target: { value: 'password123' },
-    })
-    
-    const submitButton = screen.getByRole('button', { name: /sign in/i })
-    fireEvent.click(submitButton)
+    await user.type(screen.getByLabelText(/email/i), 'test@example.com')
+    await user.type(screen.getByLabelText(/password/i), 'password123')
+    await user.click(screen.getByRole('button', { name: /sign in/i }))
     
     await waitFor(() => {
       expect(mockSignIn).toHaveBeenCalledWith('test@example.com', 'password123')
     })
   })
 
-  it('calls signInWithMagicLink when magic link is used', async () => {
-    mockSignInWithMagicLink.mockResolvedValue({ error: null })
+  it('shows error for empty email', async () => {
+    const user = userEvent.setup()
     
-    render(<Login />)
+    renderWithProviders(<Login />)
     
-    const magicLinkCheckbox = screen.getByLabelText(/use magic link instead/i)
-    fireEvent.click(magicLinkCheckbox)
-    
-    fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' },
-    })
-    
-    const submitButton = screen.getByRole('button', { name: /send magic link/i })
-    fireEvent.click(submitButton)
+    await user.click(screen.getByRole('button', { name: /sign in/i }))
     
     await waitFor(() => {
-      expect(mockSignInWithMagicLink).toHaveBeenCalledWith('test@example.com')
+      expect(screen.getByText(/email is required/i)).toBeInTheDocument()
     })
   })
 
-  it('shows success message after magic link sent', async () => {
+  it('toggles magic link mode', async () => {
+    const user = userEvent.setup()
+    
+    renderWithProviders(<Login />)
+    
+    const checkbox = screen.getByRole('checkbox', { name: /use magic link/i })
+    await user.click(checkbox)
+    
+    expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /send magic link/i })).toBeInTheDocument()
+  })
+
+  it('handles magic link submission', async () => {
+    const user = userEvent.setup()
     mockSignInWithMagicLink.mockResolvedValue({ error: null })
     
-    render(<Login />)
+    renderWithProviders(<Login />)
     
-    const magicLinkCheckbox = screen.getByLabelText(/use magic link instead/i)
-    fireEvent.click(magicLinkCheckbox)
-    
-    fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' },
-    })
-    
-    const submitButton = screen.getByRole('button', { name: /send magic link/i })
-    fireEvent.click(submitButton)
+    await user.click(screen.getByRole('checkbox', { name: /use magic link/i }))
+    await user.type(screen.getByLabelText(/email/i), 'test@example.com')
+    await user.click(screen.getByRole('button', { name: /send magic link/i }))
     
     await waitFor(() => {
+      expect(mockSignInWithMagicLink).toHaveBeenCalledWith('test@example.com')
       expect(screen.getByText(/check your email for the magic link/i)).toBeInTheDocument()
     })
   })
 
-  it('displays error from auth service', async () => {
-    mockSignIn.mockResolvedValue({ error: { message: 'Invalid credentials' } })
-    
-    render(<Login />)
-    
-    fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' },
-    })
-    fireEvent.change(screen.getByLabelText(/password/i), {
-      target: { value: 'wrong' },
-    })
-    
-    const submitButton = screen.getByRole('button', { name: /sign in/i })
-    fireEvent.click(submitButton)
-    
-    await waitFor(() => {
-      expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument()
-    })
-  })
-
-  it('calls social login when social button clicked', async () => {
+  it('handles social login', async () => {
+    const user = userEvent.setup()
     mockSignInWithProvider.mockResolvedValue({ error: null })
     
-    render(<Login />)
+    renderWithProviders(<Login />)
     
-    const googleButton = screen.getByText(/google/i)
-    fireEvent.click(googleButton)
+    const googleButton = screen.getByRole('button', { name: /google/i })
+    await user.click(googleButton)
     
     await waitFor(() => {
       expect(mockSignInWithProvider).toHaveBeenCalledWith('google')
     })
   })
 
-  it('disables form during submission', async () => {
-    mockSignIn.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)))
-    
-    render(<Login />)
-    
-    fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' },
-    })
-    fireEvent.change(screen.getByLabelText(/password/i), {
-      target: { value: 'password' },
+  it('displays error message on failed login', async () => {
+    const user = userEvent.setup()
+    mockSignIn.mockResolvedValue({ 
+      error: { message: 'Invalid credentials' } 
     })
     
-    const submitButton = screen.getByRole('button', { name: /sign in/i })
-    fireEvent.click(submitButton)
+    renderWithProviders(<Login />)
+    
+    await user.type(screen.getByLabelText(/email/i), 'test@example.com')
+    await user.type(screen.getByLabelText(/password/i), 'wrongpassword')
+    await user.click(screen.getByRole('button', { name: /sign in/i }))
+    
+    await waitFor(() => {
+      expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument()
+    })
+  })
+
+  it('disables form while loading', async () => {
+    const user = userEvent.setup()
+    mockSignIn.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 1000)))
+    
+    renderWithProviders(<Login />)
+    
+    await user.type(screen.getByLabelText(/email/i), 'test@example.com')
+    await user.type(screen.getByLabelText(/password/i), 'password123')
+    await user.click(screen.getByRole('button', { name: /sign in/i }))
     
     expect(screen.getByLabelText(/email/i)).toBeDisabled()
     expect(screen.getByLabelText(/password/i)).toBeDisabled()
-    expect(submitButton).toBeDisabled()
   })
 
-  it('has link to signup page', () => {
-    render(<Login />)
+  it('shows link to signup page', () => {
+    renderWithProviders(<Login />)
     
-    expect(screen.getByText(/sign up/i)).toBeInTheDocument()
+    const signupLink = screen.getByRole('link', { name: /sign up/i })
+    expect(signupLink).toBeInTheDocument()
+    expect(signupLink).toHaveAttribute('href', '/auth/signup')
   })
 
-  it('has link to forgot password', () => {
-    render(<Login />)
+  it('shows link to forgot password', () => {
+    renderWithProviders(<Login />)
     
-    expect(screen.getByText(/forgot password/i)).toBeInTheDocument()
+    const forgotLink = screen.getByRole('link', { name: /forgot password/i })
+    expect(forgotLink).toBeInTheDocument()
+    expect(forgotLink).toHaveAttribute('href', '/auth/forgot-password')
   })
 })

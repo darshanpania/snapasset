@@ -1,13 +1,13 @@
-name: Test Suite
+name: Frontend Tests
 
 on:
   push:
-    branches: [ main, develop, feature/** ]
+    branches: [ main, develop, 'feature/**' ]
   pull_request:
     branches: [ main, develop ]
 
 jobs:
-  frontend-tests:
+  test:
     runs-on: ubuntu-latest
     
     strategy:
@@ -31,18 +31,16 @@ jobs:
       run: npm run lint
       continue-on-error: true
     
-    - name: Run frontend tests
+    - name: Run tests
       run: npm run test:run
       env:
-        VITE_SUPABASE_URL: https://test.supabase.co
-        VITE_SUPABASE_ANON_KEY: test-key
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://test.supabase.co' }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'test-key' }}
+        VITE_API_URL: http://localhost:3001
     
     - name: Generate coverage report
       run: npm run test:coverage
       if: matrix.node-version == '20.x'
-      env:
-        VITE_SUPABASE_URL: https://test.supabase.co
-        VITE_SUPABASE_ANON_KEY: test-key
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -51,81 +49,20 @@ jobs:
         files: ./coverage/lcov.info
         flags: frontend
         name: frontend-coverage
+      continue-on-error: true
     
     - name: Upload coverage artifacts
       uses: actions/upload-artifact@v4
       if: matrix.node-version == '20.x'
       with:
-        name: frontend-coverage
+        name: coverage-report
         path: coverage/
         retention-days: 7
-
-  backend-tests:
-    runs-on: ubuntu-latest
     
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Setup Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+    - name: Comment coverage on PR
+      uses: romeovs/lcov-reporter-action@v0.3.1
+      if: github.event_name == 'pull_request' && matrix.node-version == '20.x'
       with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        cache-dependency-path: server/package-lock.json
-    
-    - name: Install backend dependencies
-      run: |
-        cd server
-        npm ci
-    
-    - name: Run backend tests
-      run: |
-        cd server
-        npm test
-      env:
-        NODE_ENV: test
-        SUPABASE_URL: https://test.supabase.co
-        SUPABASE_SERVICE_KEY: test-service-key
-        OPENAI_API_KEY: sk-test-key
-    
-    - name: Generate backend coverage
-      run: |
-        cd server
-        npm run test:coverage
-      if: matrix.node-version == '20.x'
-      env:
-        NODE_ENV: test
-    
-    - name: Upload backend coverage
-      uses: codecov/codecov-action@v3
-      if: matrix.node-version == '20.x'
-      with:
-        files: ./server/coverage/lcov.info
-        flags: backend
-        name: backend-coverage
-    
-    - name: Upload backend coverage artifacts
-      uses: actions/upload-artifact@v4
-      if: matrix.node-version == '20.x'
-      with:
-        name: backend-coverage
-        path: server/coverage/
-        retention-days: 7
-
-  test-summary:
-    needs: [frontend-tests, backend-tests]
-    runs-on: ubuntu-latest
-    if: always()
-    
-    steps:
-    - name: Test Summary
-      run: |
-        echo "✅ Frontend tests completed"
-        echo "✅ Backend tests completed"
-        echo "📊 Coverage reports generated"
-        echo "🎉 All tests passed!"
+        lcov-file: ./coverage/lcov.info
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: true

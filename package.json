@@ -13,7 +13,7 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest watch"
+    "test:watch": "vitest --watch"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.3",
@@ -22,7 +22,7 @@
     "react-router-dom": "^6.21.3"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.1.6",
+    "@testing-library/jest-dom": "^6.2.0",
     "@testing-library/react": "^14.1.2",
     "@testing-library/user-event": "^14.5.2",
     "@types/react": "^18.2.48",

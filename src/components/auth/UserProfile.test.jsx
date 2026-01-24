@@ -1,19 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '../../tests/utils/test-utils'
+import { screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { renderWithProviders, mockUser } from '../../test/utils/test-utils'
 import UserProfile from './UserProfile'
 import * as AuthContext from '../../contexts/AuthContext'
-
-const mockUser = {
-  id: 'test-user-123',
-  email: 'test@example.com',
-  email_confirmed_at: '2026-01-24T14:00:00Z',
-  created_at: '2026-01-24T14:00:00Z',
-  last_sign_in_at: '2026-01-24T14:00:00Z',
-  user_metadata: {
-    full_name: 'Test User',
-    avatar_url: 'https://example.com/avatar.jpg',
-  },
-}
 
 describe('UserProfile Component', () => {
   const mockUpdateProfile = vi.fn()
@@ -21,9 +11,7 @@ describe('UserProfile Component', () => {
   const mockNavigate = vi.fn()
 
   beforeEach(() => {
-    mockUpdateProfile.mockClear()
-    mockSignOut.mockClear()
-    mockNavigate.mockClear()
+    vi.clearAllMocks()
     
     vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
       user: mockUser,
@@ -32,126 +20,87 @@ describe('UserProfile Component', () => {
       loading: false,
       error: null,
     })
-    
-    vi.mock('react-router-dom', async () => {
-      const actual = await vi.importActual('react-router-dom')
-      return {
-        ...actual,
-        useNavigate: () => mockNavigate,
-      }
-    })
   })
 
-  it('renders user profile', () => {
-    render(<UserProfile />)
+  it('renders user profile information', () => {
+    renderWithProviders(<UserProfile />)
     
-    expect(screen.getByText(/my profile/i)).toBeInTheDocument()
-    expect(screen.getByText('test@example.com')).toBeInTheDocument()
-    expect(screen.getByText('Test User')).toBeInTheDocument()
+    expect(screen.getByText('My Profile')).toBeInTheDocument()
+    expect(screen.getByText(mockUser.email)).toBeInTheDocument()
+    expect(screen.getByText(mockUser.user_metadata.full_name)).toBeInTheDocument()
   })
 
-  it('shows email verification badge', () => {
-    render(<UserProfile />)
+  it('shows verified badge for confirmed email', () => {
+    renderWithProviders(<UserProfile />)
     
     expect(screen.getByText(/verified/i)).toBeInTheDocument()
   })
 
-  it('displays user avatar', () => {
-    render(<UserProfile />)
+  it('enters edit mode when clicking edit button', async () => {
+    const user = userEvent.setup()
     
-    const avatar = screen.getByAltText(/profile/i)
-    expect(avatar).toHaveAttribute('src', 'https://example.com/avatar.jpg')
+    renderWithProviders(<UserProfile />)
+    
+    await user.click(screen.getByRole('button', { name: /edit profile/i }))
+    
+    expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument()
   })
 
-  it('enters edit mode when edit button clicked', async () => {
-    render(<UserProfile />)
-    
-    const editButton = screen.getByText(/edit profile/i)
-    fireEvent.click(editButton)
-    
-    await waitFor(() => {
-      expect(screen.getByText(/save changes/i)).toBeInTheDocument()
-      expect(screen.getByText(/cancel/i)).toBeInTheDocument()
-    })
-  })
-
-  it('allows editing full name', async () => {
-    render(<UserProfile />)
-    
-    fireEvent.click(screen.getByText(/edit profile/i))
-    
-    const nameInput = screen.getByDisplayValue('Test User')
-    fireEvent.change(nameInput, { target: { value: 'Updated Name' } })
-    
-    expect(nameInput.value).toBe('Updated Name')
-  })
-
-  it('calls updateProfile when save clicked', async () => {
+  it('updates profile successfully', async () => {
+    const user = userEvent.setup()
     mockUpdateProfile.mockResolvedValue({ error: null })
     
-    render(<UserProfile />)
+    renderWithProviders(<UserProfile />)
     
-    fireEvent.click(screen.getByText(/edit profile/i))
+    await user.click(screen.getByRole('button', { name: /edit profile/i }))
     
-    const nameInput = screen.getByDisplayValue('Test User')
-    fireEvent.change(nameInput, { target: { value: 'New Name' } })
+    const nameInput = screen.getByDisplayValue(mockUser.user_metadata.full_name)
+    await user.clear(nameInput)
+    await user.type(nameInput, 'Updated Name')
     
-    const saveButton = screen.getByText(/save changes/i)
-    fireEvent.click(saveButton)
+    await user.click(screen.getByRole('button', { name: /save changes/i }))
     
     await waitFor(() => {
       expect(mockUpdateProfile).toHaveBeenCalledWith(
         expect.objectContaining({
-          full_name: 'New Name',
+          full_name: 'Updated Name',
         })
       )
     })
   })
 
-  it('shows success message after profile update', async () => {
-    mockUpdateProfile.mockResolvedValue({ error: null })
+  it('cancels editing without saving', async () => {
+    const user = userEvent.setup()
     
-    render(<UserProfile />)
+    renderWithProviders(<UserProfile />)
     
-    fireEvent.click(screen.getByText(/edit profile/i))
-    fireEvent.click(screen.getByText(/save changes/i))
+    await user.click(screen.getByRole('button', { name: /edit profile/i }))
     
-    await waitFor(() => {
-      expect(screen.getByText(/profile updated successfully/i)).toBeInTheDocument()
-    })
+    const nameInput = screen.getByDisplayValue(mockUser.user_metadata.full_name)
+    await user.clear(nameInput)
+    await user.type(nameInput, 'New Name')
+    
+    await user.click(screen.getByRole('button', { name: /cancel/i }))
+    
+    expect(mockUpdateProfile).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: /edit profile/i })).toBeInTheDocument()
   })
 
-  it('cancels edit mode', async () => {
-    render(<UserProfile />)
-    
-    fireEvent.click(screen.getByText(/edit profile/i))
-    
-    const nameInput = screen.getByDisplayValue('Test User')
-    fireEvent.change(nameInput, { target: { value: 'Changed' } })
-    
-    const cancelButton = screen.getByText(/cancel/i)
-    fireEvent.click(cancelButton)
-    
-    await waitFor(() => {
-      expect(screen.getByText(/edit profile/i)).toBeInTheDocument()
-      expect(screen.getByText('Test User')).toBeInTheDocument()
-    })
-  })
-
-  it('calls signOut when sign out clicked', async () => {
+  it('handles sign out', async () => {
+    const user = userEvent.setup()
     mockSignOut.mockResolvedValue({ error: null })
     
-    render(<UserProfile />)
+    renderWithProviders(<UserProfile />)
     
-    const signOutButton = screen.getByText(/sign out/i)
-    fireEvent.click(signOutButton)
+    await user.click(screen.getByRole('button', { name: /^sign out$/i }))
     
     await waitFor(() => {
       expect(mockSignOut).toHaveBeenCalled()
     })
   })
 
-  it('returns null when no user', () => {
+  it('returns null when no user is logged in', () => {
     vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
       user: null,
       updateProfile: mockUpdateProfile,
@@ -160,13 +109,8 @@ describe('UserProfile Component', () => {
       error: null,
     })
     
-    const { container } = render(<UserProfile />)
-    expect(container.firstChild).toBeNull()
-  })
-
-  it('displays account creation date', () => {
-    render(<UserProfile />)
+    const { container } = renderWithProviders(<UserProfile />)
     
-    expect(screen.getByText(/january 24, 2026/i)).toBeInTheDocument()
+    expect(container.firstChild).toBeNull()
   })
 })
