@@ -1,0 +1,100 @@
+.version-history {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.history-header {
+  margin-bottom: 1.5rem;
+}
+
+.history-header h3 {
+  margin: 0 0 1rem 0;
+}
+
+.create-version {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.create-version input {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+.create-version button {
+  padding: 0.5rem 1rem;
+  white-space: nowrap;
+}
+
+.versions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.version-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  transition: border-color 0.2s;
+}
+
+.version-item:hover {
+  border-color: #3b82f6;
+}
+
+.version-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.version-number {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #2563eb;
+  min-width: 50px;
+}
+
+.version-date {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.version-notes {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.version-stats {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.btn-restore {
+  padding: 0.5rem 1rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.btn-restore:hover {
+  background: #059669;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #9ca3af;
+}
