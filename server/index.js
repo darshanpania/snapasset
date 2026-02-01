@@ -4,6 +4,11 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import dotenv from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
+import { initRedis } from './config/redis.js'
+import { initQueues } from './config/queue.js'
+import logger from './utils/logger.js'
+import jobRoutes from './routes/jobs.js'
+import sseRoutes from './routes/sse.js'
 
 // Load environment variables
 dotenv.config()
@@ -19,7 +24,7 @@ let supabase = null
 if (supabaseUrl && supabaseServiceKey) {
   supabase = createClient(supabaseUrl, supabaseServiceKey)
 } else {
-  console.warn('⚠️  Supabase credentials not configured. Some features will be limited.')
+  logger.warn('Supabase credentials not configured. Some features will be limited.')
 }
 
 // Middleware
@@ -28,78 +33,81 @@ app.use(cors({
   origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173'],
   credentials: true
 }))
-app.use(morgan('dev'))
+app.use(morgan('combined', {
+  stream: {
+    write: (message) => logger.info(message.trim()),
+  },
+}))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', async (req, res) => {
+  const { redisClient, isRedisAvailable } = await import('./config/redis.js')
+  const { imageGenerationQueue, fileCleanupQueue } = await import('./config/queue.js')
+
+  let queueHealth = {
+    imageGeneration: 'unknown',
+    fileCleanup: 'unknown',
+  }
+
+  try {
+    if (imageGenerationQueue) {
+      const counts = await imageGenerationQueue.getJobCounts()
+      queueHealth.imageGeneration = counts
+    }
+    if (fileCleanupQueue) {
+      const counts = await fileCleanupQueue.getJobCounts()
+      queueHealth.fileCleanup = counts
+    }
+  } catch (error) {
+    logger.error('Error checking queue health', { error: error.message })
+  }
+
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV,
-    supabaseConnected: !!supabase
+    services: {
+      supabase: !!supabase,
+      redis: isRedisAvailable,
+      queues: queueHealth,
+    },
   })
 })
 
 // API Routes
 app.get('/api', (req, res) => {
   res.json({
-    message: 'SnapAsset API',
-    version: '0.1.0',
+    message: 'SnapAsset API with Background Job Processing',
+    version: '0.2.0',
     endpoints: {
       health: '/health',
       api: '/api',
-      images: '/api/images (Coming soon)',
-      generate: '/api/generate (Coming soon)'
-    }
+      jobs: '/api/jobs',
+      sse: '/api/sse',
+    },
+    documentation: 'https://github.com/darshanpania/snapasset#api',
   })
 })
 
-// Placeholder route for image generation
-app.post('/api/generate', async (req, res) => {
-  try {
-    // TODO: Implement image generation logic
-    res.json({
-      message: 'Image generation endpoint',
-      status: 'not_implemented',
-      note: 'This endpoint will handle image generation requests'
-    })
-  } catch (error) {
-    console.error('Error:', error)
-    res.status(500).json({ error: 'Internal server error' })
-  }
-})
+// Mount job routes
+app.use('/api/jobs', jobRoutes)
 
-// Placeholder route for image uploads
-app.post('/api/images/upload', async (req, res) => {
-  try {
-    if (!supabase) {
-      return res.status(503).json({
-        error: 'Supabase not configured',
-        message: 'Please configure SUPABASE_URL and SUPABASE_SERVICE_KEY'
-      })
-    }
-
-    // TODO: Implement image upload to Supabase Storage
-    res.json({
-      message: 'Image upload endpoint',
-      status: 'not_implemented',
-      note: 'This endpoint will handle image uploads to Supabase Storage'
-    })
-  } catch (error) {
-    console.error('Error:', error)
-    res.status(500).json({ error: 'Internal server error' })
-  }
-})
+// Mount SSE routes
+app.use('/api/sse', sseRoutes)
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack)
+  logger.error('Unhandled error', {
+    error: err.message,
+    stack: err.stack,
+    path: req.path,
+  })
   res.status(500).json({
     error: 'Something went wrong!',
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error',
   })
 })
 
@@ -107,19 +115,68 @@ app.use((err, req, res, next) => {
 app.use((req, res) => {
   res.status(404).json({
     error: 'Not found',
-    path: req.path
+    path: req.path,
   })
 })
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 SnapAsset API Server running on port ${PORT}`)
-  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`)
-  console.log(`🔗 Health check: http://localhost:${PORT}/health`)
-  console.log(`🔗 API info: http://localhost:${PORT}/api`)
-  if (!supabase) {
-    console.log('⚠️  Warning: Supabase not configured')
+// Initialize services and start server
+async function startServer() {
+  try {
+    // Initialize Redis
+    await initRedis()
+
+    // Initialize queues
+    initQueues()
+
+    // Start server
+    app.listen(PORT, () => {
+      logger.info('SnapAsset API Server started', {
+        port: PORT,
+        environment: process.env.NODE_ENV || 'development',
+        supabaseConnected: !!supabase,
+      })
+      console.log(`\n🚀 SnapAsset API Server running on port ${PORT}`)
+      console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`)
+      console.log(`🔗 Health check: http://localhost:${PORT}/health`)
+      console.log(`🔗 API info: http://localhost:${PORT}/api`)
+      if (!supabase) {
+        console.log('⚠️  Warning: Supabase not configured')
+      }
+      console.log('\n💡 API Endpoints:')
+      console.log('   POST   /api/jobs/generate - Create image generation job')
+      console.log('   GET    /api/jobs/:jobId - Get job status')
+      console.log('   GET    /api/jobs/:jobId/result - Get job result')
+      console.log('   POST   /api/jobs/:jobId/retry - Retry failed job')
+      console.log('   DELETE /api/jobs/:jobId - Cancel job')
+      console.log('   GET    /api/jobs/stats/overview - Get queue statistics')
+      console.log('   GET    /api/sse/jobs/:jobId - Real-time job updates (SSE)')
+      console.log('   GET    /api/sse/stats - Real-time queue stats (SSE)')
+      console.log('\n👷 Worker Process:')
+      console.log('   Run: npm run worker (or npm run worker:dev for development)')
+      console.log()
+    })
+  } catch (error) {
+    logger.error('Failed to start server', { error: error.message })
+    process.exit(1)
   }
+}
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  logger.info('SIGTERM received, shutting down gracefully')
+  const { closeRedis } = await import('./config/redis.js')
+  await closeRedis()
+  process.exit(0)
 })
+
+process.on('SIGINT', async () => {
+  logger.info('SIGINT received, shutting down gracefully')
+  const { closeRedis } = await import('./config/redis.js')
+  await closeRedis()
+  process.exit(0)
+})
+
+// Start the server
+startServer()
 
 export default app
