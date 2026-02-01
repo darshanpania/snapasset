@@ -1,0 +1,24 @@
+[phases.setup]
+nixPkgs = ["nodejs-18_x", "npm-9_x"]
+
+[phases.install]
+cmds = [
+  "npm ci --include=dev",
+  "cd server && npm ci --include=dev"
+]
+
+[phases.build]
+cmds = [
+  "npm run build"
+]
+
+[start]
+cmd = "cd server && npm start"
+
+[staticAssets]
+# Serve built frontend from dist directory
+"dist" = "/app/dist"
+
+[variables]
+NODE_ENV = "production"
+NPM_CONFIG_PRODUCTION = "false"
