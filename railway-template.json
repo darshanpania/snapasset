@@ -1,0 +1,72 @@
+{
+  "name": "SnapAsset - AI Image Generator",
+  "description": "AI-powered image generation tool that creates perfectly-sized assets for multiple social media platforms",
+  "icon": "🎨",
+  "tags": [
+    "ai",
+    "image-generation",
+    "react",
+    "express",
+    "supabase"
+  ],
+  "repository": {
+    "repo": "darshanpania/snapasset",
+    "branch": "main"
+  },
+  "services": [
+    {
+      "name": "SnapAsset",
+      "type": "web",
+      "icon": "🚀",
+      "env": {
+        "NODE_ENV": {
+          "description": "Node environment",
+          "value": "production",
+          "required": true
+        },
+        "PORT": {
+          "description": "Port for the server to listen on",
+          "value": "3001",
+          "required": false
+        },
+        "SUPABASE_URL": {
+          "description": "Your Supabase project URL (e.g., https://xxx.supabase.co)",
+          "required": true
+        },
+        "SUPABASE_SERVICE_KEY": {
+          "description": "Supabase service role key (Settings → API → service_role)",
+          "required": true
+        },
+        "SUPABASE_ANON_KEY": {
+          "description": "Supabase anon public key (Settings → API → anon public)",
+          "required": true
+        },
+        "ALLOWED_ORIGINS": {
+          "description": "Comma-separated list of allowed origins for CORS",
+          "value": "${{RAILWAY_PUBLIC_DOMAIN}}",
+          "required": true
+        },
+        "OPENAI_API_KEY": {
+          "description": "OpenAI API key for image generation (optional)",
+          "required": false
+        }
+      },
+      "healthcheck": {
+        "path": "/health",
+        "timeout": 300
+      },
+      "regions": ["us-west1"],
+      "scaling": {
+        "minInstances": 1,
+        "maxInstances": 3
+      }
+    }
+  ],
+  "variables": {
+    "RAILWAY_PUBLIC_DOMAIN": {
+      "description": "Your Railway public domain",
+      "value": "${{RAILWAY_PUBLIC_DOMAIN}}"
+    }
+  },
+  "plugins": []
+}
