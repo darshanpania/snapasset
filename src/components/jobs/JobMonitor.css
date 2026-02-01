@@ -1,0 +1,156 @@
+.job-monitor {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  margin: 20px auto;
+}
+
+.job-monitor.loading {
+  text-align: center;
+  padding: 40px;
+}
+
+.job-monitor.error {
+  border: 2px solid #ef4444;
+}
+
+.job-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.status-icon {
+  font-size: 32px;
+}
+
+.job-info h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #1f2937;
+}
+
+.job-id {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: #6b7280;
+  font-family: monospace;
+}
+
+.progress-section {
+  margin: 20px 0;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 12px;
+  background: #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  transition: width 0.3s ease;
+  border-radius: 6px;
+}
+
+.progress-text {
+  text-align: center;
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.processing-steps {
+  margin: 16px 0;
+  padding: 12px;
+  background: #f3f4f6;
+  border-radius: 8px;
+}
+
+.processing-steps .step {
+  margin: 0;
+  font-size: 14px;
+  color: #374151;
+}
+
+.result-section,
+.error-section {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.result-section {
+  background: #ecfdf5;
+  border: 1px solid #10b981;
+}
+
+.result-section h4 {
+  margin: 0 0 8px 0;
+  color: #059669;
+}
+
+.result-section p {
+  margin: 0;
+  color: #047857;
+}
+
+.error-section {
+  background: #fef2f2;
+  border: 1px solid #ef4444;
+}
+
+.error-section h4 {
+  margin: 0 0 8px 0;
+  color: #dc2626;
+}
+
+.error-section p {
+  margin: 0;
+  color: #991b1b;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 16px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-icon {
+  font-size: 48px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+button {
+  margin-top: 16px;
+  padding: 10px 20px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+button:hover {
+  background: #2563eb;
+}
