@@ -1,0 +1,43 @@
+name: Accessibility Testing
+
+on:
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  accessibility:
+    name: Run Accessibility Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Start preview server
+        run: |
+          npm run preview &
+          sleep 10
+
+      - name: Run Pa11y accessibility tests
+        run: |
+          npx pa11y-ci --sitemap http://localhost:4173/sitemap.xml || \
+          npx pa11y http://localhost:4173
+        continue-on-error: true
+
+      - name: Run axe accessibility tests
+        run: |
+          npx @axe-core/cli http://localhost:4173
+        continue-on-error: true

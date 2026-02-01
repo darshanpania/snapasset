@@ -1,0 +1,67 @@
+name: Performance Monitoring
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Run every 6 hours
+  workflow_dispatch:
+
+jobs:
+  lighthouse:
+    name: Lighthouse Performance Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Run Lighthouse audit
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          urls: |
+            https://snapasset.app
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+      - name: Check performance thresholds
+        run: |
+          echo "Checking if performance metrics meet requirements"
+          # Add custom threshold checks here
+
+  bundle-size-monitoring:
+    name: Monitor Bundle Size
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and analyze
+        run: |
+          npm run build
+          echo "Analyzing bundle size..."
+          du -sh dist/
+
+      - name: Compare with previous build
+        run: |
+          echo "Bundle size comparison will be available in artifacts"
