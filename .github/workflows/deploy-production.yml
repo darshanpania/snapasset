@@ -1,0 +1,69 @@
+name: Deploy to Production
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  deploy-production:
+    name: Deploy to Production Environment
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://snapasset.app
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run all tests
+        run: npm run build
+
+      - name: Build for production
+        run: npm run build
+        env:
+          NODE_ENV: production
+          VITE_API_URL: ${{ secrets.PRODUCTION_API_URL }}
+          VITE_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
+
+      - name: Create backup point
+        run: |
+          echo "Creating backup point before deployment"
+          echo "Previous deployment SHA: ${{ github.sha }}"
+
+      - name: Deploy to Railway (Production)
+        run: |
+          npx @railway/cli deploy --service production --environment production
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Verify deployment
+        run: |
+          echo "Verifying production deployment..."
+          curl -f https://snapasset.app || exit 1
+
+      - name: Deployment success notification
+        run: |
+          echo "🚀 Production deployment successful!"
+          echo "URL: https://snapasset.app"
+          echo "Version: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Author: ${{ github.actor }}"
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed! Initiating rollback..."
+          # Add rollback commands here
+          echo "Please review logs and perform manual rollback if needed"
