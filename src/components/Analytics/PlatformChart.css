@@ -1,0 +1,72 @@
+.platform-chart {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.chart-container {
+  width: 100%;
+}
+
+.platform-stats h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  color: #111827;
+}
+
+.platform-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.platform-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.platform-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.platform-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.platform-name {
+  font-weight: 500;
+  color: #111827;
+  text-transform: capitalize;
+}
+
+.platform-stats-value {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.platform-count {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.platform-percentage {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .platform-chart {
+    grid-template-columns: 1fr;
+  }
+}
