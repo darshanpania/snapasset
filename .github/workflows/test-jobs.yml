@@ -1,0 +1,49 @@
+name: Test Job Processing
+
+on:
+  push:
+    branches: [feature/background-jobs]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'server/**'
+      - '.github/workflows/test-jobs.yml'
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        working-directory: server
+        run: npm ci
+
+      - name: Run tests
+        working-directory: server
+        run: npm test
+        env:
+          NODE_ENV: test
+
+      - name: Generate coverage report
+        working-directory: server
+        run: npm run test:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./server/coverage/lcov.info
+          flags: backend
+          name: backend-coverage
