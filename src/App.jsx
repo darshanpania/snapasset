@@ -1,158 +1,41 @@
-import { useState } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider } from './contexts/AuthContext'
+import Login from './components/auth/Login'
+import Signup from './components/auth/Signup'
+import ForgotPassword from './components/auth/ForgotPassword'
+import AuthCallback from './components/auth/AuthCallback'
+import UserProfile from './components/auth/UserProfile'
+import ProtectedRoute from './components/auth/ProtectedRoute'
+import Home from './pages/Home'
 import './App.css'
-import PromptInput from './components/PromptInput'
-import PresetSelector from './components/PresetSelector'
-import ResultsGrid from './components/ResultsGrid'
-import { generateImages } from './services/api'
 
 function App() {
-  const [prompt, setPrompt] = useState('')
-  const [selectedPresets, setSelectedPresets] = useState([])
-  const [results, setResults] = useState([])
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [error, setError] = useState(null)
-
-  const handleGenerate = async () => {
-    if (!prompt.trim()) {
-      setError('Please enter a prompt for image generation')
-      return
-    }
-
-    if (selectedPresets.length === 0) {
-      setError('Please select at least one platform preset')
-      return
-    }
-
-    setError(null)
-    setIsGenerating(true)
-
-    try {
-      const response = await generateImages({
-        prompt: prompt.trim(),
-        presets: selectedPresets
-      })
-
-      setResults(response.images || [])
-    } catch (err) {
-      console.error('Generation error:', err)
-      setError(err.message || 'Failed to generate images. Please try again.')
-    } finally {
-      setIsGenerating(false)
-    }
-  }
-
-  const handleClearResults = () => {
-    setResults([])
-    setError(null)
-  }
-
   return (
-    <div className="app">
-      <header className="header">
-        <h1>📸 SnapAsset</h1>
-        <p>AI-Powered Multi-Platform Image Generator</p>
-      </header>
-      
-      <main className="main">
-        <div className="container">
-          {/* Input Section */}
-          <div className="input-section">
-            <PromptInput
-              value={prompt}
-              onChange={setPrompt}
-              onGenerate={handleGenerate}
-              isGenerating={isGenerating}
-            />
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/auth/login" element={<Login />} />
+          <Route path="/auth/signup" element={<Signup />} />
+          <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
 
-            <PresetSelector
-              selectedPresets={selectedPresets}
-              onChange={setSelectedPresets}
-              disabled={isGenerating}
-            />
+          {/* Protected Routes */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <UserProfile />
+              </ProtectedRoute>
+            }
+          />
 
-            {error && (
-              <div className="error-message">
-                <span>⚠️</span>
-                <p>{error}</p>
-              </div>
-            )}
-
-            <div className="action-buttons">
-              <button
-                className="generate-button"
-                onClick={handleGenerate}
-                disabled={isGenerating || !prompt.trim() || selectedPresets.length === 0}
-              >
-                {isGenerating ? (
-                  <>
-                    <span className="spinner"></span>
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <span>✨</span>
-                    Generate Images
-                  </>
-                )}
-              </button>
-
-              {results.length > 0 && (
-                <button
-                  className="clear-button"
-                  onClick={handleClearResults}
-                  disabled={isGenerating}
-                >
-                  Clear Results
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Results Section */}
-          {results.length > 0 && (
-            <ResultsGrid
-              results={results}
-              prompt={prompt}
-            />
-          )}
-
-          {/* Info Section */}
-          {results.length === 0 && !isGenerating && (
-            <div className="info-section">
-              <div className="info-card">
-                <h3>🎨 How it works</h3>
-                <ol>
-                  <li>Enter a detailed description of the image you want to create</li>
-                  <li>Select the platforms where you'll use the image</li>
-                  <li>Click "Generate Images" and let AI do the magic</li>
-                  <li>Download individual images or all at once</li>
-                </ol>
-              </div>
-
-              <div className="features">
-                <div className="feature-card">
-                  <h3>🚀 AI-Powered</h3>
-                  <p>Generate unique images using DALL-E AI technology</p>
-                </div>
-                <div className="feature-card">
-                  <h3>📐 Perfect Sizes</h3>
-                  <p>Automatically resized for each platform's requirements</p>
-                </div>
-                <div className="feature-card">
-                  <h3>⚡ Fast & Easy</h3>
-                  <p>Generate multiple platform assets in seconds</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </main>
-
-      <footer className="footer">
-        <p>Built with React + Vite | Powered by DALL-E & Supabase</p>
-        <p>© 2026 SnapAsset by Darshan Pania</p>
-      </footer>
-    </div>
+          {/* 404 Redirect */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   )
 }
 
