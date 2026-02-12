@@ -1,50 +1,133 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+/**
+ * API Client for Project Management
+ */
 
-export async function generateImages({ prompt, presets }) {
-  try {
-    const response = await fetch(`${API_URL}/api/generate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        prompt,
-        presets
-      })
-    })
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || `HTTP error! status: ${response.status}`)
+class ApiClient {
+  constructor(baseURL) {
+    this.baseURL = baseURL;
+  }
+
+  async request(endpoint, options = {}) {
+    const token = localStorage.getItem('token');
+    
+    const headers = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
     }
 
-    const data = await response.json()
-    return data
-  } catch (error) {
-    console.error('API Error:', error)
-    throw new Error(error.message || 'Failed to generate images. Please check your connection and try again.')
+    const response = await fetch(`${this.baseURL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Request failed');
+    }
+
+    return data;
+  }
+
+  get(endpoint) {
+    return this.request(endpoint);
+  }
+
+  post(endpoint, body) {
+    return this.request(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  put(endpoint, body) {
+    return this.request(endpoint, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
+  delete(endpoint) {
+    return this.request(endpoint, {
+      method: 'DELETE',
+    });
   }
 }
 
-export async function uploadImage(file) {
-  try {
-    const formData = new FormData()
-    formData.append('image', file)
+const apiClient = new ApiClient(API_BASE_URL);
 
-    const response = await fetch(`${API_URL}/api/images/upload`, {
-      method: 'POST',
-      body: formData
-    })
+// Project API
+export const projectApi = {
+  // Projects
+  getProjects: (params) => {
+    const query = new URLSearchParams(params).toString();
+    return apiClient.get(`/projects${query ? `?${query}` : ''}`);
+  },
 
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || `HTTP error! status: ${response.status}`)
-    }
+  getProject: (id) => apiClient.get(`/projects/${id}`),
 
-    const data = await response.json()
-    return data
-  } catch (error) {
-    console.error('Upload Error:', error)
-    throw new Error(error.message || 'Failed to upload image. Please try again.')
-  }
-}
+  createProject: (data) => apiClient.post('/projects', data),
+
+  updateProject: (id, data) => apiClient.put(`/projects/${id}`, data),
+
+  deleteProject: (id, permanent = false) => 
+    apiClient.delete(`/projects/${id}${permanent ? '?permanent=true' : ''}`),
+
+  // Project Stats
+  getProjectStats: (id) => apiClient.get(`/projects/${id}/stats`),
+
+  getDashboardStats: () => apiClient.get('/projects/stats/dashboard'),
+
+  // Images
+  getProjectImages: (id, params) => {
+    const query = new URLSearchParams(params).toString();
+    return apiClient.get(`/projects/${id}/images${query ? `?${query}` : ''}`);
+  },
+
+  addImagesToProject: (id, imageIds) => 
+    apiClient.post(`/projects/${id}/images`, { image_ids: imageIds }),
+
+  removeImagesFromProject: (id, imageIds) => 
+    apiClient.delete(`/projects/${id}/images`, { body: JSON.stringify({ image_ids: imageIds }) }),
+
+  // Collaborators
+  getCollaborators: (id) => apiClient.get(`/projects/${id}/collaborators`),
+
+  addCollaborator: (id, data) => apiClient.post(`/projects/${id}/collaborators`, data),
+
+  removeCollaborator: (id, userId) => 
+    apiClient.delete(`/projects/${id}/collaborators/${userId}`),
+
+  // Versions
+  getVersionHistory: (id) => apiClient.get(`/projects/${id}/versions`),
+
+  createVersion: (id, notes) => apiClient.post(`/projects/${id}/versions`, { notes }),
+
+  restoreVersion: (id, versionId) => 
+    apiClient.post(`/projects/${id}/versions/${versionId}/restore`),
+
+  // Import/Export
+  exportProject: (id, format = 'json') => 
+    apiClient.get(`/projects/${id}/export?format=${format}`),
+
+  importProject: (data) => apiClient.post('/projects/import', data),
+
+  // Bulk Operations
+  bulkOperation: (operation, projectIds, data = {}) => 
+    apiClient.post('/projects/bulk', { operation, project_ids: projectIds, data }),
+
+  // Analytics
+  getAnalytics: (id, period = '30d') => 
+    apiClient.get(`/projects/${id}/analytics?period=${period}`),
+
+  // Templates
+  getTemplates: () => apiClient.get('/projects/templates'),
+};
+
+export default apiClient;

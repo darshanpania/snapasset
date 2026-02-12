@@ -1,7 +1,7 @@
 {
   "name": "snapasset",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Image generation wrapper for creating perfectly-sized assets for various platforms",
   "scripts": {
@@ -9,11 +9,17 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --ext js,jsx --fix",
+    "format": "prettier --write \"src/**/*.{js,jsx,json,css}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,json,css}\"",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest watch"
+    "test:watch": "vitest watch",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.3",
@@ -22,6 +28,9 @@
     "react-router-dom": "^6.21.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.40.1",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
     "@testing-library/jest-dom": "^6.1.6",
     "@testing-library/react": "^14.1.2",
     "@testing-library/user-event": "^14.5.2",
@@ -30,12 +39,27 @@
     "@vitejs/plugin-react": "^4.2.1",
     "@vitest/coverage-v8": "^1.2.0",
     "@vitest/ui": "^1.2.0",
+    "conventional-changelog-cli": "^4.1.0",
     "eslint": "^8.56.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
     "happy-dom": "^12.10.3",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.1",
+    "semantic-release": "^22.0.12",
     "vite": "^5.0.11",
+    "vite-bundle-visualizer": "^1.0.1",
     "vitest": "^1.2.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md}": [
+      "prettier --write"
+    ]
   }
 }
