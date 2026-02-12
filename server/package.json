@@ -1,56 +1,27 @@
 {
   "name": "snapasset-server",
-  "version": "1.0.0",
-  "description": "Backend API for SnapAsset - AI-powered image generation and optimization",
+  "version": "0.3.0",
+  "description": "Backend API for SnapAsset with Analytics",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "worker": "node workers/imageWorker.js",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
-    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
-    "test:verbose": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose",
-    "docs:generate": "node scripts/generateDocs.js"
+    "migrate": "node scripts/migrate.js",
+    "seed-analytics": "node scripts/seedAnalytics.js"
   },
-  "keywords": [
-    "image-generation",
-    "ai",
-    "dalle",
-    "api",
-    "job-queue",
-    "social-media",
-    "image-processing"
-  ],
-  "author": "Darshan Pania",
-  "license": "MIT",
   "dependencies": {
     "@supabase/supabase-js": "^2.39.3",
-    "axios": "^1.6.5",
-    "bull": "^4.12.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.1",
     "express": "^4.18.2",
-    "express-rate-limit": "^7.1.5",
     "helmet": "^7.1.0",
-    "ioredis": "^5.3.2",
     "morgan": "^1.10.0",
-    "multer": "^1.4.5-lts.1",
-    "openai": "^4.26.0",
     "sharp": "^0.33.2",
-    "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.0",
-    "uuid": "^9.0.1",
-    "winston": "^3.11.0"
+    "compression": "^1.7.4",
+    "express-rate-limit": "^7.1.5"
   },
   "devDependencies": {
-    "@jest/globals": "^29.7.0",
-    "jest": "^29.7.0",
-    "nodemon": "^3.0.3",
-    "supertest": "^6.3.4"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "nodemon": "^3.0.3"
   }
 }
