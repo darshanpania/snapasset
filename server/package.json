@@ -8,8 +8,10 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "worker": "node workers/imageWorker.js",
-    "test": "jest",
-    "test:watch": "jest --watch",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "test:verbose": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose",
     "docs:generate": "node scripts/generateDocs.js"
   },
   "keywords": [
@@ -43,6 +45,7 @@
     "winston": "^3.11.0"
   },
   "devDependencies": {
+    "@jest/globals": "^29.7.0",
     "jest": "^29.7.0",
     "nodemon": "^3.0.3",
     "supertest": "^6.3.4"
