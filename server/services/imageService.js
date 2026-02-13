@@ -105,6 +105,9 @@ export async function resizeImage(imageBuffer, platform) {
  * Upload image to Supabase Storage
  */
 export async function uploadToStorage(imageBuffer, path, contentType = 'image/png') {
+  if (!supabase) {
+    throw new Error('Supabase not configured — cannot upload to storage');
+  }
   try {
     const { data, error } = await supabase.storage
       .from('generated-images')
@@ -133,6 +136,9 @@ export async function uploadToStorage(imageBuffer, path, contentType = 'image/pn
  * Save generation metadata to database
  */
 export async function saveGeneration(userId, generationData) {
+  if (!supabase) {
+    throw new Error('Supabase not configured — cannot save generation');
+  }
   try {
     const { data, error } = await supabase
       .from('generations')
@@ -156,6 +162,9 @@ export async function saveGeneration(userId, generationData) {
  * Save generated image metadata
  */
 export async function saveGeneratedImage(generationId, imageData) {
+  if (!supabase) {
+    throw new Error('Supabase not configured — cannot save image metadata');
+  }
   try {
     const { data, error } = await supabase
       .from('generated_images')

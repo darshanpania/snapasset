@@ -36,6 +36,7 @@ class InMemoryQueue {
     };
     this.jobs.set(id, job);
     console.log(`[InMemoryQueue] Job ${id} added to ${this.name}`);
+    setImmediate(() => this._processNext());
     return job;
   }
 
@@ -72,6 +73,86 @@ class InMemoryQueue {
     return counts;
   }
 
+  async getWaitingCount() {
+    return this._countByState('waiting');
+  }
+
+  async getActiveCount() {
+    return this._countByState('active');
+  }
+
+  async getCompletedCount() {
+    return this._countByState('completed');
+  }
+
+  async getFailedCount() {
+    return this._countByState('failed');
+  }
+
+  async getDelayedCount() {
+    return this._countByState('delayed');
+  }
+
+  async pause() {
+    this._paused = true;
+    console.log(`[InMemoryQueue] ${this.name} paused`);
+  }
+
+  async resume() {
+    this._paused = false;
+    console.log(`[InMemoryQueue] ${this.name} resumed`);
+    this._processNext();
+  }
+
+  async clean(grace, status) {
+    const now = Date.now();
+    const cleaned = [];
+    for (const [id, job] of this.jobs.entries()) {
+      if (job._state === status && (now - job.timestamp) > grace) {
+        this.jobs.delete(id);
+        cleaned.push(job);
+      }
+    }
+    return cleaned;
+  }
+
+  process(handler) {
+    this._handler = handler;
+    this._paused = false;
+    this._processNext();
+  }
+
+  async _processNext() {
+    if (this._paused || !this._handler) return;
+
+    const waiting = [...this.jobs.values()].find(j => j._state === 'waiting');
+    if (!waiting) return;
+
+    waiting._state = 'active';
+    waiting.processedOn = Date.now();
+
+    try {
+      const result = await this._handler(waiting);
+      waiting.returnvalue = result;
+      waiting._state = 'completed';
+      waiting.finishedOn = Date.now();
+      console.log(`[InMemoryQueue] Job ${waiting.id} completed`);
+    } catch (error) {
+      waiting.failedReason = error.message;
+      waiting.attemptsMade++;
+      if (waiting.attemptsMade < (waiting.opts.attempts || 3)) {
+        waiting._state = 'waiting';
+        console.log(`[InMemoryQueue] Job ${waiting.id} failed, retrying (${waiting.attemptsMade}/${waiting.opts.attempts || 3})`);
+      } else {
+        waiting._state = 'failed';
+        console.error(`[InMemoryQueue] Job ${waiting.id} failed permanently:`, error.message);
+      }
+    }
+
+    // Process next job
+    setImmediate(() => this._processNext());
+  }
+
   async close() {}
 
   on() {}
@@ -79,6 +160,10 @@ class InMemoryQueue {
   _getByState(state, start, end) {
     const filtered = [...this.jobs.values()].filter(j => j._state === state);
     return filtered.slice(start, end + 1);
+  }
+
+  _countByState(state) {
+    return [...this.jobs.values()].filter(j => j._state === state).length;
   }
 }
 

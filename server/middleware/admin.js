@@ -12,6 +12,13 @@ export const isAdmin = async (req, res, next) => {
       });
     }
 
+    if (!req.app.locals.supabase) {
+      return res.status(503).json({
+        success: false,
+        error: 'Admin verification service unavailable',
+      });
+    }
+
     // Check if user has admin role
     const { data, error } = await req.app.locals.supabase
       .from('user_roles')

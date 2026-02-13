@@ -14,6 +14,8 @@ import jobsRouter from './routes/jobs.js';
 import sseRouter from './routes/sse.js';
 import queueRouter from './routes/queue.js';
 import logger from './utils/logger.js';
+import analyticsRouter from './routes/analytics.js';
+import projectsRouter from './routes/projects.js';
 
 // Load environment variables
 dotenv.config();
@@ -139,6 +141,8 @@ app.use('/api', imageRoutes);
 app.use('/api/jobs', jobsRouter);
 app.use('/api/sse', sseRouter);
 app.use('/api/queue', queueRouter);
+app.use('/api/analytics', analyticsRouter);
+app.use('/api/projects', projectsRouter);
 
 // API Documentation
 app.use(

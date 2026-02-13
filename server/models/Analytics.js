@@ -39,8 +39,7 @@ export class AnalyticsEvent {
   }
 
   toJSON() {
-    return {
-      id: this.id,
+    const json = {
       user_id: this.user_id,
       session_id: this.session_id,
       event_type: this.event_type,
@@ -55,6 +54,11 @@ export class AnalyticsEvent {
       platform: this.platform,
       created_at: this.created_at,
     };
+    // Only include id if it's set (avoid sending null to DB which conflicts with DEFAULT)
+    if (this.id) {
+      json.id = this.id;
+    }
+    return json;
   }
 }
 
