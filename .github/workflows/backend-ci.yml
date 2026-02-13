@@ -60,7 +60,7 @@ jobs:
         run: npm run test:coverage || npm test -- --coverage
       
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           files: ./server/coverage/lcov.info
           flags: backend
