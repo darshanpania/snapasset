@@ -3,7 +3,7 @@ import { imageGenerationQueue } from '../config/queue.js';
 
 const router = express.Router();
 
-// Store active SSE connections
+// Store active SSE connections (jobId -> Set of response objects)
 const sseConnections = new Map();
 
 /**
@@ -49,7 +49,10 @@ router.get('/jobs/:jobId', async (req, res) => {
     res.write(`data: ${JSON.stringify({ type: 'connected', jobId })}\n\n`);
 
     // Store connection
-    sseConnections.set(jobId, res);
+    if (!sseConnections.has(jobId)) {
+      sseConnections.set(jobId, new Set());
+    }
+    sseConnections.get(jobId).add(res);
 
     // Send current job status immediately
     const state = await job.getState();
@@ -100,13 +103,21 @@ router.get('/jobs/:jobId', async (req, res) => {
           );
 
           clearInterval(intervalId);
-          sseConnections.delete(jobId);
+          const conns = sseConnections.get(jobId);
+          if (conns) {
+            conns.delete(res);
+            if (conns.size === 0) sseConnections.delete(jobId);
+          }
           res.end();
         }
       } catch (error) {
         console.error('Error in SSE interval:', error);
         clearInterval(intervalId);
-        sseConnections.delete(jobId);
+        const conns = sseConnections.get(jobId);
+        if (conns) {
+          conns.delete(res);
+          if (conns.size === 0) sseConnections.delete(jobId);
+        }
         res.end();
       }
     }, 1000); // Check every second
@@ -114,7 +125,11 @@ router.get('/jobs/:jobId', async (req, res) => {
     // Handle client disconnect
     req.on('close', () => {
       clearInterval(intervalId);
-      sseConnections.delete(jobId);
+      const conns = sseConnections.get(jobId);
+      if (conns) {
+        conns.delete(res);
+        if (conns.size === 0) sseConnections.delete(jobId);
+      }
       console.log(`SSE connection closed for job ${jobId}`);
     });
   } catch (error) {

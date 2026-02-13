@@ -8,10 +8,15 @@ import { ProjectService } from '../services/ProjectService.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
-const projectService = new ProjectService();
 
 // Apply authentication middleware to all routes
 router.use(authMiddleware);
+
+// Attach ProjectService instance per request
+router.use((req, res, next) => {
+  req.projectService = new ProjectService(req.app.locals.supabase);
+  next();
+});
 
 // Create a new project
 router.post('/', async (req, res) => {
@@ -21,7 +26,7 @@ router.post('/', async (req, res) => {
       owner_id: req.user.id,
     };
 
-    const project = await projectService.createProject(projectData);
+    const project = await req.projectService.createProject(projectData);
     res.status(201).json({
       success: true,
       data: project,
@@ -40,7 +45,7 @@ router.get('/', async (req, res) => {
   try {
     const { status, visibility, tags, search, page = 1, limit = 20 } = req.query;
 
-    const projects = await projectService.getUserProjects(req.user.id, {
+    const projects = await req.projectService.getUserProjects(req.user.id, {
       status,
       visibility,
       tags: tags ? tags.split(',') : undefined,
@@ -66,7 +71,7 @@ router.get('/', async (req, res) => {
 // Get project by ID
 router.get('/:id', async (req, res) => {
   try {
-    const project = await projectService.getProjectById(req.params.id, req.user.id);
+    const project = await req.projectService.getProjectById(req.params.id, req.user.id);
 
     if (!project) {
       return res.status(404).json({
@@ -91,7 +96,7 @@ router.get('/:id', async (req, res) => {
 // Update project
 router.put('/:id', async (req, res) => {
   try {
-    const project = await projectService.updateProject(req.params.id, req.user.id, req.body);
+    const project = await req.projectService.updateProject(req.params.id, req.user.id, req.body);
 
     res.json({
       success: true,
@@ -111,7 +116,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const { permanent = false } = req.query;
 
-    await projectService.deleteProject(req.params.id, req.user.id, permanent === 'true');
+    await req.projectService.deleteProject(req.params.id, req.user.id, permanent === 'true');
 
     res.json({
       success: true,
@@ -129,7 +134,7 @@ router.delete('/:id', async (req, res) => {
 // Get project statistics
 router.get('/:id/stats', async (req, res) => {
   try {
-    const stats = await projectService.getProjectStats(req.params.id, req.user.id);
+    const stats = await req.projectService.getProjectStats(req.params.id, req.user.id);
 
     res.json({
       success: true,
@@ -156,7 +161,7 @@ router.post('/:id/images', async (req, res) => {
       });
     }
 
-    const result = await projectService.addImagesToProject(
+    const result = await req.projectService.addImagesToProject(
       req.params.id,
       req.user.id,
       image_ids
@@ -175,7 +180,34 @@ router.post('/:id/images', async (req, res) => {
   }
 });
 
-// Remove images from project
+// Remove images from project (POST alternative for clients that can't send DELETE body)
+router.post('/:id/images/remove', async (req, res) => {
+  try {
+    const { image_ids } = req.body;
+
+    if (!Array.isArray(image_ids)) {
+      return res.status(400).json({
+        success: false,
+        error: 'image_ids must be an array',
+      });
+    }
+
+    await req.projectService.removeImagesFromProject(req.params.id, req.user.id, image_ids);
+
+    res.json({
+      success: true,
+      message: 'Images removed from project',
+    });
+  } catch (error) {
+    console.error('Remove images error:', error);
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Remove images from project (DELETE - kept for backward compatibility)
 router.delete('/:id/images', async (req, res) => {
   try {
     const { image_ids } = req.body;
@@ -187,7 +219,7 @@ router.delete('/:id/images', async (req, res) => {
       });
     }
 
-    await projectService.removeImagesFromProject(req.params.id, req.user.id, image_ids);
+    await req.projectService.removeImagesFromProject(req.params.id, req.user.id, image_ids);
 
     res.json({
       success: true,
@@ -207,7 +239,7 @@ router.get('/:id/images', async (req, res) => {
   try {
     const { page = 1, limit = 50 } = req.query;
 
-    const images = await projectService.getProjectImages(req.params.id, req.user.id, {
+    const images = await req.projectService.getProjectImages(req.params.id, req.user.id, {
       page: parseInt(page),
       limit: parseInt(limit),
     });
@@ -231,7 +263,7 @@ router.post('/:id/collaborators', async (req, res) => {
   try {
     const { user_id, role, permissions } = req.body;
 
-    const collaborator = await projectService.addCollaborator(req.params.id, req.user.id, {
+    const collaborator = await req.projectService.addCollaborator(req.params.id, req.user.id, {
       user_id,
       role,
       permissions,
@@ -253,7 +285,7 @@ router.post('/:id/collaborators', async (req, res) => {
 // Get collaborators
 router.get('/:id/collaborators', async (req, res) => {
   try {
-    const collaborators = await projectService.getCollaborators(req.params.id, req.user.id);
+    const collaborators = await req.projectService.getCollaborators(req.params.id, req.user.id);
 
     res.json({
       success: true,
@@ -271,7 +303,7 @@ router.get('/:id/collaborators', async (req, res) => {
 // Remove collaborator
 router.delete('/:id/collaborators/:userId', async (req, res) => {
   try {
-    await projectService.removeCollaborator(req.params.id, req.user.id, req.params.userId);
+    await req.projectService.removeCollaborator(req.params.id, req.user.id, req.params.userId);
 
     res.json({
       success: true,
@@ -291,7 +323,7 @@ router.post('/:id/versions', async (req, res) => {
   try {
     const { notes } = req.body;
 
-    const version = await projectService.createVersion(req.params.id, req.user.id, notes);
+    const version = await req.projectService.createVersion(req.params.id, req.user.id, notes);
 
     res.status(201).json({
       success: true,
@@ -309,7 +341,7 @@ router.post('/:id/versions', async (req, res) => {
 // Get version history
 router.get('/:id/versions', async (req, res) => {
   try {
-    const versions = await projectService.getVersionHistory(req.params.id, req.user.id);
+    const versions = await req.projectService.getVersionHistory(req.params.id, req.user.id);
 
     res.json({
       success: true,
@@ -327,7 +359,7 @@ router.get('/:id/versions', async (req, res) => {
 // Restore from version
 router.post('/:id/versions/:versionId/restore', async (req, res) => {
   try {
-    const project = await projectService.restoreVersion(
+    const project = await req.projectService.restoreVersion(
       req.params.id,
       req.user.id,
       req.params.versionId
@@ -352,7 +384,7 @@ router.get('/:id/export', async (req, res) => {
   try {
     const { format = 'json' } = req.query;
 
-    const exportData = await projectService.exportProject(req.params.id, req.user.id, format);
+    const exportData = await req.projectService.exportProject(req.params.id, req.user.id, format);
 
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename="project-${req.params.id}.json"`);
@@ -369,7 +401,7 @@ router.get('/:id/export', async (req, res) => {
 // Import project
 router.post('/import', async (req, res) => {
   try {
-    const project = await projectService.importProject(req.user.id, req.body);
+    const project = await req.projectService.importProject(req.user.id, req.body);
 
     res.status(201).json({
       success: true,
@@ -396,7 +428,7 @@ router.post('/bulk', async (req, res) => {
       });
     }
 
-    const result = await projectService.bulkOperation(req.user.id, operation, project_ids, data);
+    const result = await req.projectService.bulkOperation(req.user.id, operation, project_ids, data);
 
     res.json({
       success: true,
@@ -416,7 +448,7 @@ router.get('/:id/analytics', async (req, res) => {
   try {
     const { period = '30d' } = req.query;
 
-    const analytics = await projectService.getAnalytics(req.params.id, req.user.id, period);
+    const analytics = await req.projectService.getAnalytics(req.params.id, req.user.id, period);
 
     res.json({
       success: true,

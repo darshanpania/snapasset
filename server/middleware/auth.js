@@ -5,6 +5,13 @@
 
 export const authMiddleware = async (req, res, next) => {
   try {
+    if (!req.app.locals.supabase) {
+      return res.status(503).json({
+        success: false,
+        error: 'Authentication service unavailable',
+      });
+    }
+
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

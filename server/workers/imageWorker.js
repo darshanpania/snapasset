@@ -8,7 +8,6 @@ import {
   saveGeneratedImage,
   PLATFORM_PRESETS,
 } from '../services/imageService.js';
-import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Process image generation job

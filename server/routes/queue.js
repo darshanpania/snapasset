@@ -1,7 +1,12 @@
 import express from 'express';
 import { imageGenerationQueue } from '../config/queue.js';
+import { authMiddleware } from '../middleware/auth.js';
+import { isAdmin } from '../middleware/admin.js';
 
 const router = express.Router();
+
+// Apply authentication to all queue routes
+router.use(authMiddleware);
 
 /**
  * @swagger
@@ -63,7 +68,7 @@ router.get('/stats', async (req, res) => {
  *       200:
  *         description: Queue paused
  */
-router.post('/pause', async (req, res) => {
+router.post('/pause', isAdmin, async (req, res) => {
   try {
     await imageGenerationQueue.pause();
     res.json({
@@ -86,7 +91,7 @@ router.post('/pause', async (req, res) => {
  *       200:
  *         description: Queue resumed
  */
-router.post('/resume', async (req, res) => {
+router.post('/resume', isAdmin, async (req, res) => {
   try {
     await imageGenerationQueue.resume();
     res.json({
@@ -123,7 +128,7 @@ router.post('/resume', async (req, res) => {
  *       200:
  *         description: Queue cleaned
  */
-router.post('/clean', async (req, res) => {
+router.post('/clean', isAdmin, async (req, res) => {
   try {
     const { grace = 86400000, status = 'completed' } = req.body; // 24 hours default
 

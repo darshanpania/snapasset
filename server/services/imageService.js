@@ -11,10 +11,14 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+let supabase = null;
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+if (supabaseUrl && supabaseKey && /^https?:\/\//i.test(supabaseUrl)) {
+  supabase = createClient(supabaseUrl, supabaseKey);
+} else {
+  logger.warn('Supabase not configured in imageService — storage/DB features disabled');
+}
 
 // Platform presets with exact dimensions
 const PLATFORM_PRESETS = {
@@ -101,6 +105,9 @@ export async function resizeImage(imageBuffer, platform) {
  * Upload image to Supabase Storage
  */
 export async function uploadToStorage(imageBuffer, path, contentType = 'image/png') {
+  if (!supabase) {
+    throw new Error('Supabase not configured — cannot upload to storage');
+  }
   try {
     const { data, error } = await supabase.storage
       .from('generated-images')
@@ -129,6 +136,9 @@ export async function uploadToStorage(imageBuffer, path, contentType = 'image/pn
  * Save generation metadata to database
  */
 export async function saveGeneration(userId, generationData) {
+  if (!supabase) {
+    throw new Error('Supabase not configured — cannot save generation');
+  }
   try {
     const { data, error } = await supabase
       .from('generations')
@@ -152,6 +162,9 @@ export async function saveGeneration(userId, generationData) {
  * Save generated image metadata
  */
 export async function saveGeneratedImage(generationId, imageData) {
+  if (!supabase) {
+    throw new Error('Supabase not configured — cannot save image metadata');
+  }
   try {
     const { data, error } = await supabase
       .from('generated_images')
@@ -175,6 +188,57 @@ export async function saveGeneratedImage(generationId, imageData) {
   }
 }
 
+/**
+ * Get platform presets as an array
+ */
+export function getPlatformPresets() {
+  return Object.entries(PLATFORM_PRESETS).map(([id, preset]) => ({
+    id,
+    ...preset,
+  }));
+}
+
+/**
+ * Generate images from a prompt for multiple platform presets
+ */
+export async function generateImagesFromPrompt(prompt, presetIds) {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OpenAI API key not configured');
+  }
+
+  // Generate the base image with DALL-E
+  const generated = await generateWithDallE(prompt);
+
+  // Download the generated image
+  const imageBuffer = await downloadImage(generated.url);
+
+  // Resize for each requested platform
+  const results = await Promise.all(
+    presetIds.map(async (presetId) => {
+      const preset = PLATFORM_PRESETS[presetId];
+      if (!preset) {
+        logger.warn(`Unknown preset: ${presetId}, skipping`);
+        return null;
+      }
+
+      const resized = await resizeImage(imageBuffer, presetId);
+      const base64 = resized.buffer.toString('base64');
+
+      return {
+        platform: presetId,
+        platformName: preset.name,
+        width: resized.width,
+        height: resized.height,
+        size: resized.size,
+        image: `data:image/png;base64,${base64}`,
+        revisedPrompt: generated.revisedPrompt,
+      };
+    })
+  );
+
+  return results.filter(Boolean);
+}
+
 export default {
   generateWithDallE,
   downloadImage,
@@ -182,5 +246,7 @@ export default {
   uploadToStorage,
   saveGeneration,
   saveGeneratedImage,
+  generateImagesFromPrompt,
+  getPlatformPresets,
   PLATFORM_PRESETS,
 };

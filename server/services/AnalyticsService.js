@@ -315,7 +315,7 @@ export class AnalyticsService {
       case 'w': return value * 7;
       case 'm': return value * 30;
       case 'y': return value * 365;
-      case 'h': return Math.ceil(value / 24);
+      case 'h': return Math.max(1, Math.ceil(value / 24));
       default: return 30;
     }
   }
@@ -323,8 +323,8 @@ export class AnalyticsService {
   getWeekStart(date) {
     const d = new Date(date);
     const day = d.getDay();
-    const diff = d.getDate() - day;
-    return new Date(d.setDate(diff)).toISOString().split('T')[0];
+    d.setDate(d.getDate() - day);
+    return d.toISOString().split('T')[0];
   }
 
   calculateTrends(dailyUsage, days) {
@@ -481,31 +481,45 @@ export class AnalyticsService {
    * Track platform usage
    */
   async trackPlatformUsage(userId, platform) {
-    const { data, error } = await this.supabase
+    const now = new Date().toISOString();
+
+    // Try to find existing record
+    const { data: existing } = await this.supabase
       .from('platform_usage_stats')
-      .upsert(
-        {
+      .select('id, usage_count')
+      .eq('user_id', userId)
+      .eq('platform', platform)
+      .single();
+
+    if (existing) {
+      // Increment existing record
+      const { data, error } = await this.supabase
+        .from('platform_usage_stats')
+        .update({
+          usage_count: existing.usage_count + 1,
+          last_used_at: now,
+          updated_at: now,
+        })
+        .eq('id', existing.id)
+        .select();
+
+      if (error) throw error;
+      return data;
+    } else {
+      // Insert new record
+      const { data, error } = await this.supabase
+        .from('platform_usage_stats')
+        .insert({
           user_id: userId,
           platform,
           usage_count: 1,
-          last_used_at: new Date().toISOString(),
-        },
-        {
-          onConflict: 'user_id,platform',
-          ignoreDuplicates: false,
-        }
-      )
-      .select();
+          last_used_at: now,
+        })
+        .select();
 
-    if (error) {
-      // If record exists, increment usage_count
-      await this.supabase.rpc('increment_platform_usage', {
-        p_user_id: userId,
-        p_platform: platform,
-      });
+      if (error) throw error;
+      return data;
     }
-
-    return data;
   }
 
   /**

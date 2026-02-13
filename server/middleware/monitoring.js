@@ -49,18 +49,24 @@ export function requestTracker(req, res, next) {
 export function performanceMonitor(req, res, next) {
   const start = process.hrtime.bigint()
   
-  res.on('finish', () => {
+  // Capture the original end method to inject the header before sending
+  const originalEnd = res.end
+  res.end = function (...args) {
     const end = process.hrtime.bigint()
     const duration = Number(end - start) / 1e6 // Convert to milliseconds
     
-    // Add performance header
-    res.setHeader('X-Response-Time', `${duration.toFixed(2)}ms`)
+    // Set header before response is finalized
+    if (!res.headersSent) {
+      res.setHeader('X-Response-Time', `${duration.toFixed(2)}ms`)
+    }
     
     // Log slow requests
     if (duration > 1000) {
       console.warn(`⚠️  Performance warning: ${req.method} ${req.path} took ${duration.toFixed(2)}ms`)
     }
-  })
+    
+    originalEnd.apply(res, args)
+  }
   
   next()
 }
@@ -180,10 +186,10 @@ export function metricsCollector(req, res, next) {
 export function securityLogger(req, res, next) {
   // Log suspicious activity
   const suspiciousPatterns = [
-    /\.\./,  // Path traversal
-    /\bor\b.*=/i,  // SQL injection
-    /<script/i,  // XSS attempt
-    /eval\(/i,  // Code injection
+    /\.\.\//,  // Path traversal (require the slash)
+    /(\bor\b|\bunion\b)\s+(select|drop|delete|update|insert)\b/i,  // SQL injection (require SQL keyword after OR/UNION)
+    /<script[\s>]/i,  // XSS attempt
+    /eval\s*\(/i,  // Code injection
   ]
   
   const path = req.path.toLowerCase()

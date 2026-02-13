@@ -130,24 +130,48 @@ export const trackCost = (provider) => {
   return async (req, res, next) => {
     try {
       if (req.user && res.locals.costData) {
-        const { data, error } = await req.app.locals.supabase
+        const supabase = req.app.locals.supabase;
+        if (!supabase) return next();
+
+        const today = new Date().toISOString().split('T')[0];
+        const cost = res.locals.costData.cost || 0;
+        const tokens = res.locals.costData.tokens || 0;
+        const images = res.locals.costData.images || 0;
+
+        // Try to increment existing row first
+        const { data: existing, error: selectError } = await supabase
           .from('cost_tracking')
-          .upsert(
-            {
+          .select('id, api_calls, total_cost_usd, tokens_used, images_generated')
+          .eq('user_id', req.user.id)
+          .eq('date', today)
+          .eq('service_provider', provider)
+          .single();
+
+        if (existing) {
+          const { error } = await supabase
+            .from('cost_tracking')
+            .update({
+              api_calls: existing.api_calls + 1,
+              total_cost_usd: parseFloat(existing.total_cost_usd) + cost,
+              tokens_used: existing.tokens_used + tokens,
+              images_generated: existing.images_generated + images,
+            })
+            .eq('id', existing.id);
+          if (error) console.error('Cost tracking update error:', error);
+        } else {
+          const { error } = await supabase
+            .from('cost_tracking')
+            .insert({
               user_id: req.user.id,
-              date: new Date().toISOString().split('T')[0],
+              date: today,
               service_provider: provider,
               api_calls: 1,
-              total_cost_usd: res.locals.costData.cost || 0,
-              tokens_used: res.locals.costData.tokens || 0,
-              images_generated: res.locals.costData.images || 0,
-            },
-            {
-              onConflict: 'user_id,date,service_provider',
-            }
-          );
-
-        if (error) console.error('Cost tracking error:', error);
+              total_cost_usd: cost,
+              tokens_used: tokens,
+              images_generated: images,
+            });
+          if (error) console.error('Cost tracking insert error:', error);
+        }
       }
     } catch (error) {
       console.error('Cost tracking error:', error);
@@ -156,4 +180,4 @@ export const trackCost = (provider) => {
   };
 };
 
-export default router;
+export default { analyticsMiddleware, trackEvent, trackImageGeneration, trackCost };

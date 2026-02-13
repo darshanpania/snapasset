@@ -1,8 +1,8 @@
-name: Test Suite
+name: Frontend Tests
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, 'feature/**']
   pull_request:
     branches: [main, develop]
   workflow_dispatch:
@@ -11,23 +11,23 @@ jobs:
   test:
     name: Test on Node ${{ matrix.node }} - ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    
+
     strategy:
       fail-fast: false
       matrix:
         node: [18, 20, 21]
         os: [ubuntu-latest, windows-latest, macos-latest]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Setup Node.js ${{ matrix.node }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
           cache: 'npm'
-      
+
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
@@ -39,24 +39,44 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-${{ matrix.node }}-
             ${{ runner.os }}-node-
-      
+
       - name: Install client dependencies
         run: npm ci
-      
+
       - name: Install server dependencies
         run: cd server && npm ci
-      
-      - name: Run client tests
-        run: npm test -- --run
+
+      - name: Run linter
+        run: npm run lint
         continue-on-error: true
-      
+
+      - name: Run client tests
+        run: npm run test:run
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://test.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'test-key' }}
+          VITE_API_URL: http://localhost:3001
+
       - name: Run server tests
         run: cd server && npm test -- --run
         continue-on-error: true
-      
+
+      - name: Generate coverage report
+        run: npm run test:coverage
+        if: matrix.node == 20 && matrix.os == 'ubuntu-latest'
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        if: matrix.node == 20 && matrix.os == 'ubuntu-latest'
+        with:
+          files: ./coverage/lcov.info
+          flags: frontend
+          name: frontend-coverage
+        continue-on-error: true
+
       - name: Build client
         run: npm run build
-      
+
       - name: Upload build artifacts
         if: matrix.node == 20 && matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4

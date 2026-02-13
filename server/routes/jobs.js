@@ -1,7 +1,12 @@
 import express from 'express';
 import { imageGenerationQueue } from '../config/queue.js';
+import { authMiddleware } from '../middleware/auth.js';
+import { jobCreationLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
+
+// Apply authentication to all job routes
+router.use(authMiddleware);
 
 /**
  * @swagger
@@ -50,7 +55,7 @@ const router = express.Router();
  *       500:
  *         description: Server error
  */
-router.post('/', async (req, res) => {
+router.post('/', jobCreationLimiter, async (req, res) => {
   try {
     const { userId, prompt, platforms, options } = req.body;
 

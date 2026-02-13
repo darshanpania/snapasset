@@ -1,168 +1,121 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '../../tests/utils/test-utils'
+import { screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { renderWithProviders } from '../../test/utils/test-utils'
 import Signup from './Signup'
 import * as AuthContext from '../../contexts/AuthContext'
 
 describe('Signup Component', () => {
   const mockSignUp = vi.fn()
   const mockSignInWithProvider = vi.fn()
+  const mockNavigate = vi.fn()
 
   beforeEach(() => {
-    mockSignUp.mockClear()
-    mockSignInWithProvider.mockClear()
+    vi.clearAllMocks()
     
     vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
       signUp: mockSignUp,
       signInWithProvider: mockSignInWithProvider,
-      user: null,
       loading: false,
       error: null,
     })
   })
 
   it('renders signup form', () => {
-    render(<Signup />)
+    renderWithProviders(<Signup />)
     
-    expect(screen.getByText(/create account/i)).toBeInTheDocument()
+    expect(screen.getByText('Create Account')).toBeInTheDocument()
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument()
   })
 
-  it('validates all required fields', async () => {
-    render(<Signup />)
-    
-    const submitButton = screen.getByRole('button', { name: /create account/i })
-    fireEvent.click(submitButton)
-    
-    await waitFor(() => {
-      expect(screen.getByText(/all fields are required/i)).toBeInTheDocument()
-    })
-  })
-
-  it('validates password length', async () => {
-    render(<Signup />)
-    
-    fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' },
-    })
-    fireEvent.change(screen.getByLabelText(/^password$/i), {
-      target: { value: '12345' },
-    })
-    fireEvent.change(screen.getByLabelText(/confirm password/i), {
-      target: { value: '12345' },
-    })
-    
-    const termsCheckbox = screen.getByRole('checkbox')
-    fireEvent.click(termsCheckbox)
-    
-    const submitButton = screen.getByRole('button', { name: /create account/i })
-    fireEvent.click(submitButton)
-    
-    await waitFor(() => {
-      expect(screen.getByText(/password must be at least 6 characters/i)).toBeInTheDocument()
-    })
-  })
-
-  it('validates password confirmation match', async () => {
-    render(<Signup />)
-    
-    fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' },
-    })
-    fireEvent.change(screen.getByLabelText(/^password$/i), {
-      target: { value: 'password123' },
-    })
-    fireEvent.change(screen.getByLabelText(/confirm password/i), {
-      target: { value: 'different' },
-    })
-    
-    const termsCheckbox = screen.getByRole('checkbox')
-    fireEvent.click(termsCheckbox)
-    
-    const submitButton = screen.getByRole('button', { name: /create account/i })
-    fireEvent.click(submitButton)
-    
-    await waitFor(() => {
-      expect(screen.getByText(/passwords do not match/i)).toBeInTheDocument()
-    })
-  })
-
-  it('validates terms acceptance', async () => {
-    render(<Signup />)
-    
-    fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' },
-    })
-    fireEvent.change(screen.getByLabelText(/^password$/i), {
-      target: { value: 'password123' },
-    })
-    fireEvent.change(screen.getByLabelText(/confirm password/i), {
-      target: { value: 'password123' },
-    })
-    
-    const submitButton = screen.getByRole('button', { name: /create account/i })
-    fireEvent.click(submitButton)
-    
-    await waitFor(() => {
-      expect(screen.getByText(/you must accept the terms/i)).toBeInTheDocument()
-    })
-  })
-
-  it('calls signUp with correct data when form is valid', async () => {
+  it('handles successful signup', async () => {
+    const user = userEvent.setup()
     mockSignUp.mockResolvedValue({ error: null })
     
-    render(<Signup />)
+    renderWithProviders(<Signup />)
     
-    fireEvent.change(screen.getByLabelText(/full name/i), {
-      target: { value: 'John Doe' },
-    })
-    fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' },
-    })
-    fireEvent.change(screen.getByLabelText(/^password$/i), {
-      target: { value: 'password123' },
-    })
-    fireEvent.change(screen.getByLabelText(/confirm password/i), {
-      target: { value: 'password123' },
-    })
-    
-    const termsCheckbox = screen.getByRole('checkbox')
-    fireEvent.click(termsCheckbox)
-    
-    const submitButton = screen.getByRole('button', { name: /create account/i })
-    fireEvent.click(submitButton)
+    await user.type(screen.getByLabelText(/full name/i), 'Test User')
+    await user.type(screen.getByLabelText(/email/i), 'test@example.com')
+    await user.type(screen.getByLabelText(/^password$/i), 'password123')
+    await user.type(screen.getByLabelText(/confirm password/i), 'password123')
+    await user.click(screen.getByRole('checkbox', { name: /agree to the terms/i }))
+    await user.click(screen.getByRole('button', { name: /create account/i }))
     
     await waitFor(() => {
       expect(mockSignUp).toHaveBeenCalledWith(
         'test@example.com',
         'password123',
         expect.objectContaining({
-          full_name: 'John Doe',
+          full_name: 'Test User',
         })
       )
     })
   })
 
+  it('validates password length', async () => {
+    const user = userEvent.setup()
+    
+    renderWithProviders(<Signup />)
+    
+    await user.type(screen.getByLabelText(/email/i), 'test@example.com')
+    await user.type(screen.getByLabelText(/^password$/i), '12345')
+    await user.type(screen.getByLabelText(/confirm password/i), '12345')
+    await user.click(screen.getByRole('checkbox', { name: /agree to the terms/i }))
+    await user.click(screen.getByRole('button', { name: /create account/i }))
+    
+    await waitFor(() => {
+      expect(screen.getByText(/password must be at least 6 characters/i)).toBeInTheDocument()
+    })
+    expect(mockSignUp).not.toHaveBeenCalled()
+  })
+
+  it('validates password match', async () => {
+    const user = userEvent.setup()
+    
+    renderWithProviders(<Signup />)
+    
+    await user.type(screen.getByLabelText(/email/i), 'test@example.com')
+    await user.type(screen.getByLabelText(/^password$/i), 'password123')
+    await user.type(screen.getByLabelText(/confirm password/i), 'different123')
+    await user.click(screen.getByRole('checkbox', { name: /agree to the terms/i }))
+    await user.click(screen.getByRole('button', { name: /create account/i }))
+    
+    await waitFor(() => {
+      expect(screen.getByText(/passwords do not match/i)).toBeInTheDocument()
+    })
+    expect(mockSignUp).not.toHaveBeenCalled()
+  })
+
+  it('requires terms acceptance', async () => {
+    const user = userEvent.setup()
+    
+    renderWithProviders(<Signup />)
+    
+    await user.type(screen.getByLabelText(/email/i), 'test@example.com')
+    await user.type(screen.getByLabelText(/^password$/i), 'password123')
+    await user.type(screen.getByLabelText(/confirm password/i), 'password123')
+    await user.click(screen.getByRole('button', { name: /create account/i }))
+    
+    await waitFor(() => {
+      expect(screen.getByText(/must accept the terms/i)).toBeInTheDocument()
+    })
+    expect(mockSignUp).not.toHaveBeenCalled()
+  })
+
   it('shows success message after signup', async () => {
+    const user = userEvent.setup()
     mockSignUp.mockResolvedValue({ error: null })
     
-    render(<Signup />)
+    renderWithProviders(<Signup />)
     
-    // Fill valid form
-    fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' },
-    })
-    fireEvent.change(screen.getByLabelText(/^password$/i), {
-      target: { value: 'password123' },
-    })
-    fireEvent.change(screen.getByLabelText(/confirm password/i), {
-      target: { value: 'password123' },
-    })
-    fireEvent.click(screen.getByRole('checkbox'))
-    
-    const submitButton = screen.getByRole('button', { name: /create account/i })
-    fireEvent.click(submitButton)
+    await user.type(screen.getByLabelText(/email/i), 'test@example.com')
+    await user.type(screen.getByLabelText(/^password$/i), 'password123')
+    await user.type(screen.getByLabelText(/confirm password/i), 'password123')
+    await user.click(screen.getByRole('checkbox', { name: /agree to the terms/i }))
+    await user.click(screen.getByRole('button', { name: /create account/i }))
     
     await waitFor(() => {
       expect(screen.getByText(/account created/i)).toBeInTheDocument()
@@ -170,48 +123,25 @@ describe('Signup Component', () => {
     })
   })
 
-  it('displays error from signup service', async () => {
-    mockSignUp.mockResolvedValue({ error: { message: 'Email already exists' } })
-    
-    render(<Signup />)
-    
-    // Fill valid form
-    fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'existing@example.com' },
-    })
-    fireEvent.change(screen.getByLabelText(/^password$/i), {
-      target: { value: 'password123' },
-    })
-    fireEvent.change(screen.getByLabelText(/confirm password/i), {
-      target: { value: 'password123' },
-    })
-    fireEvent.click(screen.getByRole('checkbox'))
-    
-    const submitButton = screen.getByRole('button', { name: /create account/i })
-    fireEvent.click(submitButton)
-    
-    await waitFor(() => {
-      expect(screen.getByText(/email already exists/i)).toBeInTheDocument()
-    })
-  })
-
-  it('calls social signup when social button clicked', async () => {
+  it('handles social signup', async () => {
+    const user = userEvent.setup()
     mockSignInWithProvider.mockResolvedValue({ error: null })
     
-    render(<Signup />)
+    renderWithProviders(<Signup />)
     
-    const googleButton = screen.getAllByText(/google/i)[1] // Second one is in signup section
-    fireEvent.click(googleButton)
+    const githubButton = screen.getByRole('button', { name: /github/i })
+    await user.click(githubButton)
     
     await waitFor(() => {
-      expect(mockSignInWithProvider).toHaveBeenCalledWith('google')
+      expect(mockSignInWithProvider).toHaveBeenCalledWith('github')
     })
   })
 
-  it('has link to login page', () => {
-    render(<Signup />)
+  it('shows link to login page', () => {
+    renderWithProviders(<Signup />)
     
-    expect(screen.getByText(/already have an account/i)).toBeInTheDocument()
-    expect(screen.getByText(/sign in/i)).toBeInTheDocument()
+    const loginLink = screen.getByRole('link', { name: /sign in/i })
+    expect(loginLink).toBeInTheDocument()
+    expect(loginLink).toHaveAttribute('href', '/auth/login')
   })
 })

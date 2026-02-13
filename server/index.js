@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import compression from 'compression';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
@@ -13,6 +14,8 @@ import jobsRouter from './routes/jobs.js';
 import sseRouter from './routes/sse.js';
 import queueRouter from './routes/queue.js';
 import logger from './utils/logger.js';
+import analyticsRouter from './routes/analytics.js';
+import projectsRouter from './routes/projects.js';
 
 // Load environment variables
 dotenv.config();
@@ -25,7 +28,7 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
 let supabase = null;
-if (supabaseUrl && supabaseServiceKey) {
+if (supabaseUrl && supabaseServiceKey && /^https?:\/\//i.test(supabaseUrl)) {
   supabase = createClient(supabaseUrl, supabaseServiceKey);
   logger.info('Supabase client initialized');
 } else {
@@ -39,6 +42,9 @@ app.locals.supabase = supabase;
 app.use(helmet({
   contentSecurityPolicy: false, // Disable for Swagger UI
 }));
+
+// Compression
+app.use(compression());
 
 // CORS configuration
 app.use(cors({
@@ -135,6 +141,8 @@ app.use('/api', imageRoutes);
 app.use('/api/jobs', jobsRouter);
 app.use('/api/sse', sseRouter);
 app.use('/api/queue', queueRouter);
+app.use('/api/analytics', analyticsRouter);
+app.use('/api/projects', projectsRouter);
 
 // API Documentation
 app.use(

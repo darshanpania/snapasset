@@ -161,6 +161,20 @@ ALTER TABLE daily_usage_aggregates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE platform_usage_stats ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cost_tracking ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_engagement ENABLE ROW LEVEL SECURITY;
+ALTER TABLE performance_metrics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE system_metrics ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for performance_metrics (service-level inserts, admin reads)
+CREATE POLICY "Service can insert performance metrics" ON performance_metrics
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Admins can view performance metrics" ON performance_metrics
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM user_roles 
+      WHERE user_id = auth.uid() AND role = 'admin'
+    )
+  );
 
 -- RLS Policies for analytics_events
 CREATE POLICY "Users can view their own analytics events" ON analytics_events
