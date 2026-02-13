@@ -1,0 +1,135 @@
+.retention-chart {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  grid-template-areas:
+    "overview overview"
+    "visualization breakdown"
+    "insights insights";
+}
+
+.retention-overview {
+  grid-area: overview;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+  border-radius: 12px;
+  color: white;
+  text-align: center;
+}
+
+.total-label {
+  display: block;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.9;
+  margin-bottom: 0.5rem;
+}
+
+.total-value {
+  display: block;
+  font-size: 3rem;
+  font-weight: bold;
+}
+
+.retention-visualization {
+  grid-area: visualization;
+}
+
+.retention-breakdown {
+  grid-area: breakdown;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.retention-breakdown h3 {
+  margin: 0 0 1rem 0;
+}
+
+.cohort-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.cohort-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cohort-indicator {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.cohort-name {
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.cohort-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cohort-count {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #111827;
+}
+
+.cohort-percentage {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.retention-insights {
+  grid-area: insights;
+  background: #f0fdf4;
+  border: 2px solid #10b981;
+  padding: 1.5rem;
+  border-radius: 12px;
+}
+
+.retention-insights h3 {
+  margin: 0 0 1rem 0;
+  color: #065f46;
+}
+
+.retention-insights ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #047857;
+}
+
+.retention-insights li {
+  margin-bottom: 0.5rem;
+}
+
+.insight-good {
+  color: #059669;
+  font-weight: 500;
+}
+
+.insight-warning {
+  color: #d97706;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .retention-chart {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "overview"
+      "visualization"
+      "breakdown"
+      "insights";
+  }
+}

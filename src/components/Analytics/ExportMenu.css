@@ -1,0 +1,78 @@
+.export-menu {
+  position: relative;
+}
+
+.export-btn {
+  padding: 0.75rem 1.5rem;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #374151;
+  transition: all 0.2s;
+}
+
+.export-btn:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.export-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  min-width: 250px;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.export-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border: none;
+  background: white;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s;
+}
+
+.export-dropdown button:hover {
+  background: #f9fafb;
+}
+
+.export-dropdown button:not(:last-child) {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.format-icon {
+  font-size: 1.5rem;
+}
+
+.export-dropdown button span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.export-dropdown strong {
+  color: #111827;
+  font-size: 0.875rem;
+}
+
+.export-dropdown small {
+  color: #6b7280;
+  font-size: 0.75rem;
+}

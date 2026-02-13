@@ -1,0 +1,73 @@
+.activity-heatmap {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.activity-heatmap h3 {
+  margin: 0 0 1.5rem 0;
+}
+
+.heatmap-container {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 1rem 0;
+}
+
+.day-labels {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  margin-right: 0.5rem;
+}
+
+.day-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  height: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.heatmap-grid {
+  display: grid;
+  gap: 3px;
+  grid-auto-flow: column;
+}
+
+.heatmap-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.5);
+  z-index: 10;
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.legend-colors {
+  display: flex;
+  gap: 3px;
+}
+
+.legend-colors div {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}

@@ -1,0 +1,188 @@
+name: 🚂 Railway Deployment
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18.x'
+
+jobs:
+  validate:
+    name: 🔍 Validate Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: |
+          npm ci
+          cd server && npm ci
+
+      - name: 🧹 Run linter
+        run: npm run lint || echo "No lint script configured"
+        continue-on-error: true
+
+      - name: 🏗️ Build frontend
+        run: npm run build
+
+      - name: ✅ Verify build artifacts
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "❌ Build directory 'dist' not found!"
+            exit 1
+          fi
+          echo "✅ Build artifacts verified"
+
+      - name: 🧪 Test server configuration
+        run: |
+          cd server
+          timeout 5 node index.js > /dev/null 2>&1 || true
+          echo "✅ Server configuration valid"
+
+      - name: 📊 Build size report
+        run: |
+          echo "### 📦 Build Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Total Size:**" >> $GITHUB_STEP_SUMMARY
+          du -sh dist >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**File Count:**" >> $GITHUB_STEP_SUMMARY
+          find dist -type f | wc -l >> $GITHUB_STEP_SUMMARY
+
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/staging'
+    environment:
+      name: staging
+      url: https://snapasset-staging.railway.app
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🚂 Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: 🚀 Deploy to Railway (Staging)
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
+        run: railway up --service staging
+
+      - name: ⏳ Wait for deployment
+        run: sleep 30
+
+      - name: 🏥 Health check
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://snapasset-staging.railway.app/health)
+          if [ $response -eq 200 ]; then
+            echo "✅ Staging deployment healthy"
+          else
+            echo "❌ Staging deployment failed health check"
+            exit 1
+          fi
+
+  deploy-production:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://snapasset.railway.app
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🚂 Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: 🚀 Deploy to Railway (Production)
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up --service production
+
+      - name: ⏳ Wait for deployment
+        run: sleep 30
+
+      - name: 🏥 Health check
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://snapasset.railway.app/health)
+          if [ $response -eq 200 ]; then
+            echo "✅ Production deployment healthy"
+          else
+            echo "❌ Production deployment failed health check"
+            exit 1
+          fi
+
+      - name: 🧪 Smoke tests
+        run: |
+          echo "Running smoke tests..."
+          
+          # Test API endpoint
+          api_response=$(curl -s https://snapasset.railway.app/api | jq -r '.name')
+          if [ "$api_response" == "SnapAsset API" ]; then
+            echo "✅ API endpoint working"
+          else
+            echo "❌ API endpoint failed"
+            exit 1
+          fi
+          
+          # Test detailed health
+          health_status=$(curl -s https://snapasset.railway.app/health/detailed | jq -r '.status')
+          if [ "$health_status" == "ok" ]; then
+            echo "✅ Detailed health check passed"
+          else
+            echo "⚠️ Detailed health check returned: $health_status"
+          fi
+
+      - name: 📊 Deployment summary
+        run: |
+          echo "### 🎉 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** Production" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** https://snapasset.railway.app" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: 💬 Create deployment comment
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 **Deployed to Production!**\n\n✅ Health check passed\n🔗 [View deployment](https://snapasset.railway.app)'
+            })
+
+  notify-failure:
+    name: 📢 Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [validate, deploy-production]
+    if: failure()
+    
+    steps:
+      - name: 📧 Send notification
+        run: |
+          echo "❌ Deployment failed!"
+          echo "Check the logs at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

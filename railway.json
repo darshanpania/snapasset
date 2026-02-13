@@ -2,11 +2,33 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "npm install && npm run build && cd server && npm install"
+    "buildCommand": "npm install && npm run build && cd server && npm install",
+    "watchPatterns": [
+      "**/*.js",
+      "**/*.jsx",
+      "**/*.json",
+      "!node_modules/**",
+      "!dist/**"
+    ]
   },
   "deploy": {
     "startCommand": "cd server && npm start",
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
+    "restartPolicyMaxRetries": 10,
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 300,
+    "numReplicas": 1
+  },
+  "environments": {
+    "production": {
+      "variables": {
+        "NODE_ENV": "production"
+      }
+    },
+    "staging": {
+      "variables": {
+        "NODE_ENV": "staging"
+      }
+    }
   }
 }
