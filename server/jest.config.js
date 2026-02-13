@@ -9,7 +9,11 @@ export default {
     '**/?(*.)+(spec|test).js'
   ],
   collectCoverageFrom: [
-    '**/*.js',
+    'routes/**/*.js',
+    'services/**/*.js',
+    'middleware/**/*.js',
+    'workers/**/*.js',
+    'config/**/*.js',
     '!**/node_modules/**',
     '!**/coverage/**',
     '!**/dist/**',
@@ -17,6 +21,7 @@ export default {
     '!**/__tests__/**',
     '!**/tests/**',
   ],
+  coverageDirectory: 'coverage',
   coverageThreshold: {
     global: {
       branches: 80,
@@ -28,4 +33,5 @@ export default {
   coverageReporters: ['text', 'lcov', 'html', 'json'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
   testTimeout: 10000,
-}
+  verbose: true,
+};

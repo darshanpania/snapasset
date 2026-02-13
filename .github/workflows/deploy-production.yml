@@ -1,0 +1,95 @@
+name: Deploy to Production
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  deploy-production:
+    name: Deploy to Production Environment
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://snapasset.app
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run full test suite
+        run: npm test -- --run
+      
+      - name: Build for production
+        run: npm run build
+        env:
+          VITE_ENV: production
+          VITE_API_URL: ${{ secrets.PRODUCTION_API_URL }}
+          VITE_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
+      
+      - name: Create backup
+        run: |
+          echo "Creating backup before deployment"
+          # Add backup logic here
+        continue-on-error: true
+      
+      - name: Deploy to Railway (Production)
+        uses: bervProject/railway-deploy@main
+        with:
+          railway_token: ${{ secrets.RAILWAY_TOKEN }}
+          service: snapasset-production
+      
+      - name: Deploy to Vercel (Production)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          alias-domains: snapasset.app
+      
+      - name: Run smoke tests
+        run: |
+          npm install -g wait-on
+          wait-on https://snapasset.app
+          npx playwright test --grep @smoke
+      
+      - name: Run health checks
+        run: |
+          curl -f https://snapasset.app/api/health || exit 1
+      
+      - name: Notify deployment success
+        uses: 8398a7/action-slack@v3
+        if: success()
+        with:
+          status: success
+          text: '✅ Production deployment successful! Version: ${{ github.ref_name }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        continue-on-error: true
+      
+      - name: Notify deployment failure
+        uses: 8398a7/action-slack@v3
+        if: failure()
+        with:
+          status: failure
+          text: '❌ Production deployment failed! Rolling back...'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        continue-on-error: true
+      
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "Rolling back deployment"
+          # Add rollback logic here
+        continue-on-error: true

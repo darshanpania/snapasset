@@ -1,24 +1,26 @@
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
-import path from 'path'
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react()],
   test: {
     globals: true,
-    environment: 'happy-dom',
-    setupFiles: './src/test/setup.js',
+    environment: 'jsdom',
+    setupFiles: './tests/setup.js',
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html', 'lcov'],
+      reporter: ['text', 'json', 'html'],
       exclude: [
         'node_modules/',
-        'src/test/',
+        'tests/',
         '**/*.config.js',
         '**/*.config.ts',
         '**/dist/**',
         '**/.{idea,git,cache,output,temp}/**',
-        '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
       ],
       include: ['src/**/*.{js,jsx,ts,tsx}'],
       all: true,
@@ -27,7 +29,7 @@ export default defineConfig({
       branches: 80,
       statements: 80,
     },
-    include: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}'],
+    include: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}', 'tests/**/*.{test,spec}.{js,jsx,ts,tsx}'],
     exclude: ['node_modules', 'dist', '.idea', '.git', '.cache'],
     testTimeout: 10000,
     hookTimeout: 10000,
@@ -38,7 +40,6 @@ export default defineConfig({
       '@components': path.resolve(__dirname, './src/components'),
       '@services': path.resolve(__dirname, './src/services'),
       '@contexts': path.resolve(__dirname, './src/contexts'),
-      '@test': path.resolve(__dirname, './src/test'),
     },
   },
-})
+});
