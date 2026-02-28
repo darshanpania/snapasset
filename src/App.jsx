@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { ToastProvider } from './contexts/ToastContext'
+import './components/Toast.css'
 import Login from './components/auth/Login'
 import Signup from './components/auth/Signup'
 import ForgotPassword from './components/auth/ForgotPassword'
@@ -14,6 +16,7 @@ import './App.css'
 function App() {
   return (
     <ThemeProvider>
+    <ToastProvider>
     <AuthProvider>
       <Router>
         <Routes>
@@ -47,6 +50,7 @@ function App() {
         </Routes>
       </Router>
     </AuthProvider>
+    </ToastProvider>
     </ThemeProvider>
   )
 }

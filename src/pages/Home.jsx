@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
+import { useToast } from '../contexts/ToastContext'
 import ResultsGrid from '../components/ResultsGrid'
 import { generateImages } from '../services/api'
 import './Home.css'
@@ -18,22 +19,43 @@ const PLATFORM_PRESETS = [
   { id: 'pinterest-pin', name: 'Pinterest Pin', platform: 'Pinterest', width: 1000, height: 1500, ratio: '2:3' },
 ]
 
-const EXAMPLES = [
+const DEFAULT_EXAMPLES = [
   'Sunset mountain landscape, vibrant colors',
   'Minimalist geometric logo, modern',
   'Product photo, white background',
   'Abstract digital art, flowing gradients',
 ]
 
+const HISTORY_KEY = 'snapasset_history'
+const TEMPLATES_KEY = 'snapasset_templates'
+const MAX_HISTORY = 20
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]') } catch { return [] }
+}
+function saveHistory(h) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(0, MAX_HISTORY)))
+}
+function loadTemplates() {
+  try { return JSON.parse(localStorage.getItem(TEMPLATES_KEY) || '[]') } catch { return [] }
+}
+function saveTemplates(t) {
+  localStorage.setItem(TEMPLATES_KEY, JSON.stringify(t))
+}
+
 function Home() {
   const { user, signOut } = useAuth()
   const { theme, toggle: toggleTheme } = useTheme()
+  const toast = useToast()
   const navigate = useNavigate()
   const [prompt, setPrompt] = useState('')
   const [selected, setSelected] = useState([])
   const [results, setResults] = useState([])
   const [isGenerating, setIsGenerating] = useState(false)
-  const [error, setError] = useState(null)
+  const [history, setHistory] = useState(loadHistory)
+  const [showHistory, setShowHistory] = useState(false)
+  const [templates, setTemplates] = useState(loadTemplates)
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false)
 
   const toggle = (id) => {
     setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
@@ -41,22 +63,75 @@ function Home() {
 
   const handleGenerate = async () => {
     if (!prompt.trim() || selected.length === 0) return
-    setError(null)
     setIsGenerating(true)
     try {
       const response = await generateImages({ prompt: prompt.trim(), presets: selected })
-      setResults(response.images || [])
+      const images = response.images || []
+      setResults(images)
+      toast.success(`Generated ${images.length} image${images.length > 1 ? 's' : ''}`)
+      const entry = { prompt: prompt.trim(), presets: selected, count: images.length, ts: Date.now() }
+      const updated = [entry, ...history.filter(h => h.prompt !== entry.prompt)].slice(0, MAX_HISTORY)
+      setHistory(updated)
+      saveHistory(updated)
     } catch (err) {
-      setError(err.message || 'Generation failed. Try again.')
+      toast.error(err.message || 'Generation failed. Try again.')
     } finally {
       setIsGenerating(false)
     }
   }
 
+  const handleSaveTemplate = () => {
+    if (!prompt.trim()) return
+    const trimmed = prompt.trim()
+    if (templates.includes(trimmed) || DEFAULT_EXAMPLES.includes(trimmed)) {
+      toast.info('This prompt is already saved')
+      return
+    }
+    const updated = [trimmed, ...templates].slice(0, 10)
+    setTemplates(updated)
+    saveTemplates(updated)
+    setShowSaveTemplate(false)
+    toast.success('Prompt template saved')
+  }
+
+  const removeTemplate = (t) => {
+    const updated = templates.filter(x => x !== t)
+    setTemplates(updated)
+    saveTemplates(updated)
+    toast.info('Template removed')
+  }
+
+  const clearHistory = () => {
+    setHistory([])
+    saveHistory([])
+    toast.info('History cleared')
+  }
+
+  // Keyboard shortcuts
+  const handleKeyDown = useCallback((e) => {
+    // Cmd/Ctrl + Shift + A = select all presets
+    if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'a') {
+      e.preventDefault()
+      setSelected(PLATFORM_PRESETS.map(p => p.id))
+    }
+    // Escape = close results or history
+    if (e.key === 'Escape') {
+      if (showHistory) setShowHistory(false)
+      else if (results.length > 0) setResults([])
+    }
+  }, [showHistory, results.length])
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleKeyDown])
+
   const grouped = PLATFORM_PRESETS.reduce((acc, p) => {
     ;(acc[p.platform] = acc[p.platform] || []).push(p)
     return acc
   }, {})
+
+  const showOnboarding = !user && results.length === 0 && !isGenerating && !prompt
 
   return (
     <div className="app">
@@ -74,6 +149,7 @@ function Home() {
             {user ? (
               <>
                 <span className="user-email">{user.email}</span>
+                <button className="tb-btn" onClick={() => setShowHistory(!showHistory)}>History</button>
                 <button className="tb-btn" onClick={() => navigate('/settings')}>Settings</button>
                 <button className="tb-btn muted" onClick={() => { signOut(); navigate('/auth/login') }}>Sign Out</button>
               </>
@@ -86,6 +162,45 @@ function Home() {
           </div>
         </div>
       </header>
+
+      {/* Onboarding / Info Section */}
+      {showOnboarding && (
+        <section className="onboarding">
+          <div className="onboarding-inner">
+            <h1 className="onboarding-title">Create perfect social media images with AI</h1>
+            <p className="onboarding-sub">
+              Describe what you want, pick your platforms, and SnapAsset generates correctly-sized images for every channel — Instagram, Twitter, Facebook, LinkedIn, YouTube, and Pinterest.
+            </p>
+            <div className="onboarding-steps">
+              <div className="step">
+                <div className="step-num">1</div>
+                <div className="step-text">
+                  <strong>Describe your image</strong>
+                  <span>Write a prompt describing the image you need</span>
+                </div>
+              </div>
+              <div className="step">
+                <div className="step-num">2</div>
+                <div className="step-text">
+                  <strong>Pick platforms</strong>
+                  <span>Select the social media sizes you need</span>
+                </div>
+              </div>
+              <div className="step">
+                <div className="step-num">3</div>
+                <div className="step-text">
+                  <strong>Generate & download</strong>
+                  <span>Get AI-generated images sized for each platform</span>
+                </div>
+              </div>
+            </div>
+            <div className="onboarding-cta">
+              <button className="tb-btn primary" onClick={() => navigate('/auth/signup')}>Get Started Free</button>
+              <span className="onboarding-hint">Bring your own OpenAI API key — or sign in with ChatGPT</span>
+            </div>
+          </div>
+        </section>
+      )}
 
       <main className="workspace">
         {/* Input Panel */}
@@ -103,7 +218,13 @@ function Home() {
             />
             <div className="prompt-meta">
               <div className="examples">
-                {EXAMPLES.map((ex, i) => (
+                {templates.map((t, i) => (
+                  <span key={`t-${i}`} className="example-chip saved">
+                    <button className="chip-btn" onClick={() => setPrompt(t)} disabled={isGenerating}>{t}</button>
+                    <button className="chip-remove" onClick={() => removeTemplate(t)} title="Remove">&times;</button>
+                  </span>
+                ))}
+                {DEFAULT_EXAMPLES.map((ex, i) => (
                   <button key={i} className="example-chip" onClick={() => setPrompt(ex)} disabled={isGenerating}>{ex}</button>
                 ))}
               </div>
@@ -111,7 +232,11 @@ function Home() {
             </div>
           </div>
 
-          {error && <div className="err-msg">{error}</div>}
+          {prompt.trim() && (
+            <button className="save-template-btn" onClick={handleSaveTemplate}>
+              + Save as template
+            </button>
+          )}
 
           <button
             className="gen-btn"
@@ -124,6 +249,12 @@ function Home() {
               <>Generate {selected.length > 0 ? `(${selected.length} preset${selected.length > 1 ? 's' : ''})` : ''}</>
             )}
           </button>
+
+          <div className="shortcuts-hint">
+            <kbd>{navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+Enter</kbd> Generate
+            <kbd>{navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+Shift+A</kbd> Select all
+            <kbd>Esc</kbd> Clear
+          </div>
         </div>
 
         {/* Presets Panel */}
@@ -158,6 +289,35 @@ function Home() {
           </div>
         </div>
       </main>
+
+      {/* History Sidebar */}
+      {showHistory && (
+        <div className="history-overlay" onClick={() => setShowHistory(false)}>
+          <div className="history-panel" onClick={e => e.stopPropagation()}>
+            <div className="history-head">
+              <h3>Generation History</h3>
+              {history.length > 0 && (
+                <button className="link-btn" onClick={clearHistory}>Clear</button>
+              )}
+            </div>
+            {history.length === 0 ? (
+              <p className="history-empty">No generations yet</p>
+            ) : (
+              <div className="history-list">
+                {history.map((h, i) => (
+                  <div key={i} className="history-item" onClick={() => { setPrompt(h.prompt); setSelected(h.presets); setShowHistory(false) }}>
+                    <p className="history-prompt">{h.prompt}</p>
+                    <div className="history-meta">
+                      <span>{h.count} image{h.count > 1 ? 's' : ''}</span>
+                      <span>{new Date(h.ts).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Results */}
       {(results.length > 0 || isGenerating) && (

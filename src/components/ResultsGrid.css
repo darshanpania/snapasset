@@ -30,6 +30,18 @@
   transition: all 0.15s;
 }
 .rg-dl-all:hover { background: var(--btn-hover-bg); color: var(--text-primary); }
+.rg-dl-all:disabled { opacity: 0.5; cursor: default; }
+.rg-dl-all { display: flex; align-items: center; gap: 0.4rem; }
+
+.spinner-sm {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--spinner-track);
+  border-top-color: var(--spinner-color);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* Grid */
 .rg-grid {
