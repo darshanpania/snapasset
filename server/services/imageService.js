@@ -6,9 +6,15 @@ import logger from '../utils/logger.js';
 
 dotenv.config();
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const defaultOpenai = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
+
+function getOpenAIClient(apiKey) {
+  if (apiKey) return new OpenAI({ apiKey });
+  if (defaultOpenai) return defaultOpenai;
+  throw new Error('No OpenAI API key available. Set OPENAI_API_KEY or provide a user key.');
+}
 
 // Platform presets with exact dimensions
 export const PLATFORM_PRESETS = {
@@ -26,9 +32,10 @@ export const PLATFORM_PRESETS = {
 /**
  * Generate image using DALL-E 3
  */
-export async function generateWithDallE(prompt, options = {}) {
+export async function generateWithDallE(prompt, options = {}, apiKey = null) {
   try {
-    const response = await openai.images.generate({
+    const client = getOpenAIClient(apiKey);
+    const response = await client.images.generate({
       model: 'dall-e-3',
       prompt: prompt,
       n: 1,

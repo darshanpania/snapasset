@@ -32,9 +32,18 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (isLocalMode) {
-      // Local mode: check for saved token
+      // Local mode: check for token from URL (ChatGPT OAuth callback) or localStorage
       const initLocal = async () => {
         try {
+          // Check for token in URL (from ChatGPT OAuth redirect)
+          const urlParams = new URLSearchParams(window.location.search)
+          const urlToken = urlParams.get('token')
+          if (urlToken) {
+            localStorage.setItem('snapasset_token', urlToken)
+            // Clean the URL
+            window.history.replaceState({}, '', window.location.pathname)
+          }
+
           const token = localStorage.getItem('snapasset_token')
           if (token) {
             const data = await localApi('/api/auth/me')

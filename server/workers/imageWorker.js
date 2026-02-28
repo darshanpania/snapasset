@@ -1,6 +1,7 @@
 import path from 'path';
 import { imageGenerationQueue } from '../config/queue.js';
 import { createProviders } from '../providers/index.js';
+import { decryptApiKey } from '../utils/encryption.js';
 import {
   generateWithDallE,
   downloadImage,
@@ -28,12 +29,25 @@ imageGenerationQueue.process(async (job) => {
   const results = [];
 
   try {
+    // Resolve user's API key (user key > server fallback)
+    let userApiKey = null;
+    try {
+      if (providers.db?.users?.getApiKey) {
+        const keyData = await providers.db.users.getApiKey(userId);
+        if (keyData?.encryptedKey) {
+          userApiKey = decryptApiKey(keyData.encryptedKey);
+        }
+      }
+    } catch (err) {
+      job.log(`Warning: could not resolve user API key: ${err.message}`);
+    }
+
     // Update job progress: Starting generation
     await job.progress(10);
     job.log('Starting DALL-E image generation...');
 
-    // Step 1: Generate image with DALL-E
-    const { url: dalleUrl, revisedPrompt } = await generateWithDallE(prompt, options);
+    // Step 1: Generate image with DALL-E (user key or server fallback)
+    const { url: dalleUrl, revisedPrompt } = await generateWithDallE(prompt, options, userApiKey);
     await job.progress(30);
     job.log('Image generated successfully');
 

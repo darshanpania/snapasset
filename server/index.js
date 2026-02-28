@@ -19,6 +19,9 @@ import logger from './utils/logger.js';
 import analyticsRouter from './routes/analytics.js';
 import projectsRouter from './routes/projects.js';
 import authRouter from './routes/auth.js';
+import settingsRouter from './routes/settings.js';
+import chatgptAuthRouter from './routes/chatgpt-auth.js';
+import { authMiddleware } from './middleware/auth.js';
 
 // Load environment variables
 dotenv.config();
@@ -157,6 +160,23 @@ if (providers.type === 'local') {
     : path.join(process.cwd(), 'data', 'storage');
   app.use('/storage', express.static(storagePath));
 }
+
+// ChatGPT OAuth routes (available in any provider mode when configured)
+if (process.env.CHATGPT_CLIENT_ID) {
+  app.use('/api/auth/chatgpt', chatgptAuthRouter);
+}
+
+// Config endpoint (public — tells frontend what features are available)
+app.get('/api/config', (req, res) => {
+  res.json({
+    chatgptAuthEnabled: !!process.env.CHATGPT_CLIENT_ID,
+    hasServerApiKey: !!process.env.OPENAI_API_KEY,
+    provider: providers.type,
+  });
+});
+
+// Settings routes (authenticated)
+app.use('/api/settings', authMiddleware, settingsRouter);
 
 // API Routes
 app.use('/api', imageRoutes);

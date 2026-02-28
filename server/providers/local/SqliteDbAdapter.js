@@ -386,4 +386,27 @@ class UsersRepository {
   async findById(id) {
     return this.db.prepare('SELECT * FROM users WHERE id = ?').get(id);
   }
+
+  async setApiKey(userId, encryptedKey, source) {
+    this.db.prepare(
+      'UPDATE users SET encrypted_openai_key = ?, openai_key_source = ?, updated_at = ? WHERE id = ?'
+    ).run(encryptedKey, source, new Date().toISOString(), userId);
+  }
+
+  async getApiKey(userId) {
+    const row = this.db.prepare('SELECT encrypted_openai_key, openai_key_source FROM users WHERE id = ?').get(userId);
+    return row ? { encryptedKey: row.encrypted_openai_key, source: row.openai_key_source } : null;
+  }
+
+  async removeApiKey(userId) {
+    this.db.prepare(
+      'UPDATE users SET encrypted_openai_key = NULL, openai_key_source = NULL, updated_at = ? WHERE id = ?'
+    ).run(new Date().toISOString(), userId);
+  }
+
+  async setChatgptAccountId(userId, chatgptAccountId) {
+    this.db.prepare(
+      'UPDATE users SET chatgpt_account_id = ?, updated_at = ? WHERE id = ?'
+    ).run(chatgptAccountId, new Date().toISOString(), userId);
+  }
 }

@@ -74,6 +74,9 @@ function Home() {
                   />
                   <span>{user.user_metadata?.full_name || user.email}</span>
                 </button>
+                <button onClick={() => navigate('/settings')} className="btn-settings" title="Settings">
+                  Settings
+                </button>
                 <button onClick={handleSignOut} className="btn-logout">
                   Sign Out
                 </button>

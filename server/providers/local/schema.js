@@ -22,6 +22,9 @@ export function initializeSchema(db) {
       password_hash TEXT NOT NULL,
       metadata TEXT DEFAULT '{}',
       email_verified INTEGER DEFAULT 0,
+      encrypted_openai_key TEXT DEFAULT NULL,
+      openai_key_source TEXT DEFAULT NULL,
+      chatgpt_account_id TEXT DEFAULT NULL,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -308,4 +311,16 @@ export function initializeSchema(db) {
     -- Generated Images
     CREATE INDEX IF NOT EXISTS idx_generated_images_generation_id ON generated_images(generation_id);
   `);
+
+  // Migrate existing databases: add columns if missing
+  const userColumns = db.pragma('table_info(users)').map(c => c.name);
+  if (!userColumns.includes('encrypted_openai_key')) {
+    db.exec(`ALTER TABLE users ADD COLUMN encrypted_openai_key TEXT DEFAULT NULL`);
+  }
+  if (!userColumns.includes('openai_key_source')) {
+    db.exec(`ALTER TABLE users ADD COLUMN openai_key_source TEXT DEFAULT NULL`);
+  }
+  if (!userColumns.includes('chatgpt_account_id')) {
+    db.exec(`ALTER TABLE users ADD COLUMN chatgpt_account_id TEXT DEFAULT NULL`);
+  }
 }

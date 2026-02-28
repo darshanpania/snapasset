@@ -7,6 +7,7 @@ import AuthCallback from './components/auth/AuthCallback'
 import UserProfile from './components/auth/UserProfile'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import Home from './pages/Home'
+import Settings from './pages/Settings'
 import './App.css'
 
 function App() {
@@ -27,6 +28,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <UserProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             }
           />

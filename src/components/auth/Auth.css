@@ -155,6 +155,17 @@
   background: #f5f7fa;
 }
 
+.btn-chatgpt {
+  border-color: #10a37f;
+  color: #10a37f;
+  font-weight: 600;
+}
+
+.btn-chatgpt:hover:not(:disabled) {
+  border-color: #10a37f;
+  background: #f0faf6;
+}
+
 .btn-social svg {
   flex-shrink: 0;
 }
