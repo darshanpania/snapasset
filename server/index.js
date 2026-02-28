@@ -38,13 +38,19 @@ if (supabaseUrl && supabaseServiceKey && /^https?:\/\//i.test(supabaseUrl)) {
   supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
 }
 
-const providers = createProviders({
-  dbProvider: process.env.DB_PROVIDER,
-  supabaseUrl,
-  supabaseClient,
-  jwtSecret: process.env.JWT_SECRET,
-  dataDir: process.env.LOCAL_DATA_DIR || path.join(process.cwd(), 'data'),
-});
+let providers;
+try {
+  providers = createProviders({
+    dbProvider: process.env.DB_PROVIDER,
+    supabaseUrl,
+    supabaseClient,
+    jwtSecret: process.env.JWT_SECRET,
+    dataDir: process.env.LOCAL_DATA_DIR || path.join(process.cwd(), 'data'),
+  });
+} catch (err) {
+  logger.error('Failed to initialize providers:', err.message);
+  process.exit(1);
+}
 
 logger.info(`Provider mode: ${providers.type}`);
 
@@ -161,9 +167,8 @@ if (providers.type === 'local') {
   app.use('/storage', express.static(storagePath));
 }
 
-// ChatGPT OAuth routes
+// ChatGPT OAuth routes (callback handler is on the dedicated OAuth server, not here)
 app.use('/api/auth/chatgpt', chatgptAuthRouter);
-app.use('/', createCallbackHandler()); // /callback at root — matches Codex redirect URI format
 
 // Config endpoint (public — tells frontend what features are available)
 app.get('/api/config', (req, res) => {
@@ -322,26 +327,31 @@ const server = app.listen(PORT, () => {
   logger.info('');
 });
 
-// Start OAuth callback listener on a separate Express instance (port 1455)
-const OAUTH_PORT = 1455;
+// Start OAuth callback listener on a separate Express instance
+const OAUTH_PORT = parseInt(process.env.OAUTH_CALLBACK_PORT, 10) || 1455;
 const oauthApp = express();
 oauthApp.locals = app.locals;
 oauthApp.use('/', createCallbackHandler());
 const oauthServer = oauthApp.listen(OAUTH_PORT, () => {
   logger.info(`🔗 OpenAI OAuth callback: http://localhost:${OAUTH_PORT}/auth/callback`);
 });
+oauthServer.on('error', (err) => {
+  logger.error(`OAuth callback server failed on port ${OAUTH_PORT}:`, err.message);
+});
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  logger.info('SIGTERM signal received: closing HTTP server');
-  oauthServer.close();
-  server.close(() => {
-    if (providers._sqlite) {
-      providers._sqlite.close();
-      logger.info('SQLite database closed');
-    }
-    logger.info('HTTP server closed');
-    process.exit(0);
+  logger.info('SIGTERM signal received: closing HTTP servers');
+  oauthServer.close(() => {
+    logger.info('OAuth server closed');
+    server.close(() => {
+      if (providers._sqlite) {
+        providers._sqlite.close();
+        logger.info('SQLite database closed');
+      }
+      logger.info('HTTP server closed');
+      process.exit(0);
+    });
   });
 });
 

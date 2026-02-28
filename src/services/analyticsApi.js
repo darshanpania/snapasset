@@ -93,12 +93,7 @@ export const analyticsApi = {
   connectRealtime: (onMessage, onError) => {
     const token = localStorage.getItem('snapasset_token');
     const eventSource = new EventSource(
-      `${API_BASE}/analytics/realtime`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+      `${API_BASE}/analytics/realtime?token=${encodeURIComponent(token)}`
     );
 
     eventSource.onmessage = (event) => {

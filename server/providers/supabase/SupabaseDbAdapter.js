@@ -240,13 +240,17 @@ class SupabaseProjectsRepository {
     if (updateError) throw updateError;
 
     // Clear current images and re-insert from snapshot
-    await this.supabase
+    const { error: deleteError } = await this.supabase
       .from('project_images')
       .delete()
       .eq('project_id', projectId);
+    if (deleteError) throw deleteError;
 
     if (version.snapshot.images && version.snapshot.images.length > 0) {
-      await this.supabase.from('project_images').insert(version.snapshot.images);
+      const { error: insertError } = await this.supabase
+        .from('project_images')
+        .insert(version.snapshot.images);
+      if (insertError) throw insertError;
     }
 
     return updatedProject[0];

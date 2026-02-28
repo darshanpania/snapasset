@@ -144,6 +144,7 @@ class ProjectsRepository {
     const id = uuidv4();
     const now = new Date().toISOString();
     const project = this._getById(projectId);
+    if (!project) throw new Error(`Project not found: ${projectId}`);
     const images = this.db.prepare('SELECT * FROM project_images WHERE project_id = ?').all(projectId);
 
     const lastVersion = this.db.prepare('SELECT MAX(version_number) as max_v FROM project_versions WHERE project_id = ?').get(projectId);

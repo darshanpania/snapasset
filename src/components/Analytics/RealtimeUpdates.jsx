@@ -21,12 +21,7 @@ export const RealtimeUpdates = () => {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
     const eventSource = new EventSource(
-      `${apiUrl}/analytics/realtime`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+      `${apiUrl}/analytics/realtime?token=${encodeURIComponent(token)}`
     );
 
     eventSource.onopen = () => {

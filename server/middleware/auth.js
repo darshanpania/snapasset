@@ -14,15 +14,16 @@ export const authMiddleware = async (req, res, next) => {
     }
 
     const authHeader = req.headers.authorization;
+    // Support token via query param for SSE (EventSource can't send headers)
+    const token = (authHeader?.startsWith('Bearer ') && authHeader.substring(7))
+      || req.query?.token;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
       return res.status(401).json({
         success: false,
         error: 'No token provided',
       });
     }
-
-    const token = authHeader.substring(7);
     const user = await providers.auth.verifyToken(token);
 
     // Attach user to request
