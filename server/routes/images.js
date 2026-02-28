@@ -1,6 +1,8 @@
 import express from 'express'
 import multer from 'multer'
-import { generateImagesFromPrompt, getPlatformPresets } from '../services/imageService.js'
+import { generateImagesFromPrompt, getPlatformPresets, IMAGE_MODELS } from '../services/imageService.js'
+import { decryptApiKey } from '../utils/encryption.js'
+import { authMiddleware } from '../middleware/auth.js'
 import logger from '../utils/logger.js'
 
 const router = express.Router()
@@ -19,6 +21,15 @@ const upload = multer({
       cb(new Error('Invalid file type. Only JPEG, PNG, and WebP images are allowed.'))
     }
   }
+})
+
+// Get available image generation models
+router.get('/models', (req, res) => {
+  res.json({
+    success: true,
+    models: Object.entries(IMAGE_MODELS).map(([id, config]) => ({ id, ...config })),
+    default: 'gpt-image-1',
+  })
 })
 
 // Get available platform presets
@@ -40,9 +51,9 @@ router.get('/platforms', (req, res) => {
 })
 
 // Generate images from text prompt
-router.post('/generate', async (req, res) => {
+router.post('/generate', authMiddleware, async (req, res) => {
   try {
-    const { prompt, presets } = req.body
+    const { prompt, presets, model, quality, style } = req.body
 
     // Validation
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
@@ -66,10 +77,29 @@ router.post('/generate', async (req, res) => {
       })
     }
 
+    // Resolve user's API key (falls back to server-wide key in imageService)
+    let userApiKey = null
+    try {
+      const userId = req.user?.id || req.user?.sub
+      if (userId) {
+        const db = req.app.locals.providers?.db
+        const keyData = await db?.users?.getApiKey(userId)
+        if (keyData?.encryptedKey) {
+          userApiKey = decryptApiKey(keyData.encryptedKey)
+        }
+      }
+    } catch (err) {
+      logger.warn('Could not resolve user API key, falling back to server key:', err.message)
+    }
+
     logger.info(`Generating images for prompt: "${prompt.substring(0, 50)}..." with ${presets.length} presets`)
 
     // Generate images
-    const result = await generateImagesFromPrompt(prompt, presets)
+    const genOptions = {}
+    if (model) genOptions.model = model
+    if (quality) genOptions.quality = quality
+    if (style) genOptions.style = style
+    const result = await generateImagesFromPrompt(prompt, presets, userApiKey, genOptions)
 
     res.json({
       success: true,

@@ -5,7 +5,7 @@ function toBase64Url(buffer) {
 }
 
 export function generateCodeVerifier() {
-  return toBase64Url(crypto.randomBytes(48));
+  return toBase64Url(crypto.randomBytes(64));
 }
 
 export function createCodeChallenge(codeVerifier) {

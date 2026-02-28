@@ -20,6 +20,7 @@ services:
     container_name: snapasset-api
     ports:
       - "${API_PORT:-3001}:3001"
+      - "${OAUTH_PORT:-1455}:1455"
     environment:
       - NODE_ENV=production
       - PORT=3001
@@ -30,10 +31,6 @@ services:
       - DB_PROVIDER=${DB_PROVIDER:-local}
       - LOCAL_DATA_DIR=/usr/src/app/data
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - CHATGPT_CLIENT_ID=${CHATGPT_CLIENT_ID:-}
-      - CHATGPT_CLIENT_SECRET=${CHATGPT_CLIENT_SECRET:-}
-      - CHATGPT_REDIRECT_URI=${CHATGPT_REDIRECT_URI:-}
-      - EXCHANGE_OPENAI_API_KEY=${EXCHANGE_OPENAI_API_KEY:-true}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
     env_file:
       - .env

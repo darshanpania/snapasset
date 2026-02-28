@@ -4,10 +4,15 @@ import './ResultsGrid.css'
 function ResultsGrid({ results, prompt }) {
   const [selectedImage, setSelectedImage] = useState(null)
 
+  const getImageSrc = (image) => image.image || image.url
+  const getName = (image) => image.platformName || image.preset?.name || image.platform
+  const getWidth = (image) => image.width || image.preset?.width
+  const getHeight = (image) => image.height || image.preset?.height
+
   const handleDownload = (image) => {
     const link = document.createElement('a')
-    link.href = image.url
-    link.download = `${image.preset.name.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.png`
+    link.href = getImageSrc(image)
+    link.download = `${getName(image).replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.png`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -17,7 +22,7 @@ function ResultsGrid({ results, prompt }) {
     results.forEach((image, index) => {
       setTimeout(() => {
         handleDownload(image)
-      }, index * 500) // Stagger downloads by 500ms
+      }, index * 500)
     })
   }
 
@@ -33,14 +38,14 @@ function ResultsGrid({ results, prompt }) {
     <div className="results-container">
       <div className="results-header">
         <div>
-          <h2 className="results-title">✨ Generated Images</h2>
+          <h2 className="results-title">Generated Images</h2>
           <p className="results-prompt">"{prompt}"</p>
         </div>
         <button
           className="download-all-btn"
           onClick={handleDownloadAll}
         >
-          ⬇️ Download All ({results.length})
+          Download All ({results.length})
         </button>
       </div>
 
@@ -49,28 +54,24 @@ function ResultsGrid({ results, prompt }) {
           <div key={index} className="result-card">
             <div className="image-container" onClick={() => handleImageClick(image)}>
               <img
-                src={image.url}
-                alt={`${image.preset.name} - ${prompt}`}
+                src={getImageSrc(image)}
+                alt={`${getName(image)} - ${prompt}`}
                 className="result-image"
                 loading="lazy"
               />
               <div className="image-overlay">
-                <button className="preview-btn">👁️ Preview</button>
+                <button className="preview-btn">Preview</button>
               </div>
             </div>
-            
+
             <div className="result-info">
               <div className="info-header">
-                <span className="platform-icon">{image.preset.icon}</span>
-                <h4 className="result-name">{image.preset.name}</h4>
+                <h4 className="result-name">{getName(image)}</h4>
               </div>
-              
+
               <div className="result-details">
                 <span className="detail-item">
-                  📐 {image.preset.width} × {image.preset.height}
-                </span>
-                <span className="detail-item">
-                  📊 {image.preset.aspectRatio}
+                  {getWidth(image)} x {getHeight(image)}
                 </span>
               </div>
 
@@ -78,7 +79,7 @@ function ResultsGrid({ results, prompt }) {
                 className="download-btn"
                 onClick={() => handleDownload(image)}
               >
-                ⬇️ Download
+                Download
               </button>
             </div>
           </div>
@@ -90,21 +91,21 @@ function ResultsGrid({ results, prompt }) {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={closeModal}>
-              ✕
+              x
             </button>
             <img
-              src={selectedImage.url}
-              alt={selectedImage.preset.name}
+              src={getImageSrc(selectedImage)}
+              alt={getName(selectedImage)}
               className="modal-image"
             />
             <div className="modal-info">
-              <h3>{selectedImage.preset.name}</h3>
-              <p>{selectedImage.preset.width} × {selectedImage.preset.height} ({selectedImage.preset.aspectRatio})</p>
+              <h3>{getName(selectedImage)}</h3>
+              <p>{getWidth(selectedImage)} x {getHeight(selectedImage)}</p>
               <button
                 className="modal-download-btn"
                 onClick={() => handleDownload(selectedImage)}
               >
-                ⬇️ Download Image
+                Download Image
               </button>
             </div>
           </div>

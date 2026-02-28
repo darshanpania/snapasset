@@ -25,6 +25,7 @@ export function initializeSchema(db) {
       encrypted_openai_key TEXT DEFAULT NULL,
       openai_key_source TEXT DEFAULT NULL,
       chatgpt_account_id TEXT DEFAULT NULL,
+      encrypted_refresh_token TEXT DEFAULT NULL,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -322,5 +323,8 @@ export function initializeSchema(db) {
   }
   if (!userColumns.includes('chatgpt_account_id')) {
     db.exec(`ALTER TABLE users ADD COLUMN chatgpt_account_id TEXT DEFAULT NULL`);
+  }
+  if (!userColumns.includes('encrypted_refresh_token')) {
+    db.exec(`ALTER TABLE users ADD COLUMN encrypted_refresh_token TEXT DEFAULT NULL`);
   }
 }

@@ -20,7 +20,7 @@ import analyticsRouter from './routes/analytics.js';
 import projectsRouter from './routes/projects.js';
 import authRouter from './routes/auth.js';
 import settingsRouter from './routes/settings.js';
-import chatgptAuthRouter from './routes/chatgpt-auth.js';
+import chatgptAuthRouter, { createCallbackHandler } from './routes/chatgpt-auth.js';
 import { authMiddleware } from './middleware/auth.js';
 
 // Load environment variables
@@ -161,15 +161,14 @@ if (providers.type === 'local') {
   app.use('/storage', express.static(storagePath));
 }
 
-// ChatGPT OAuth routes (available in any provider mode when configured)
-if (process.env.CHATGPT_CLIENT_ID) {
-  app.use('/api/auth/chatgpt', chatgptAuthRouter);
-}
+// ChatGPT OAuth routes
+app.use('/api/auth/chatgpt', chatgptAuthRouter);
+app.use('/', createCallbackHandler()); // /callback at root — matches Codex redirect URI format
 
 // Config endpoint (public — tells frontend what features are available)
 app.get('/api/config', (req, res) => {
   res.json({
-    chatgptAuthEnabled: !!process.env.CHATGPT_CLIENT_ID,
+    chatgptAuthEnabled: true,
     hasServerApiKey: !!process.env.OPENAI_API_KEY,
     provider: providers.type,
   });
@@ -323,9 +322,16 @@ const server = app.listen(PORT, () => {
   logger.info('');
 });
 
+// Start OAuth callback listener on port 1455 (required by OpenAI's Codex client registration)
+const OAUTH_PORT = 1455;
+const oauthServer = app.listen(OAUTH_PORT, () => {
+  logger.info(`🔗 OpenAI OAuth callback: http://localhost:${OAUTH_PORT}/auth/callback`);
+});
+
 // Graceful shutdown
 process.on('SIGTERM', () => {
   logger.info('SIGTERM signal received: closing HTTP server');
+  oauthServer.close();
   server.close(() => {
     if (providers._sqlite) {
       providers._sqlite.close();

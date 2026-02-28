@@ -409,4 +409,10 @@ class UsersRepository {
       'UPDATE users SET chatgpt_account_id = ?, updated_at = ? WHERE id = ?'
     ).run(chatgptAccountId, new Date().toISOString(), userId);
   }
+
+  async setRefreshToken(userId, encryptedRefreshToken) {
+    this.db.prepare(
+      'UPDATE users SET encrypted_refresh_token = ?, updated_at = ? WHERE id = ?'
+    ).run(encryptedRefreshToken, new Date().toISOString(), userId);
+  }
 }

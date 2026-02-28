@@ -10,7 +10,7 @@ class ApiClient {
   }
 
   async request(endpoint, options = {}) {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('snapasset_token');
     
     const headers = {
       'Content-Type': 'application/json',
