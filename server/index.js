@@ -4,11 +4,13 @@ import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import { createClient } from '@supabase/supabase-js';
 import { swaggerSpec } from './config/swagger.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import { createProviders } from './providers/index.js';
 import imageRoutes from './routes/images.js';
 import jobsRouter from './routes/jobs.js';
 import sseRouter from './routes/sse.js';
@@ -16,6 +18,7 @@ import queueRouter from './routes/queue.js';
 import logger from './utils/logger.js';
 import analyticsRouter from './routes/analytics.js';
 import projectsRouter from './routes/projects.js';
+import authRouter from './routes/auth.js';
 
 // Load environment variables
 dotenv.config();
@@ -23,20 +26,29 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Initialize Supabase client
+// Initialize providers (Supabase or Local)
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
-let supabase = null;
+let supabaseClient = null;
 if (supabaseUrl && supabaseServiceKey && /^https?:\/\//i.test(supabaseUrl)) {
-  supabase = createClient(supabaseUrl, supabaseServiceKey);
-  logger.info('Supabase client initialized');
-} else {
-  logger.warn('Supabase credentials not configured. Some features will be limited.');
+  supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
 }
 
-// Make supabase available to routes
-app.locals.supabase = supabase;
+const providers = createProviders({
+  dbProvider: process.env.DB_PROVIDER,
+  supabaseUrl,
+  supabaseClient,
+  jwtSecret: process.env.JWT_SECRET,
+  dataDir: process.env.LOCAL_DATA_DIR || path.join(process.cwd(), 'data'),
+});
+
+logger.info(`Provider mode: ${providers.type}`);
+
+// Make providers available to routes
+app.locals.providers = providers;
+// Backwards compat: keep supabase reference for any code not yet migrated
+app.locals.supabase = supabaseClient;
 
 // Security middleware
 app.use(helmet({
@@ -106,8 +118,9 @@ app.get('/health', (req, res) => {
     uptime: process.uptime(),
     environment: process.env.NODE_ENV || 'development',
     version: '1.0.0',
+    provider: providers.type,
     services: {
-      supabase: !!supabase,
+      supabase: providers.type === 'supabase',
       redis: !!process.env.REDIS_HOST,
       openai: !!process.env.OPENAI_API_KEY,
     },
@@ -135,6 +148,15 @@ app.get('/api', (req, res) => {
     },
   });
 });
+
+// Local mode: mount auth routes and static file serving
+if (providers.type === 'local') {
+  app.use('/api/auth', authRouter);
+  const storagePath = process.env.LOCAL_DATA_DIR
+    ? path.join(process.env.LOCAL_DATA_DIR, 'storage')
+    : path.join(process.cwd(), 'data', 'storage');
+  app.use('/storage', express.static(storagePath));
+}
 
 // API Routes
 app.use('/api', imageRoutes);
@@ -267,11 +289,13 @@ const server = app.listen(PORT, () => {
   logger.info(`📦 Postman: http://localhost:${PORT}/api-docs/postman`);
   logger.info('');
 
+  logger.info(`🗄️  Provider: ${providers.type}`);
+  if (providers.type === 'local') {
+    logger.info('🔑 Auth: /api/auth (register, login, me)');
+    logger.info('📁 Storage: /storage (local filesystem)');
+  }
   if (!process.env.OPENAI_API_KEY) {
     logger.warn('⚠️  Warning: OPENAI_API_KEY not set');
-  }
-  if (!supabase) {
-    logger.warn('⚠️  Warning: Supabase not configured');
   }
   if (!process.env.REDIS_HOST) {
     logger.warn('⚠️  Warning: Redis not configured - job queue will use memory');
@@ -283,6 +307,10 @@ const server = app.listen(PORT, () => {
 process.on('SIGTERM', () => {
   logger.info('SIGTERM signal received: closing HTTP server');
   server.close(() => {
+    if (providers._sqlite) {
+      providers._sqlite.close();
+      logger.info('SQLite database closed');
+    }
     logger.info('HTTP server closed');
     process.exit(0);
   });

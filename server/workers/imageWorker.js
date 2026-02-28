@@ -1,4 +1,6 @@
+import path from 'path';
 import { imageGenerationQueue } from '../config/queue.js';
+import { createProviders } from '../providers/index.js';
 import {
   generateWithDallE,
   downloadImage,
@@ -8,6 +10,15 @@ import {
   saveGeneratedImage,
   PLATFORM_PRESETS,
 } from '../services/imageService.js';
+
+// Initialize providers for the worker process
+const providers = createProviders({
+  dbProvider: process.env.DB_PROVIDER,
+  supabaseUrl: process.env.SUPABASE_URL,
+  supabaseClient: null, // Will be created if needed
+  jwtSecret: process.env.JWT_SECRET,
+  dataDir: process.env.LOCAL_DATA_DIR || path.join(process.cwd(), 'data'),
+});
 
 /**
  * Process image generation job
@@ -32,7 +43,7 @@ imageGenerationQueue.process(async (job) => {
     job.log('Image downloaded');
 
     // Step 3: Save generation to database
-    const generation = await saveGeneration(userId, {
+    const generation = await saveGeneration(providers.db, userId, {
       prompt: revisedPrompt || prompt,
       imageType: options?.imageType || 'photo',
     });
@@ -59,16 +70,16 @@ imageGenerationQueue.process(async (job) => {
       // Upload to storage
       const fileName = `${platform}-${width}x${height}.png`;
       const storagePath = `${userId}/${generation.id}/${fileName}`;
-      const { path, url } = await uploadToStorage(buffer, storagePath);
+      const { path: savedPath, url } = await uploadToStorage(providers.storage, buffer, storagePath);
 
       // Save to database
-      const savedImage = await saveGeneratedImage(generation.id, {
+      const savedImage = await saveGeneratedImage(providers.db, generation.id, {
         platformId: platform,
         platformName: preset.name,
         width,
         height,
         fileSize: size,
-        storagePath: path,
+        storagePath: savedPath,
         url,
       });
 
@@ -100,18 +111,20 @@ imageGenerationQueue.process(async (job) => {
   }
 });
 
-console.log('🎨 Image generation worker started');
-console.log('📡 Waiting for jobs...');
+console.log('Image generation worker started');
+console.log('Waiting for jobs...');
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('Shutting down worker...');
+  if (providers._sqlite) providers._sqlite.close();
   await imageGenerationQueue.close();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
   console.log('Shutting down worker...');
+  if (providers._sqlite) providers._sqlite.close();
   await imageGenerationQueue.close();
   process.exit(0);
 });

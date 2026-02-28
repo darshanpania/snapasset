@@ -15,7 +15,7 @@ export const analyticsMiddleware = (req, res, next) => {
   res.on('finish', async () => {
     try {
       const responseTime = Date.now() - startTime;
-      const analyticsService = new AnalyticsService(req.app.locals.supabase);
+      const analyticsService = new AnalyticsService(req.app.locals.providers.db);
 
       // Track API call event
       if (req.user) {
@@ -64,7 +64,7 @@ export const trackEvent = (eventType, category = null) => {
   return async (req, res, next) => {
     try {
       if (req.user) {
-        const analyticsService = new AnalyticsService(req.app.locals.supabase);
+        const analyticsService = new AnalyticsService(req.app.locals.providers.db);
         
         await analyticsService.trackEvent({
           user_id: req.user.id,
@@ -91,7 +91,7 @@ export const trackEvent = (eventType, category = null) => {
 export const trackImageGeneration = async (req, res, next) => {
   try {
     if (req.user && res.locals.imageData) {
-      const analyticsService = new AnalyticsService(req.app.locals.supabase);
+      const analyticsService = new AnalyticsService(req.app.locals.providers.db);
       
       await analyticsService.trackEvent({
         user_id: req.user.id,
@@ -126,52 +126,23 @@ export const trackImageGeneration = async (req, res, next) => {
 /**
  * Track cost
  */
-export const trackCost = (provider) => {
+export const trackCost = (serviceProvider) => {
   return async (req, res, next) => {
     try {
       if (req.user && res.locals.costData) {
-        const supabase = req.app.locals.supabase;
-        if (!supabase) return next();
+        const db = req.app.locals.providers?.db;
+        if (!db?.analytics?.trackCost) return next();
 
         const today = new Date().toISOString().split('T')[0];
-        const cost = res.locals.costData.cost || 0;
-        const tokens = res.locals.costData.tokens || 0;
-        const images = res.locals.costData.images || 0;
-
-        // Try to increment existing row first
-        const { data: existing, error: selectError } = await supabase
-          .from('cost_tracking')
-          .select('id, api_calls, total_cost_usd, tokens_used, images_generated')
-          .eq('user_id', req.user.id)
-          .eq('date', today)
-          .eq('service_provider', provider)
-          .single();
-
-        if (existing) {
-          const { error } = await supabase
-            .from('cost_tracking')
-            .update({
-              api_calls: existing.api_calls + 1,
-              total_cost_usd: parseFloat(existing.total_cost_usd) + cost,
-              tokens_used: existing.tokens_used + tokens,
-              images_generated: existing.images_generated + images,
-            })
-            .eq('id', existing.id);
-          if (error) console.error('Cost tracking update error:', error);
-        } else {
-          const { error } = await supabase
-            .from('cost_tracking')
-            .insert({
-              user_id: req.user.id,
-              date: today,
-              service_provider: provider,
-              api_calls: 1,
-              total_cost_usd: cost,
-              tokens_used: tokens,
-              images_generated: images,
-            });
-          if (error) console.error('Cost tracking insert error:', error);
-        }
+        await db.analytics.trackCost({
+          user_id: req.user.id,
+          date: today,
+          service_provider: serviceProvider,
+          api_calls: 1,
+          total_cost_usd: res.locals.costData.cost || 0,
+          tokens_used: res.locals.costData.tokens || 0,
+          images_generated: res.locals.costData.images || 0,
+        });
       }
     } catch (error) {
       console.error('Cost tracking error:', error);

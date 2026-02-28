@@ -45,3 +45,6 @@ build
 *.tmp
 *.temp
 .cache
+
+# Local database and storage
+server/data/

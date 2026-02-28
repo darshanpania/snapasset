@@ -1,29 +1,28 @@
-import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals'
+// @vitest-environment node
 import request from 'supertest'
 import express from 'express'
-import imageRoutes from '../routes/images.js'
 
-// Mock dependencies
-jest.unstable_mockModule('../services/imageService.js', () => ({
-  generateImagesFromPrompt: jest.fn(),
-  getPlatformPresets: jest.fn(),
+vi.mock('../services/imageService.js', () => ({
+  generateImagesFromPrompt: vi.fn(),
+  getPlatformPresets: vi.fn(),
 }))
 
-jest.unstable_mockModule('../utils/logger.js', () => ({
+vi.mock('../utils/logger.js', () => ({
   default: {
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
   },
 }))
 
+const { default: imageRoutes } = await import('../routes/images.js')
 const { generateImagesFromPrompt, getPlatformPresets } = await import('../services/imageService.js')
 
 // Create test app
 const createTestApp = () => {
   const app = express()
   app.use(express.json())
-  app.locals.supabase = { auth: { getUser: jest.fn() } }
+  app.locals.providers = { storage: { upload: vi.fn(), getPublicUrl: vi.fn() } }
   app.use('/api', imageRoutes)
   return app
 }
@@ -33,7 +32,7 @@ describe('Image Routes', () => {
 
   beforeEach(() => {
     app = createTestApp()
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   describe('GET /api/platforms', () => {
@@ -42,7 +41,7 @@ describe('Image Routes', () => {
         { id: 'instagram-post', name: 'Instagram Post', width: 1080, height: 1080 },
         { id: 'twitter-post', name: 'Twitter Post', width: 1200, height: 675 },
       ]
-      
+
       getPlatformPresets.mockReturnValue(mockPresets)
 
       const response = await request(app)
@@ -81,7 +80,7 @@ describe('Image Routes', () => {
           size: 250000,
         },
       ]
-      
+
       generateImagesFromPrompt.mockResolvedValue(mockImages)
 
       const response = await request(app)
@@ -222,8 +221,8 @@ describe('Image Routes', () => {
       })
     })
 
-    it('handles missing Supabase configuration', async () => {
-      app.locals.supabase = null
+    it('handles missing storage configuration', async () => {
+      app.locals.providers = {}
 
       const response = await request(app)
         .post('/api/images/upload')

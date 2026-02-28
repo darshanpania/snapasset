@@ -116,8 +116,8 @@ router.post('/images/upload', upload.single('image'), async (req, res) => {
       })
     }
 
-    const supabase = req.app.locals.supabase
-    if (!supabase) {
+    const storage = req.app.locals.providers?.storage
+    if (!storage) {
       return res.status(503).json({
         success: false,
         error: 'Storage service not configured'

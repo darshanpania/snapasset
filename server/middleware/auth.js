@@ -1,11 +1,12 @@
 /**
  * Authentication Middleware
- * Verifies JWT tokens and attaches user to request
+ * Verifies JWT tokens using the active provider (Supabase or Local)
  */
 
 export const authMiddleware = async (req, res, next) => {
   try {
-    if (!req.app.locals.supabase) {
+    const providers = req.app.locals.providers;
+    if (!providers?.auth) {
       return res.status(503).json({
         success: false,
         error: 'Authentication service unavailable',
@@ -22,22 +23,12 @@ export const authMiddleware = async (req, res, next) => {
     }
 
     const token = authHeader.substring(7);
-
-    // Verify token with Supabase
-    const { data: { user }, error } = await req.app.locals.supabase.auth.getUser(token);
-
-    if (error || !user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid token',
-      });
-    }
+    const user = await providers.auth.verifyToken(token);
 
     // Attach user to request
     req.user = user;
     next();
   } catch (error) {
-    console.error('Auth middleware error:', error);
     res.status(401).json({
       success: false,
       error: 'Authentication failed',

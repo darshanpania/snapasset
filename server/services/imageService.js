@@ -1,7 +1,6 @@
 import OpenAI from 'openai';
 import sharp from 'sharp';
 import axios from 'axios';
-import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import logger from '../utils/logger.js';
 
@@ -10,15 +9,6 @@ dotenv.config();
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-
-let supabase = null;
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
-if (supabaseUrl && supabaseKey && /^https?:\/\//i.test(supabaseUrl)) {
-  supabase = createClient(supabaseUrl, supabaseKey);
-} else {
-  logger.warn('Supabase not configured in imageService — storage/DB features disabled');
-}
 
 // Platform presets with exact dimensions
 const PLATFORM_PRESETS = {
@@ -102,30 +92,22 @@ export async function resizeImage(imageBuffer, platform) {
 }
 
 /**
- * Upload image to Supabase Storage
+ * Upload image to storage via provider adapter
  */
-export async function uploadToStorage(imageBuffer, path, contentType = 'image/png') {
-  if (!supabase) {
-    throw new Error('Supabase not configured — cannot upload to storage');
+export async function uploadToStorage(storageAdapter, imageBuffer, storagePath, contentType = 'image/png') {
+  if (!storageAdapter) {
+    throw new Error('Storage not configured — cannot upload');
   }
   try {
-    const { data, error } = await supabase.storage
-      .from('generated-images')
-      .upload(path, imageBuffer, {
-        contentType,
-        cacheControl: '3600',
-        upsert: true,
-      });
-
-    if (error) throw error;
-
-    const { data: urlData } = supabase.storage
-      .from('generated-images')
-      .getPublicUrl(path);
-
+    const result = await storageAdapter.upload('generated-images', storagePath, imageBuffer, {
+      contentType,
+      cacheControl: '3600',
+      upsert: true,
+    });
+    const url = storageAdapter.getPublicUrl('generated-images', storagePath);
     return {
-      path: data.path,
-      url: urlData.publicUrl,
+      path: result.path || storagePath,
+      url: typeof url === 'string' ? url : url.publicUrl || url,
     };
   } catch (error) {
     throw new Error(`Upload to storage failed: ${error.message}`);
@@ -133,56 +115,42 @@ export async function uploadToStorage(imageBuffer, path, contentType = 'image/pn
 }
 
 /**
- * Save generation metadata to database
+ * Save generation metadata to database via provider adapter
  */
-export async function saveGeneration(userId, generationData) {
-  if (!supabase) {
-    throw new Error('Supabase not configured — cannot save generation');
+export async function saveGeneration(dbAdapter, userId, generationData) {
+  if (!dbAdapter?.images) {
+    throw new Error('Database not configured — cannot save generation');
   }
   try {
-    const { data, error } = await supabase
-      .from('generations')
-      .insert({
-        user_id: userId,
-        prompt: generationData.prompt,
-        image_type: generationData.imageType || 'photo',
-        status: 'completed',
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    return await dbAdapter.images.saveGeneration({
+      user_id: userId,
+      prompt: generationData.prompt,
+      image_type: generationData.imageType || 'photo',
+      status: 'completed',
+    });
   } catch (error) {
     throw new Error(`Failed to save generation: ${error.message}`);
   }
 }
 
 /**
- * Save generated image metadata
+ * Save generated image metadata via provider adapter
  */
-export async function saveGeneratedImage(generationId, imageData) {
-  if (!supabase) {
-    throw new Error('Supabase not configured — cannot save image metadata');
+export async function saveGeneratedImage(dbAdapter, generationId, imageData) {
+  if (!dbAdapter?.images) {
+    throw new Error('Database not configured — cannot save image metadata');
   }
   try {
-    const { data, error } = await supabase
-      .from('generated_images')
-      .insert({
-        generation_id: generationId,
-        platform_id: imageData.platformId,
-        platform_name: imageData.platformName,
-        width: imageData.width,
-        height: imageData.height,
-        file_size: imageData.fileSize,
-        storage_path: imageData.storagePath,
-        url: imageData.url,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    return await dbAdapter.images.saveGeneratedImage({
+      generation_id: generationId,
+      platform_id: imageData.platformId,
+      platform_name: imageData.platformName,
+      width: imageData.width,
+      height: imageData.height,
+      file_size: imageData.fileSize,
+      storage_path: imageData.storagePath,
+      url: imageData.url,
+    });
   } catch (error) {
     throw new Error(`Failed to save image metadata: ${error.message}`);
   }

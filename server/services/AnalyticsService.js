@@ -1,18 +1,15 @@
 /**
  * Analytics Service
- * Handles analytics data collection, aggregation, and retrieval
+ * Business logic for analytics - delegates data access to db adapter
  */
 
-import { AnalyticsEvent, UserUsageStats, DailyUsageAggregate } from '../models/Analytics.js';
+import { AnalyticsEvent, UserUsageStats } from '../models/Analytics.js';
 
 export class AnalyticsService {
-  constructor(supabaseClient) {
-    this.supabase = supabaseClient;
+  constructor(dbAdapter) {
+    this.db = dbAdapter;
   }
 
-  /**
-   * Track an analytics event
-   */
   async trackEvent(eventData) {
     const event = new AnalyticsEvent(eventData);
     const validation = event.validate();
@@ -21,262 +18,61 @@ export class AnalyticsService {
       throw new Error(validation.errors.join(', '));
     }
 
-    const { data, error } = await this.supabase
-      .from('analytics_events')
-      .insert([event.toJSON()])
-      .select();
-
-    if (error) throw error;
-
-    return data[0];
+    return await this.db.analytics.trackEvent(event.toJSON());
   }
 
-  /**
-   * Get user dashboard analytics
-   */
   async getUserDashboard(userId, period = '30d') {
+    const dashboard = await this.db.analytics.getDashboard(userId, period);
     const days = this.parsePeriod(period);
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
 
-    // Get overall stats
-    const { data: usageStats } = await this.supabase
-      .from('user_usage_stats')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-
-    // Get daily usage for period
-    const { data: dailyUsage } = await this.supabase
-      .from('daily_usage_aggregates')
-      .select('*')
-      .eq('user_id', userId)
-      .gte('date', startDate.toISOString().split('T')[0])
-      .order('date', { ascending: true });
-
-    // Get platform usage
-    const { data: platformUsage } = await this.supabase
-      .from('platform_usage_stats')
-      .select('*')
-      .eq('user_id', userId)
-      .order('usage_count', { ascending: false });
-
-    // Get recent events
-    const { data: recentEvents } = await this.supabase
-      .from('analytics_events')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(50);
-
-    // Get cost data
-    const { data: costData } = await this.supabase
-      .from('cost_tracking')
-      .select('*')
-      .eq('user_id', userId)
-      .gte('date', startDate.toISOString().split('T')[0])
-      .order('date', { ascending: true });
-
-    // Calculate trends
-    const trends = this.calculateTrends(dailyUsage, days);
+    const trends = this.calculateTrends(dashboard.dailyUsage, days);
 
     return {
-      overview: new UserUsageStats(usageStats || {}).toJSON(),
-      dailyUsage: dailyUsage || [],
-      platformUsage: platformUsage || [],
-      recentActivity: recentEvents || [],
-      costAnalysis: this.aggregateCosts(costData || []),
+      overview: dashboard.overview ? new UserUsageStats(dashboard.overview).toJSON() : {},
+      dailyUsage: dashboard.dailyUsage || [],
+      platformUsage: dashboard.platformUsage || [],
+      recentActivity: dashboard.recentActivity || [],
+      costAnalysis: this.aggregateCosts(dashboard.costAnalysis || []),
       trends,
       period: {
         days,
-        startDate: startDate.toISOString(),
-        endDate: new Date().toISOString(),
+        startDate: dashboard.period?.startDate || new Date().toISOString(),
+        endDate: dashboard.period?.endDate || new Date().toISOString(),
       },
     };
   }
 
-  /**
-   * Get usage timeline data
-   */
   async getUsageTimeline(userId, period = '30d', granularity = 'day') {
-    const days = this.parsePeriod(period);
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-
-    const { data, error } = await this.supabase
-      .from('daily_usage_aggregates')
-      .select('*')
-      .eq('user_id', userId)
-      .gte('date', startDate.toISOString().split('T')[0])
-      .order('date', { ascending: true });
-
-    if (error) throw error;
-
+    const data = await this.db.analytics.getUsageTimeline(userId, period);
     return this.formatTimelineData(data || [], granularity);
   }
 
-  /**
-   * Get platform breakdown
-   */
   async getPlatformBreakdown(userId, period = '30d') {
-    const days = this.parsePeriod(period);
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-
-    const { data, error } = await this.supabase
-      .from('analytics_events')
-      .select('platform')
-      .eq('user_id', userId)
-      .eq('event_type', 'image_generated')
-      .gte('created_at', startDate.toISOString());
-
-    if (error) throw error;
-
-    // Aggregate by platform
-    const breakdown = {};
-    (data || []).forEach((event) => {
-      const platform = event.platform || 'unknown';
-      breakdown[platform] = (breakdown[platform] || 0) + 1;
-    });
-
-    return Object.entries(breakdown)
-      .map(([platform, count]) => ({ platform, count }))
-      .sort((a, b) => b.count - a.count);
+    return await this.db.analytics.getPlatformBreakdown(userId, period);
   }
 
-  /**
-   * Get user engagement metrics
-   */
   async getUserEngagement(userId, weeks = 12) {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - (weeks * 7));
-    const weekStart = this.getWeekStart(startDate);
-
-    const { data, error } = await this.supabase
-      .from('user_engagement')
-      .select('*')
-      .eq('user_id', userId)
-      .gte('week_start_date', weekStart)
-      .order('week_start_date', { ascending: true });
-
-    if (error) throw error;
-
-    return data || [];
+    return await this.db.analytics.getUserEngagement(userId, `${weeks}w`);
   }
 
-  /**
-   * Get cost analytics
-   */
   async getCostAnalytics(userId, period = '30d') {
-    const days = this.parsePeriod(period);
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-
-    const { data, error } = await this.supabase
-      .from('cost_tracking')
-      .select('*')
-      .eq('user_id', userId)
-      .gte('date', startDate.toISOString().split('T')[0])
-      .order('date', { ascending: true });
-
-    if (error) throw error;
-
+    const data = await this.db.analytics.getCostAnalytics(userId, period);
     return this.aggregateCosts(data || []);
   }
 
-  /**
-   * Get performance metrics
-   */
   async getPerformanceMetrics(metricType = null, hours = 24) {
-    const startTime = new Date();
-    startTime.setHours(startTime.getHours() - hours);
-
-    let query = this.supabase
-      .from('performance_metrics')
-      .select('*')
-      .gte('created_at', startTime.toISOString())
-      .order('created_at', { ascending: true });
-
-    if (metricType) {
-      query = query.eq('metric_type', metricType);
-    }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-
+    const data = await this.db.analytics.getPerformanceMetrics(metricType, hours);
     return this.aggregatePerformanceMetrics(data || []);
   }
 
-  /**
-   * Track performance metric
-   */
   async trackPerformance(metricData) {
-    const { data, error } = await this.supabase
-      .from('performance_metrics')
-      .insert([metricData]);
-
-    if (error) throw error;
-
-    return data;
+    return await this.db.analytics.trackPerformance(metricData);
   }
 
-  /**
-   * Get admin dashboard (system-wide metrics)
-   */
   async getAdminDashboard(period = '30d') {
-    const days = this.parsePeriod(period);
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-
-    // Get system metrics
-    const { data: systemMetrics } = await this.supabase
-      .from('system_metrics')
-      .select('*')
-      .gte('metric_date', startDate.toISOString().split('T')[0])
-      .order('metric_date', { ascending: true });
-
-    // Get user statistics
-    const { count: totalUsers } = await this.supabase
-      .from('auth.users')
-      .select('*', { count: 'exact', head: true });
-
-    const { count: activeUsers } = await this.supabase
-      .from('user_usage_stats')
-      .select('*', { count: 'exact', head: true })
-      .gte('last_active_at', startDate.toISOString());
-
-    // Get top users by activity
-    const { data: topUsers } = await this.supabase
-      .from('user_analytics_summary')
-      .select('*')
-      .order('total_images_generated', { ascending: false })
-      .limit(10);
-
-    // Get retention data
-    const { data: retentionData } = await this.supabase
-      .from('user_engagement')
-      .select('retention_cohort')
-      .gte('week_start_date', this.getWeekStart(startDate));
-
-    const retentionBreakdown = this.calculateRetentionBreakdown(retentionData || []);
-
-    return {
-      overview: {
-        totalUsers: totalUsers || 0,
-        activeUsers: activeUsers || 0,
-        period: `${days} days`,
-      },
-      systemMetrics: systemMetrics || [],
-      topUsers: topUsers || [],
-      retention: retentionBreakdown,
-      timestamp: new Date().toISOString(),
-    };
+    return await this.db.analytics.getAdminDashboard(period);
   }
 
-  /**
-   * Export analytics data
-   */
   async exportAnalytics(userId, format = 'json', period = '30d') {
     const dashboard = await this.getUserDashboard(userId, period);
     const timeline = await this.getUsageTimeline(userId, period);
@@ -301,15 +97,41 @@ export class AnalyticsService {
     }
   }
 
-  // Helper methods
+  async trackPlatformUsage(userId, platform) {
+    // Delegate to analytics adapter if available, otherwise track as event
+    if (this.db.analytics.trackPlatformUsage) {
+      return await this.db.analytics.trackPlatformUsage(userId, platform);
+    }
+    return await this.db.analytics.trackEvent({
+      user_id: userId,
+      event_type: 'platform_usage',
+      platform,
+    });
+  }
+
+  async getRealtimeStats(userId) {
+    const oneHourAgo = new Date();
+    oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+
+    // Use performance metrics or events from the last hour
+    if (this.db.analytics.getRealtimeStats) {
+      return await this.db.analytics.getRealtimeStats(userId);
+    }
+
+    return {
+      lastHour: {},
+      recentEvents: [],
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // Helper methods (pure JS, no data access)
 
   parsePeriod(period) {
     const match = period.match(/(\d+)([dhwmy])/);
-    if (!match) return 30; // Default to 30 days
-
+    if (!match) return 30;
     const value = parseInt(match[1]);
     const unit = match[2];
-
     switch (unit) {
       case 'd': return value;
       case 'w': return value * 7;
@@ -343,12 +165,9 @@ export class AnalyticsService {
     const calculateChange = (metric) => {
       const firstSum = firstHalf.reduce((sum, day) => sum + (day[metric] || 0), 0);
       const secondSum = secondHalf.reduce((sum, day) => sum + (day[metric] || 0), 0);
-      
       if (firstSum === 0) return { value: secondSum, change: 0, trend: 'stable' };
-      
       const change = ((secondSum - firstSum) / firstSum) * 100;
       const trend = change > 5 ? 'up' : change < -5 ? 'down' : 'stable';
-      
       return { value: secondSum, change: change.toFixed(1), trend };
     };
 
@@ -361,24 +180,16 @@ export class AnalyticsService {
 
   aggregateCosts(costData) {
     if (!costData || costData.length === 0) {
-      return {
-        totalCost: 0,
-        averageCostPerDay: 0,
-        costByProvider: [],
-        timeline: [],
-      };
+      return { totalCost: 0, averageCostPerDay: 0, costByProvider: [], timeline: [] };
     }
 
     const totalCost = costData.reduce((sum, item) => sum + parseFloat(item.total_cost_usd || 0), 0);
     const averageCostPerDay = totalCost / costData.length;
 
-    // Group by provider
     const byProvider = {};
     costData.forEach((item) => {
       const provider = item.service_provider || 'unknown';
-      if (!byProvider[provider]) {
-        byProvider[provider] = { provider, cost: 0, calls: 0, images: 0 };
-      }
+      if (!byProvider[provider]) byProvider[provider] = { provider, cost: 0, calls: 0, images: 0 };
       byProvider[provider].cost += parseFloat(item.total_cost_usd || 0);
       byProvider[provider].calls += item.api_calls || 0;
       byProvider[provider].images += item.images_generated || 0;
@@ -393,8 +204,6 @@ export class AnalyticsService {
   }
 
   formatTimelineData(data, granularity = 'day') {
-    // For now, return daily data as-is
-    // Future: Support weekly/monthly aggregation
     return data.map((item) => ({
       date: item.date,
       images: item.images_generated || 0,
@@ -407,15 +216,7 @@ export class AnalyticsService {
 
   aggregatePerformanceMetrics(metrics) {
     if (!metrics || metrics.length === 0) {
-      return {
-        average: 0,
-        min: 0,
-        max: 0,
-        p50: 0,
-        p95: 0,
-        p99: 0,
-        count: 0,
-      };
+      return { average: 0, min: 0, max: 0, p50: 0, p95: 0, p99: 0, count: 0 };
     }
 
     const values = metrics.map((m) => m.value).sort((a, b) => a - b);
@@ -439,20 +240,12 @@ export class AnalyticsService {
   }
 
   calculateRetentionBreakdown(retentionData) {
-    const breakdown = {
-      active: 0,
-      engaged: 0,
-      at_risk: 0,
-      churned: 0,
-    };
-
+    const breakdown = { active: 0, engaged: 0, at_risk: 0, churned: 0 };
     retentionData.forEach((item) => {
       const cohort = item.retention_cohort || 'churned';
       breakdown[cohort] = (breakdown[cohort] || 0) + 1;
     });
-
     const total = Object.values(breakdown).reduce((a, b) => a + b, 0);
-
     return {
       breakdown,
       percentages: {
@@ -466,90 +259,9 @@ export class AnalyticsService {
   }
 
   convertToCSV(data) {
-    // Convert timeline to CSV
-    if (!data.timeline || data.timeline.length === 0) {
-      return 'No data available';
-    }
-
+    if (!data.timeline || data.timeline.length === 0) return 'No data available';
     const headers = Object.keys(data.timeline[0]).join(',');
     const rows = data.timeline.map((item) => Object.values(item).join(','));
-
     return [headers, ...rows].join('\n');
-  }
-
-  /**
-   * Track platform usage
-   */
-  async trackPlatformUsage(userId, platform) {
-    const now = new Date().toISOString();
-
-    // Try to find existing record
-    const { data: existing } = await this.supabase
-      .from('platform_usage_stats')
-      .select('id, usage_count')
-      .eq('user_id', userId)
-      .eq('platform', platform)
-      .single();
-
-    if (existing) {
-      // Increment existing record
-      const { data, error } = await this.supabase
-        .from('platform_usage_stats')
-        .update({
-          usage_count: existing.usage_count + 1,
-          last_used_at: now,
-          updated_at: now,
-        })
-        .eq('id', existing.id)
-        .select();
-
-      if (error) throw error;
-      return data;
-    } else {
-      // Insert new record
-      const { data, error } = await this.supabase
-        .from('platform_usage_stats')
-        .insert({
-          user_id: userId,
-          platform,
-          usage_count: 1,
-          last_used_at: now,
-        })
-        .select();
-
-      if (error) throw error;
-      return data;
-    }
-  }
-
-  /**
-   * Get real-time analytics stream
-   */
-  async getRealtimeStats(userId) {
-    // Get stats from the last hour
-    const oneHourAgo = new Date();
-    oneHourAgo.setHours(oneHourAgo.getHours() - 1);
-
-    const { data, error } = await this.supabase
-      .from('analytics_events')
-      .select('event_type, created_at')
-      .eq('user_id', userId)
-      .gte('created_at', oneHourAgo.toISOString())
-      .order('created_at', { ascending: false })
-      .limit(100);
-
-    if (error) throw error;
-
-    // Aggregate by event type
-    const eventCounts = {};
-    (data || []).forEach((event) => {
-      eventCounts[event.event_type] = (eventCounts[event.event_type] || 0) + 1;
-    });
-
-    return {
-      lastHour: eventCounts,
-      recentEvents: data || [],
-      timestamp: new Date().toISOString(),
-    };
   }
 }

@@ -14,7 +14,7 @@ router.use(authMiddleware);
 
 // Attach ProjectService instance per request
 router.use((req, res, next) => {
-  req.projectService = new ProjectService(req.app.locals.supabase);
+  req.projectService = new ProjectService(req.app.locals.providers.db);
   next();
 });
 
