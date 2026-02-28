@@ -24,6 +24,9 @@ services:
       - NODE_ENV=production
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET:-change-me-to-a-random-string-at-least-32-characters}
+      - DB_PROVIDER=${DB_PROVIDER:-local}
+      - LOCAL_DATA_DIR=/usr/src/app/data
     env_file:
       - .env
     depends_on:
@@ -32,23 +35,29 @@ services:
     restart: unless-stopped
     volumes:
       - ./logs:/usr/src/app/logs
+      - app_data:/usr/src/app/data
 
   worker:
     build: .
-    container_name: snapasset-worker
     command: node workers/imageWorker.js
     environment:
       - NODE_ENV=production
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET:-change-me-to-a-random-string-at-least-32-characters}
+      - DB_PROVIDER=${DB_PROVIDER:-local}
+      - LOCAL_DATA_DIR=/usr/src/app/data
     env_file:
       - .env
     depends_on:
       redis:
         condition: service_healthy
     restart: unless-stopped
+    volumes:
+      - app_data:/usr/src/app/data
     deploy:
       replicas: 2  # Run 2 worker instances
 
 volumes:
   redis_data:
+  app_data:
