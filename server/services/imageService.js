@@ -11,7 +11,7 @@ const openai = new OpenAI({
 });
 
 // Platform presets with exact dimensions
-const PLATFORM_PRESETS = {
+export const PLATFORM_PRESETS = {
   'instagram-post': { width: 1080, height: 1080, name: 'Instagram Post' },
   'instagram-story': { width: 1080, height: 1920, name: 'Instagram Story' },
   'twitter-post': { width: 1200, height: 675, name: 'Twitter Post' },
