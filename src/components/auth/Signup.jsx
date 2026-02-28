@@ -58,9 +58,11 @@ const Signup = () => {
 
     if (error) {
       setLocalError(error.message)
+    } else if (isLocalMode) {
+      setSuccess('Account created! Redirecting to login...')
+      setTimeout(() => navigate('/auth/login'), 1500)
     } else {
       setSuccess('Account created! Check your email to verify your account.')
-      // Optionally redirect after a delay
       setTimeout(() => navigate('/auth/login'), 3000)
     }
   }

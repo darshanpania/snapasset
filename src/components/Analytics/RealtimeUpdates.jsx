@@ -17,7 +17,7 @@ export const RealtimeUpdates = () => {
   }, []);
 
   const connectToRealtime = () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('snapasset_token');
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
     const eventSource = new EventSource(

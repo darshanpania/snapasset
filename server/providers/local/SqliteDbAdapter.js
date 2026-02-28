@@ -62,15 +62,24 @@ class ProjectsRepository {
   }
 
   async update(id, data) {
+    const ALLOWED_COLUMNS = new Set([
+      'name', 'description', 'status', 'visibility', 'template_id',
+      'settings', 'tags', 'categories', 'owner_id',
+    ]);
+    const JSON_COLUMNS = new Set(['tags', 'categories', 'settings']);
+
     const sets = [];
     const params = [];
     for (const [key, value] of Object.entries(data)) {
-      if (['tags', 'categories', 'settings'].includes(key)) {
+      if (!ALLOWED_COLUMNS.has(key)) continue;
+      if (JSON_COLUMNS.has(key)) {
         sets.push(`${key} = ?`); params.push(JSON.stringify(value));
       } else {
         sets.push(`${key} = ?`); params.push(value);
       }
     }
+    if (sets.length === 0) return this._getById(id);
+
     sets.push('updated_at = ?'); params.push(new Date().toISOString());
     params.push(id);
 
@@ -155,7 +164,7 @@ class ProjectsRepository {
   }
 
   async restoreVersion(projectId, versionId) {
-    const version = this.db.prepare('SELECT * FROM project_versions WHERE id = ?').get(versionId);
+    const version = this.db.prepare('SELECT * FROM project_versions WHERE id = ? AND project_id = ?').get(versionId, projectId);
     if (!version) throw new Error('Version not found');
     const snapshot = JSON.parse(version.snapshot);
 

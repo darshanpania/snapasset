@@ -168,7 +168,7 @@ app.use('/', createCallbackHandler()); // /callback at root — matches Codex re
 // Config endpoint (public — tells frontend what features are available)
 app.get('/api/config', (req, res) => {
   res.json({
-    chatgptAuthEnabled: true,
+    chatgptAuthEnabled: !!process.env.JWT_SECRET && providers.type === 'local',
     hasServerApiKey: !!process.env.OPENAI_API_KEY,
     provider: providers.type,
   });
@@ -322,9 +322,12 @@ const server = app.listen(PORT, () => {
   logger.info('');
 });
 
-// Start OAuth callback listener on port 1455 (required by OpenAI's Codex client registration)
+// Start OAuth callback listener on a separate Express instance (port 1455)
 const OAUTH_PORT = 1455;
-const oauthServer = app.listen(OAUTH_PORT, () => {
+const oauthApp = express();
+oauthApp.locals = app.locals;
+oauthApp.use('/', createCallbackHandler());
+const oauthServer = oauthApp.listen(OAUTH_PORT, () => {
   logger.info(`🔗 OpenAI OAuth callback: http://localhost:${OAUTH_PORT}/auth/callback`);
 });
 

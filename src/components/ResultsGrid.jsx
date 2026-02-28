@@ -30,15 +30,17 @@ function ResultsGrid({ results, prompt }) {
       const zip = new JSZip()
       const folder = zip.folder('snapasset-images')
 
-      for (const img of results) {
+      for (let idx = 0; idx < results.length; idx++) {
+        const img = results[idx]
         const imgSrc = src(img)
-        const fileName = `${name(img).replace(/\s+/g, '-').toLowerCase()}.png`
+        const fileName = `${idx + 1}-${name(img).replace(/\s+/g, '-').toLowerCase()}.png`
 
         if (imgSrc.startsWith('data:')) {
           const base64 = imgSrc.split(',')[1]
           folder.file(fileName, base64, { base64: true })
         } else {
           const response = await fetch(imgSrc)
+          if (!response.ok) continue
           const blob = await response.blob()
           folder.file(fileName, blob)
         }

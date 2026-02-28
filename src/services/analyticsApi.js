@@ -68,7 +68,7 @@ export const analyticsApi = {
       `${API_BASE}/analytics/export?period=${period}&format=${format}`,
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem('snapasset_token')}`,
         },
       }
     );
@@ -91,7 +91,7 @@ export const analyticsApi = {
    * Connect to realtime analytics stream
    */
   connectRealtime: (onMessage, onError) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('snapasset_token');
     const eventSource = new EventSource(
       `${API_BASE}/analytics/realtime`,
       {

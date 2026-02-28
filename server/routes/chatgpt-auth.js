@@ -15,13 +15,14 @@ router.post('/start', (req, res) => {
     if (!userToken) {
       return res.status(401).json({ error: 'Authentication required' });
     }
-    jwt.verify(userToken, process.env.JWT_SECRET);
+    const decoded = jwt.verify(userToken, process.env.JWT_SECRET);
+    const userId = decoded.sub || decoded.id;
 
     const client = new ChatgptOAuthClient();
     const { codeVerifier, codeChallenge } = generatePkcePair();
     const state = generateState();
 
-    stateStore.set(state, { codeVerifier, userToken });
+    stateStore.set(state, { codeVerifier, userId });
 
     const authorizationUrl = client.buildAuthorizeUrl({ codeChallenge, state });
     return res.json({ authorizationUrl });
@@ -74,7 +75,7 @@ export function createCallbackHandler() {
       if (!apiKey) {
         // Check id_token claims to give specific guidance
         const claims = client.decodeJwtClaims(tokens.id_token);
-        console.warn('Token exchange failed. Claims:', JSON.stringify(claims));
+        console.warn('Token exchange failed for user:', claims.email || 'unknown');
 
         if (exchangeError?.includes('organization_id')) {
           return res.redirect(`${settingsUrl}?chatgpt_error=needs_platform_setup`);
@@ -83,8 +84,7 @@ export function createCallbackHandler() {
       }
 
       // Store API key for the user
-      const decoded = jwt.verify(stateRecord.userToken, process.env.JWT_SECRET);
-      const userId = decoded.sub || decoded.id;
+      const userId = stateRecord.userId;
       const db = req.app.locals.providers?.db;
 
       if (!db?.users) {

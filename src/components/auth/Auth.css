@@ -156,13 +156,13 @@
 }
 
 .btn-chatgpt {
-  border-color: #10a37f;
-  color: #10a37f;
+  border-color: var(--chatgpt, #0b6b53);
+  color: var(--chatgpt, #0b6b53);
   font-weight: 600;
 }
 
 .btn-chatgpt:hover:not(:disabled) {
-  border-color: #10a37f;
+  border-color: var(--chatgpt, #0b6b53);
   background: #f0faf6;
 }
 

@@ -8,14 +8,14 @@ const ISSUER = 'https://auth.openai.com';
 const AUTHORIZE_PATH = '/oauth/authorize';
 const TOKEN_PATH = '/oauth/token';
 const SCOPES = 'openid profile email offline_access';
-const CODEX_CLIENT_ID = 'app_EMoamEEZ73f0CkXaXp7hrann';
-
-const OAUTH_CALLBACK_PORT = 1455;
+const DEFAULT_CLIENT_ID = 'app_EMoamEEZ73f0CkXaXp7hrann';
+const DEFAULT_CALLBACK_PORT = 1455;
 
 export class ChatgptOAuthClient {
   constructor() {
-    this.clientId = CODEX_CLIENT_ID;
-    this.redirectUri = `http://localhost:${OAUTH_CALLBACK_PORT}/auth/callback`;
+    this.clientId = process.env.CHATGPT_OAUTH_CLIENT_ID || DEFAULT_CLIENT_ID;
+    const callbackPort = process.env.OAUTH_CALLBACK_PORT || DEFAULT_CALLBACK_PORT;
+    this.redirectUri = process.env.CHATGPT_OAUTH_REDIRECT_URI || `http://localhost:${callbackPort}/auth/callback`;
   }
 
   buildAuthorizeUrl({ codeChallenge, state }) {
@@ -35,42 +35,56 @@ export class ChatgptOAuthClient {
   }
 
   async exchangeCode(code, codeVerifier) {
-    const res = await fetch(`${ISSUER}${TOKEN_PATH}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: this.redirectUri,
-        client_id: this.clientId,
-        code_verifier: codeVerifier,
-      }).toString(),
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Token exchange failed (${res.status}): ${text}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    try {
+      const res = await fetch(`${ISSUER}${TOKEN_PATH}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        signal: controller.signal,
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: this.redirectUri,
+          client_id: this.clientId,
+          code_verifier: codeVerifier,
+        }).toString(),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Token exchange failed (${res.status}): ${text}`);
+      }
+      return res.json();
+    } finally {
+      clearTimeout(timeout);
     }
-    return res.json();
   }
 
   async exchangeForApiKey(idToken) {
-    const res = await fetch(`${ISSUER}${TOKEN_PATH}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
-        subject_token: idToken,
-        subject_token_type: 'urn:ietf:params:oauth:token-type:id_token',
-        requested_token: 'openai-api-key',
-        client_id: this.clientId,
-      }).toString(),
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`API key exchange failed (${res.status}): ${text}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    try {
+      const res = await fetch(`${ISSUER}${TOKEN_PATH}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        signal: controller.signal,
+        body: new URLSearchParams({
+          grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
+          subject_token: idToken,
+          subject_token_type: 'urn:ietf:params:oauth:token-type:id_token',
+          requested_token: 'openai-api-key',
+          client_id: this.clientId,
+        }).toString(),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`API key exchange failed (${res.status}): ${text}`);
+      }
+      const data = await res.json();
+      return data.access_token;
+    } finally {
+      clearTimeout(timeout);
     }
-    const data = await res.json();
-    return data.access_token;
   }
 
   decodeJwtClaims(token) {

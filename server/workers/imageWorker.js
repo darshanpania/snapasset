@@ -1,4 +1,5 @@
 import path from 'path';
+import { createClient } from '@supabase/supabase-js';
 import { imageGenerationQueue } from '../config/queue.js';
 import { createProviders } from '../providers/index.js';
 import { decryptApiKey } from '../utils/encryption.js';
@@ -13,10 +14,17 @@ import {
 } from '../services/imageService.js';
 
 // Initialize providers for the worker process
+let supabaseClient = null;
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+if (supabaseUrl && supabaseServiceKey && /^https?:\/\//i.test(supabaseUrl)) {
+  supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+}
+
 const providers = createProviders({
   dbProvider: process.env.DB_PROVIDER,
-  supabaseUrl: process.env.SUPABASE_URL,
-  supabaseClient: null, // Will be created if needed
+  supabaseUrl,
+  supabaseClient,
   jwtSecret: process.env.JWT_SECRET,
   dataDir: process.env.LOCAL_DATA_DIR || path.join(process.cwd(), 'data'),
 });
@@ -47,12 +55,15 @@ imageGenerationQueue.process(async (job) => {
     job.log('Starting DALL-E image generation...');
 
     // Step 1: Generate image with DALL-E (user key or server fallback)
-    const { url: dalleUrl, revisedPrompt } = await generateWithDallE(prompt, options, userApiKey);
+    const dalleResult = await generateWithDallE(prompt, options, userApiKey);
+    const revisedPrompt = dalleResult.revisedPrompt;
     await job.progress(30);
     job.log('Image generated successfully');
 
-    // Step 2: Download generated image
-    const originalImage = await downloadImage(dalleUrl);
+    // Step 2: Download generated image (or use base64 buffer directly)
+    const originalImage = dalleResult.b64Buffer
+      ? dalleResult.b64Buffer
+      : await downloadImage(dalleResult.url);
     await job.progress(40);
     job.log('Image downloaded');
 

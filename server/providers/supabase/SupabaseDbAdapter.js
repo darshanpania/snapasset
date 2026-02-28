@@ -52,8 +52,9 @@ class SupabaseProjectsRepository {
       query = query.eq('visibility', filters.visibility);
     }
     if (filters.search) {
+      const sanitized = filters.search.replace(/[%_.*,()]/g, '');
       query = query.or(
-        `name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`
+        `name.ilike.%${sanitized}%,description.ilike.%${sanitized}%`
       );
     }
 
@@ -168,25 +169,28 @@ class SupabaseProjectsRepository {
 
   async createVersion(projectId, userId, notes = '') {
     // Snapshot current images
-    const { data: images } = await this.supabase
+    const { data: images, error: imagesError } = await this.supabase
       .from('project_images')
       .select('*')
       .eq('project_id', projectId);
+    if (imagesError) throw imagesError;
 
     // Snapshot current project state
-    const { data: project } = await this.supabase
+    const { data: project, error: projectError } = await this.supabase
       .from('projects')
       .select('*')
       .eq('id', projectId)
       .single();
+    if (projectError) throw projectError;
 
     // Determine next version number
-    const { data: versions } = await this.supabase
+    const { data: versions, error: versionsError } = await this.supabase
       .from('project_versions')
       .select('version_number')
       .eq('project_id', projectId)
       .order('version_number', { ascending: false })
       .limit(1);
+    if (versionsError) throw versionsError;
 
     const versionNumber =
       versions && versions.length > 0 ? versions[0].version_number + 1 : 1;
@@ -218,11 +222,12 @@ class SupabaseProjectsRepository {
   }
 
   async restoreVersion(projectId, versionId) {
-    // Fetch the version
+    // Fetch the version — scoped to the project to prevent cross-project restores
     const { data: version, error: versionError } = await this.supabase
       .from('project_versions')
       .select('*')
       .eq('id', versionId)
+      .eq('project_id', projectId)
       .single();
     if (versionError) throw versionError;
 
@@ -414,9 +419,16 @@ class SupabaseAnalyticsRepository {
       .gte('metric_date', startDate.toISOString().split('T')[0])
       .order('metric_date', { ascending: true });
 
-    const { count: totalUsers } = await this.supabase
-      .from('auth.users')
-      .select('*', { count: 'exact', head: true });
+    let totalUsers = 0;
+    try {
+      const { data: usersData } = await this.supabase.auth.admin.listUsers({ perPage: 1 });
+      totalUsers = usersData?.total || 0;
+    } catch {
+      const { count } = await this.supabase
+        .from('user_usage_stats')
+        .select('*', { count: 'exact', head: true });
+      totalUsers = count || 0;
+    }
 
     const { count: activeUsers } = await this.supabase
       .from('user_usage_stats')

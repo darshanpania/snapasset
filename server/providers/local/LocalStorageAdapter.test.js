@@ -100,7 +100,7 @@ describe('LocalStorageAdapter', () => {
     it('does not throw if file does not exist', async () => {
       await expect(
         adapter.delete('images', 'nonexistent.png')
-      ).resolves.not.toThrow();
+      ).resolves.toBeUndefined();
     });
   });
 });

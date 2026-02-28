@@ -119,16 +119,18 @@ const Login = () => {
           )}
 
           <div className="form-options">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={useMagicLink}
-                onChange={(e) => setUseMagicLink(e.target.checked)}
-                disabled={isLoading}
-              />
-              <span>Use magic link instead</span>
-            </label>
-            {!useMagicLink && (
+            {!isLocalMode && (
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={useMagicLink}
+                  onChange={(e) => setUseMagicLink(e.target.checked)}
+                  disabled={isLoading}
+                />
+                <span>Use magic link instead</span>
+              </label>
+            )}
+            {!useMagicLink && !isLocalMode && (
               <Link to="/auth/forgot-password" className="link">
                 Forgot password?
               </Link>

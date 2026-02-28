@@ -22,10 +22,10 @@ export class AnalyticsService {
   }
 
   async getUserDashboard(userId, period = '30d') {
-    const dashboard = await this.db.analytics.getDashboard(userId, period);
+    const dashboard = await this.db.analytics.getDashboard(userId, period) || {};
     const days = this.parsePeriod(period);
 
-    const trends = this.calculateTrends(dashboard.dailyUsage, days);
+    const trends = this.calculateTrends(dashboard.dailyUsage || [], days);
 
     return {
       overview: dashboard.overview ? new UserUsageStats(dashboard.overview).toJSON() : {},

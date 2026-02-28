@@ -233,7 +233,7 @@ router.get('/realtime', async (req, res) => {
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
 
-  const analyticsService = new AnalyticsService(req.app.locals.supabase);
+  const analyticsService = new AnalyticsService(req.app.locals.providers.db);
 
   // Send initial data
   const sendUpdate = async () => {

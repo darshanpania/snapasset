@@ -26,8 +26,8 @@ services:
       - PORT=3001
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - JWT_SECRET=${JWT_SECRET:-change-me-to-a-random-string-at-least-32-characters}
-      - ENCRYPTION_SECRET=${ENCRYPTION_SECRET:-change-me-to-a-random-string-at-least-32-characters}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
+      - ENCRYPTION_SECRET=${ENCRYPTION_SECRET:?ENCRYPTION_SECRET must be set}
       - DB_PROVIDER=${DB_PROVIDER:-local}
       - LOCAL_DATA_DIR=/usr/src/app/data
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
@@ -49,8 +49,8 @@ services:
       - NODE_ENV=production
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - JWT_SECRET=${JWT_SECRET:-change-me-to-a-random-string-at-least-32-characters}
-      - ENCRYPTION_SECRET=${ENCRYPTION_SECRET:-change-me-to-a-random-string-at-least-32-characters}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
+      - ENCRYPTION_SECRET=${ENCRYPTION_SECRET:?ENCRYPTION_SECRET must be set}
       - DB_PROVIDER=${DB_PROVIDER:-local}
       - LOCAL_DATA_DIR=/usr/src/app/data
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}

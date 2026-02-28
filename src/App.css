@@ -1,5 +1,5 @@
 /* --- Font --- */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap';
 
 /* --- Theme Variables --- */
 :root[data-theme="dark"] {
@@ -103,9 +103,9 @@
   --warning-color: #f59e0b;
   --warning-bg: rgba(245, 158, 11, 0.1);
 
-  --chatgpt: #10a37f;
+  --chatgpt: #0b6b53;
   --chatgpt-bg: rgba(16, 163, 127, 0.06);
-  --chatgpt-border: #10a37f;
+  --chatgpt-border: #0b6b53;
 
   --manual-badge: #6366f1;
   --manual-badge-bg: rgba(99, 102, 241, 0.1);
@@ -128,7 +128,7 @@
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: var(--bg-base);

@@ -1,6 +1,14 @@
 import express from 'express';
+import logger from '../utils/logger.js';
 
 const router = express.Router();
+
+router.use((req, res, next) => {
+  if (!req.app.locals.providers?.auth) {
+    return res.status(503).json({ error: 'Auth service unavailable' });
+  }
+  next();
+});
 
 router.post('/register', async (req, res) => {
   try {
@@ -10,7 +18,8 @@ router.post('/register', async (req, res) => {
     const user = await req.app.locals.providers.auth.register(email, password, metadata);
     res.status(201).json({ user });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    logger.error('Registration error:', err);
+    res.status(400).json({ error: 'Registration failed' });
   }
 });
 
@@ -22,7 +31,8 @@ router.post('/login', async (req, res) => {
     const { token, user } = await req.app.locals.providers.auth.login(email, password);
     res.json({ token, user });
   } catch (err) {
-    res.status(401).json({ error: err.message });
+    logger.error('Login error:', err);
+    res.status(401).json({ error: 'Invalid credentials' });
   }
 });
 

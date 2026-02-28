@@ -22,6 +22,11 @@ RUN npm ci --only=production
 # Copy app source
 COPY . .
 
+# Create non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN chown -R appuser:appgroup /usr/src/app
+USER appuser
+
 # Port (configurable, defaults to 3001)
 ARG PORT=3001
 ENV PORT=$PORT
