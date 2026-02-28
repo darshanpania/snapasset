@@ -18,6 +18,7 @@ function getOAuthClient(req) {
 }
 
 // GET /api/auth/chatgpt/start — initiate OAuth flow
+// Pass ?userToken=<jwt> to link the API key to an existing logged-in user (Settings flow)
 router.get('/start', (req, res) => {
   try {
     if (!process.env.CHATGPT_CLIENT_ID) {
@@ -27,8 +28,9 @@ router.get('/start', (req, res) => {
     const { codeVerifier, codeChallenge } = generatePkcePair();
     const state = generateState();
     const returnTo = req.query.returnTo || '/';
+    const userToken = req.query.userToken || null;
 
-    stateStore.set(state, { codeVerifier, returnTo });
+    stateStore.set(state, { codeVerifier, returnTo, userToken });
 
     const authorizationUrl = client.buildAuthorizeUrl({ codeChallenge, state });
 
@@ -80,16 +82,45 @@ router.get('/callback', async (req, res) => {
       console.warn('API key exchange failed (non-fatal):', err.message);
     }
 
-    // Find or create local user
     const db = req.app.locals.providers?.db;
     const auth = req.app.locals.providers?.auth;
     if (!db?.users || !auth) {
       return res.redirect('/?error=auth_service_unavailable');
     }
 
+    const returnTo = stateRecord.returnTo || '/';
+
+    // --- Link-to-existing-user flow (Settings page) ---
+    if (stateRecord.userToken) {
+      try {
+        const jwt = (await import('jsonwebtoken')).default;
+        const decoded = jwt.verify(stateRecord.userToken, process.env.JWT_SECRET);
+        const userId = decoded.sub || decoded.id;
+
+        if (!apiKey) {
+          const sep = returnTo.includes('?') ? '&' : '?';
+          return res.redirect(`${returnTo}${sep}chatgpt_error=no_api_key`);
+        }
+
+        const encrypted = encryptApiKey(apiKey);
+        await db.users.setApiKey(userId, encrypted, 'chatgpt');
+
+        if (claims.chatgptAccountId) {
+          await db.users.setChatgptAccountId(userId, claims.chatgptAccountId);
+        }
+
+        const sep = returnTo.includes('?') ? '&' : '?';
+        return res.redirect(`${returnTo}${sep}chatgpt_linked=1`);
+      } catch (err) {
+        console.error('Link-to-user failed:', err.message);
+        const sep = returnTo.includes('?') ? '&' : '?';
+        return res.redirect(`${returnTo}${sep}chatgpt_error=link_failed`);
+      }
+    }
+
+    // --- Sign-in flow (create/find user, issue JWT) ---
     let user = await db.users.findByEmail(claims.email);
     if (!user) {
-      // Create user with sentinel password (cannot be used for regular login)
       const sentinel = await bcrypt.hash(`chatgpt_oauth_${Date.now()}`, 10);
       user = await db.users.create(claims.email, sentinel, {
         auth_method: 'chatgpt',
@@ -97,18 +128,15 @@ router.get('/callback', async (req, res) => {
       });
     }
 
-    // Store ChatGPT account ID
     if (claims.chatgptAccountId) {
       await db.users.setChatgptAccountId(user.id, claims.chatgptAccountId);
     }
 
-    // Store encrypted API key if we got one
     if (apiKey) {
       const encrypted = encryptApiKey(apiKey);
       await db.users.setApiKey(user.id, encrypted, 'chatgpt');
     }
 
-    // Issue local JWT
     const token = auth.generateToken
       ? auth.generateToken(user)
       : (await import('jsonwebtoken')).default.sign(
@@ -117,8 +145,6 @@ router.get('/callback', async (req, res) => {
           { expiresIn: '24h' }
         );
 
-    // Redirect to frontend with token
-    const returnTo = stateRecord.returnTo || '/';
     const separator = returnTo.includes('?') ? '&' : '?';
     return res.redirect(`${returnTo}${separator}token=${token}`);
   } catch (error) {

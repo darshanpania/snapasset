@@ -214,6 +214,52 @@
   font-style: italic;
 }
 
+.key-divider {
+  position: relative;
+  text-align: center;
+  margin: 1.25rem 0;
+}
+
+.key-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e0e0e0;
+}
+
+.key-divider span {
+  position: relative;
+  background: white;
+  padding: 0 0.75rem;
+  color: #999;
+  font-size: 0.8125rem;
+}
+
+.btn-chatgpt-connect {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 2px solid #10a37f;
+  border-radius: 8px;
+  color: #10a37f;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 0.5rem;
+}
+
+.btn-chatgpt-connect:hover {
+  background: #f0faf6;
+}
+
 .alert {
   padding: 0.75rem 1rem;
   border-radius: 8px;
