@@ -1,7 +1,9 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../services/supabase'
+import { supabase, isLocalMode } from '../services/supabase'
 
 const AuthContext = createContext({})
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
 export const useAuth = () => {
   const context = useContext(AuthContext)
@@ -11,6 +13,17 @@ export const useAuth = () => {
   return context
 }
 
+// Helper for local API calls
+const localApi = async (path, options = {}) => {
+  const token = localStorage.getItem('snapasset_token')
+  const headers = { 'Content-Type': 'application/json', ...options.headers }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const res = await fetch(`${API_URL}${path}`, { ...options, headers })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || data.message || 'Request failed')
+  return data
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [session, setSession] = useState(null)
@@ -18,46 +31,76 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    // Get initial session
-    const initSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession()
-        if (error) throw error
-        
-        setSession(session)
-        setUser(session?.user ?? null)
-      } catch (error) {
-        console.error('Error getting session:', error)
-        setError(error.message)
-      } finally {
-        setLoading(false)
+    if (isLocalMode) {
+      // Local mode: check for saved token
+      const initLocal = async () => {
+        try {
+          const token = localStorage.getItem('snapasset_token')
+          if (token) {
+            const data = await localApi('/api/auth/me')
+            setUser(data.user)
+            setSession({ access_token: token })
+          }
+        } catch (err) {
+          console.error('Local session error:', err)
+          localStorage.removeItem('snapasset_token')
+        } finally {
+          setLoading(false)
+        }
       }
-    }
-
-    initSession()
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event)
-        setSession(session)
-        setUser(session?.user ?? null)
-        setLoading(false)
-        setError(null)
+      initLocal()
+    } else {
+      // Supabase mode: get initial session
+      const initSession = async () => {
+        try {
+          const { data: { session }, error } = await supabase.auth.getSession()
+          if (error) throw error
+          setSession(session)
+          setUser(session?.user ?? null)
+        } catch (error) {
+          console.error('Error getting session:', error)
+          setError(error.message)
+        } finally {
+          setLoading(false)
+        }
       }
-    )
 
-    return () => {
-      subscription.unsubscribe()
+      initSession()
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          setSession(session)
+          setUser(session?.user ?? null)
+          setLoading(false)
+          setError(null)
+        }
+      )
+
+      return () => { subscription.unsubscribe() }
     }
   }, [])
 
-  // Sign up with email and password
   const signUp = async (email, password, metadata = {}) => {
     try {
       setLoading(true)
       setError(null)
-      
+
+      if (isLocalMode) {
+        const data = await localApi('/api/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        })
+        // Auto sign-in after registration
+        const loginData = await localApi('/api/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        })
+        localStorage.setItem('snapasset_token', loginData.token)
+        setUser(loginData.user || data.user)
+        setSession({ access_token: loginData.token })
+        return { data: loginData, error: null }
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -66,7 +109,6 @@ export const AuthProvider = ({ children }) => {
           emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       })
-
       if (error) throw error
       return { data, error: null }
     } catch (error) {
@@ -78,17 +120,23 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // Sign in with email and password
   const signIn = async (email, password) => {
     try {
       setLoading(true)
       setError(null)
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
 
+      if (isLocalMode) {
+        const data = await localApi('/api/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        })
+        localStorage.setItem('snapasset_token', data.token)
+        setUser(data.user)
+        setSession({ access_token: data.token })
+        return { data, error: null }
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
       return { data, error: null }
     } catch (error) {
@@ -100,23 +148,21 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // Sign in with magic link
   const signInWithMagicLink = async (email) => {
+    if (isLocalMode) {
+      setError('Magic link is not available in local mode. Use email/password.')
+      return { data: null, error: new Error('Not available in local mode') }
+    }
     try {
       setLoading(true)
       setError(null)
-      
       const { data, error } = await supabase.auth.signInWithOtp({
         email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`
-        }
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
       })
-
       if (error) throw error
       return { data, error: null }
     } catch (error) {
-      console.error('Magic link error:', error)
       setError(error.message)
       return { data: null, error }
     } finally {
@@ -124,23 +170,21 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // Sign in with OAuth provider
   const signInWithProvider = async (provider) => {
+    if (isLocalMode) {
+      setError('OAuth is not available in local mode. Use email/password.')
+      return { data: null, error: new Error('Not available in local mode') }
+    }
     try {
       setLoading(true)
       setError(null)
-      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
+        options: { redirectTo: `${window.location.origin}/auth/callback` }
       })
-
       if (error) throw error
       return { data, error: null }
     } catch (error) {
-      console.error('OAuth error:', error)
       setError(error.message)
       return { data: null, error }
     } finally {
@@ -148,20 +192,22 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // Sign out
   const signOut = async () => {
     try {
       setLoading(true)
       setError(null)
-      
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
-      
+
+      if (isLocalMode) {
+        localStorage.removeItem('snapasset_token')
+      } else {
+        const { error } = await supabase.auth.signOut()
+        if (error) throw error
+      }
+
       setUser(null)
       setSession(null)
       return { error: null }
     } catch (error) {
-      console.error('Sign out error:', error)
       setError(error.message)
       return { error }
     } finally {
@@ -169,20 +215,18 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // Update user profile
   const updateProfile = async (updates) => {
+    if (isLocalMode) {
+      setError('Profile updates not available in local mode')
+      return { data: null, error: new Error('Not available in local mode') }
+    }
     try {
       setLoading(true)
       setError(null)
-      
-      const { data, error } = await supabase.auth.updateUser({
-        data: updates
-      })
-
+      const { data, error } = await supabase.auth.updateUser({ data: updates })
       if (error) throw error
       return { data, error: null }
     } catch (error) {
-      console.error('Update profile error:', error)
       setError(error.message)
       return { data: null, error }
     } finally {
@@ -190,20 +234,20 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // Reset password
   const resetPassword = async (email) => {
+    if (isLocalMode) {
+      setError('Password reset not available in local mode')
+      return { data: null, error: new Error('Not available in local mode') }
+    }
     try {
       setLoading(true)
       setError(null)
-      
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth/reset-password`
       })
-
       if (error) throw error
       return { data, error: null }
     } catch (error) {
-      console.error('Reset password error:', error)
       setError(error.message)
       return { data: null, error }
     } finally {
@@ -216,6 +260,7 @@ export const AuthProvider = ({ children }) => {
     session,
     loading,
     error,
+    isLocalMode,
     signUp,
     signIn,
     signInWithMagicLink,
