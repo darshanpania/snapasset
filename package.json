@@ -1,7 +1,7 @@
 {
   "name": "snapasset",
   "private": true,
-  "version": "0.3.0",
+  "version": "1.0.0",
   "type": "module",
   "description": "Image generation wrapper for creating perfectly-sized assets for various platforms",
   "scripts": {

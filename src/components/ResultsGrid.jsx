@@ -2,110 +2,68 @@ import { useState } from 'react'
 import './ResultsGrid.css'
 
 function ResultsGrid({ results, prompt }) {
-  const [selectedImage, setSelectedImage] = useState(null)
+  const [preview, setPreview] = useState(null)
 
-  const getImageSrc = (image) => image.image || image.url
-  const getName = (image) => image.platformName || image.preset?.name || image.platform
-  const getWidth = (image) => image.width || image.preset?.width
-  const getHeight = (image) => image.height || image.preset?.height
+  const src = (img) => img.image || img.url
+  const name = (img) => img.platformName || img.preset?.name || img.platform
+  const w = (img) => img.width || img.preset?.width
+  const h = (img) => img.height || img.preset?.height
 
-  const handleDownload = (image) => {
-    const link = document.createElement('a')
-    link.href = getImageSrc(image)
-    link.download = `${getName(image).replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.png`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+  const download = (img) => {
+    const a = document.createElement('a')
+    a.href = src(img)
+    a.download = `${name(img).replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.png`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
   }
 
-  const handleDownloadAll = () => {
-    results.forEach((image, index) => {
-      setTimeout(() => {
-        handleDownload(image)
-      }, index * 500)
-    })
-  }
-
-  const handleImageClick = (image) => {
-    setSelectedImage(image)
-  }
-
-  const closeModal = () => {
-    setSelectedImage(null)
+  const downloadAll = () => {
+    results.forEach((img, i) => setTimeout(() => download(img), i * 400))
   }
 
   return (
-    <div className="results-container">
-      <div className="results-header">
+    <div className="rg">
+      <div className="rg-head">
         <div>
-          <h2 className="results-title">Generated Images</h2>
-          <p className="results-prompt">"{prompt}"</p>
+          <h2 className="rg-title">Generated Images</h2>
+          <p className="rg-prompt">"{prompt}"</p>
         </div>
-        <button
-          className="download-all-btn"
-          onClick={handleDownloadAll}
-        >
+        <button className="rg-dl-all" onClick={downloadAll}>
           Download All ({results.length})
         </button>
       </div>
 
-      <div className="results-grid">
-        {results.map((image, index) => (
-          <div key={index} className="result-card">
-            <div className="image-container" onClick={() => handleImageClick(image)}>
-              <img
-                src={getImageSrc(image)}
-                alt={`${getName(image)} - ${prompt}`}
-                className="result-image"
-                loading="lazy"
-              />
-              <div className="image-overlay">
-                <button className="preview-btn">Preview</button>
-              </div>
+      <div className="rg-grid">
+        {results.map((img, i) => (
+          <div key={i} className="rg-card">
+            <div className="rg-img-wrap" onClick={() => setPreview(img)}>
+              <img src={src(img)} alt={name(img)} className="rg-img" loading="lazy" />
+              <div className="rg-hover">Click to preview</div>
             </div>
-
-            <div className="result-info">
-              <div className="info-header">
-                <h4 className="result-name">{getName(image)}</h4>
+            <div className="rg-meta">
+              <div className="rg-meta-left">
+                <span className="rg-name">{name(img)}</span>
+                <span className="rg-dims">{w(img)} x {h(img)}</span>
               </div>
-
-              <div className="result-details">
-                <span className="detail-item">
-                  {getWidth(image)} x {getHeight(image)}
-                </span>
-              </div>
-
-              <button
-                className="download-btn"
-                onClick={() => handleDownload(image)}
-              >
-                Download
+              <button className="rg-dl" onClick={() => download(img)} title="Download">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v9m0 0L5 7m3 3l3-3M2 12v1a2 2 0 002 2h8a2 2 0 002-2v-1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Modal for image preview */}
-      {selectedImage && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={closeModal}>
-              x
-            </button>
-            <img
-              src={getImageSrc(selectedImage)}
-              alt={getName(selectedImage)}
-              className="modal-image"
-            />
-            <div className="modal-info">
-              <h3>{getName(selectedImage)}</h3>
-              <p>{getWidth(selectedImage)} x {getHeight(selectedImage)}</p>
-              <button
-                className="modal-download-btn"
-                onClick={() => handleDownload(selectedImage)}
-              >
-                Download Image
+      {preview && (
+        <div className="rg-modal" onClick={() => setPreview(null)}>
+          <div className="rg-modal-body" onClick={e => e.stopPropagation()}>
+            <button className="rg-modal-close" onClick={() => setPreview(null)}>x</button>
+            <img src={src(preview)} alt={name(preview)} className="rg-modal-img" />
+            <div className="rg-modal-info">
+              <span>{name(preview)} &middot; {w(preview)} x {h(preview)}</span>
+              <button className="rg-dl" onClick={() => download(preview)}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v9m0 0L5 7m3 3l3-3M2 12v1a2 2 0 002 2h8a2 2 0 002-2v-1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                Download
               </button>
             </div>
           </div>
