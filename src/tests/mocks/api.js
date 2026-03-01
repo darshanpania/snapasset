@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi } from 'vitest';
 
 // Mock generated images response
 export const mockGeneratedImages = [
@@ -26,7 +26,7 @@ export const mockGeneratedImages = [
     size: 180000,
     timestamp: '2026-01-24T14:00:00Z',
   },
-]
+];
 
 // Mock platform presets response
 export const mockPlatformPresets = [
@@ -48,14 +48,14 @@ export const mockPlatformPresets = [
     height: 675,
     aspectRatio: '16:9',
   },
-]
+];
 
 // Mock fetch for API calls
-export const mockFetch = vi.fn()
+export const mockFetch = vi.fn();
 
 export function setupFetchMock() {
-  global.fetch = mockFetch
-  
+  global.fetch = mockFetch;
+
   // Default successful response
   mockFetch.mockResolvedValue({
     ok: true,
@@ -64,7 +64,7 @@ export function setupFetchMock() {
       images: mockGeneratedImages,
       count: mockGeneratedImages.length,
     }),
-  })
+  });
 }
 
 export function mockFetchError(error = 'API Error') {
@@ -74,10 +74,10 @@ export function mockFetchError(error = 'API Error') {
       success: false,
       error: error,
     }),
-  })
+  });
 }
 
 export function resetFetchMock() {
-  mockFetch.mockReset()
-  setupFetchMock()
+  mockFetch.mockReset();
+  setupFetchMock();
 }

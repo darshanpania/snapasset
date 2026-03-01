@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { analyticsApi } from '../../services/api';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 import './EngagementMetrics.css';
 
 export const EngagementMetrics = ({ userId }) => {
@@ -27,34 +36,43 @@ export const EngagementMetrics = ({ userId }) => {
   }
 
   // Calculate average engagement
-  const avgDaysActive = engagement.length > 0
-    ? (engagement.reduce((sum, w) => sum + w.days_active, 0) / engagement.length).toFixed(1)
-    : 0;
+  const avgDaysActive =
+    engagement.length > 0
+      ? (engagement.reduce((sum, w) => sum + w.days_active, 0) / engagement.length).toFixed(1)
+      : 0;
 
-  const avgSessions = engagement.length > 0
-    ? (engagement.reduce((sum, w) => sum + w.sessions_count, 0) / engagement.length).toFixed(1)
-    : 0;
+  const avgSessions =
+    engagement.length > 0
+      ? (engagement.reduce((sum, w) => sum + w.sessions_count, 0) / engagement.length).toFixed(1)
+      : 0;
 
   // Format data for chart
   const chartData = engagement.map((week) => ({
-    week: new Date(week.week_start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    week: new Date(week.week_start_date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    }),
     daysActive: week.days_active,
     sessions: week.sessions_count,
     actions: week.total_actions,
   }));
 
   // Get current cohort
-  const currentCohort = engagement.length > 0
-    ? engagement[engagement.length - 1].retention_cohort
-    : 'unknown';
+  const currentCohort =
+    engagement.length > 0 ? engagement[engagement.length - 1].retention_cohort : 'unknown';
 
   const getCohortColor = (cohort) => {
     switch (cohort) {
-      case 'active': return '#10b981';
-      case 'engaged': return '#3b82f6';
-      case 'at_risk': return '#f59e0b';
-      case 'churned': return '#ef4444';
-      default: return '#6b7280';
+      case 'active':
+        return '#10b981';
+      case 'engaged':
+        return '#3b82f6';
+      case 'at_risk':
+        return '#f59e0b';
+      case 'churned':
+        return '#ef4444';
+      default:
+        return '#6b7280';
     }
   };
 
@@ -64,17 +82,14 @@ export const EngagementMetrics = ({ userId }) => {
       <div className="engagement-overview">
         <div className="engagement-card">
           <h3>Current Status</h3>
-          <div
-            className="cohort-badge"
-            style={{ background: getCohortColor(currentCohort) }}
-          >
+          <div className="cohort-badge" style={{ background: getCohortColor(currentCohort) }}>
             {currentCohort.toUpperCase()}
           </div>
           <p className="cohort-description">
-            {currentCohort === 'active' && 'You\'re highly engaged! Keep it up! 🎉'}
-            {currentCohort === 'engaged' && 'You\'re doing great! 👍'}
+            {currentCohort === 'active' && "You're highly engaged! Keep it up! 🎉"}
+            {currentCohort === 'engaged' && "You're doing great! 👍"}
             {currentCohort === 'at_risk' && 'We miss you! Come back soon 👋'}
-            {currentCohort === 'churned' && 'Welcome back! We\'ve missed you 💙'}
+            {currentCohort === 'churned' && "Welcome back! We've missed you 💙"}
           </p>
         </div>
 

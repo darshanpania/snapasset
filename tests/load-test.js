@@ -15,7 +15,7 @@ export const options = {
     { duration: '5m', target: 10 }, // Stay at 10 users
     { duration: '2m', target: 50 }, // Ramp up to 50 users
     { duration: '5m', target: 50 }, // Stay at 50 users
-    { duration: '2m', target: 0 },  // Ramp down to 0 users
+    { duration: '2m', target: 0 }, // Ramp down to 0 users
   ],
   thresholds: {
     http_req_duration: ['p(95)<500'], // 95% of requests should be below 500ms
@@ -45,7 +45,7 @@ export default function () {
   // Test projects list (requires auth)
   const headers = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${__ENV.TEST_TOKEN}`,
+    Authorization: `Bearer ${__ENV.TEST_TOKEN}`,
   };
 
   response = http.get(`${BASE_URL}/api/projects`, { headers });

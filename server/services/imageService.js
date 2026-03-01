@@ -31,9 +31,23 @@ export const PLATFORM_PRESETS = {
 
 // Supported image generation models
 export const IMAGE_MODELS = {
-  'gpt-image-1': { name: 'GPT Image 1', sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'], qualities: ['low', 'medium', 'high', 'auto'], outputFormats: ['png', 'webp', 'jpeg'] },
-  'dall-e-3': { name: 'DALL-E 3', sizes: ['1024x1024', '1024x1792', '1792x1024'], qualities: ['standard', 'hd'], styles: ['vivid', 'natural'] },
-  'dall-e-2': { name: 'DALL-E 2', sizes: ['256x256', '512x512', '1024x1024'], qualities: ['standard'] },
+  'gpt-image-1': {
+    name: 'GPT Image 1',
+    sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
+    qualities: ['low', 'medium', 'high', 'auto'],
+    outputFormats: ['png', 'webp', 'jpeg'],
+  },
+  'dall-e-3': {
+    name: 'DALL-E 3',
+    sizes: ['1024x1024', '1024x1792', '1792x1024'],
+    qualities: ['standard', 'hd'],
+    styles: ['vivid', 'natural'],
+  },
+  'dall-e-2': {
+    name: 'DALL-E 2',
+    sizes: ['256x256', '512x512', '1024x1024'],
+    qualities: ['standard'],
+  },
 };
 
 const DEFAULT_MODEL = 'gpt-image-1';
@@ -126,7 +140,12 @@ export async function resizeImage(imageBuffer, platform) {
 /**
  * Upload image to storage via provider adapter
  */
-export async function uploadToStorage(storageAdapter, imageBuffer, storagePath, contentType = 'image/png') {
+export async function uploadToStorage(
+  storageAdapter,
+  imageBuffer,
+  storagePath,
+  contentType = 'image/png'
+) {
   if (!storageAdapter) {
     throw new Error('Storage not configured — cannot upload');
   }
@@ -210,7 +229,7 @@ export async function generateImagesFromPrompt(prompt, presetIds, apiKey = null,
   const generated = await generateWithDallE(prompt, options, apiKey);
 
   // Get image buffer (either from URL download or direct base64)
-  const imageBuffer = generated.b64Buffer || await downloadImage(generated.url);
+  const imageBuffer = generated.b64Buffer || (await downloadImage(generated.url));
 
   // Resize for each requested platform
   const results = await Promise.all(

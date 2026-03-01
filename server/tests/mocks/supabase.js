@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals'
+import { jest } from '@jest/globals';
 
 // Mock Supabase client
 export const mockSupabaseClient = {
@@ -18,7 +18,7 @@ export const mockSupabaseClient = {
   auth: {
     getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
   },
-}
+};
 
 // Mock createClient function
-export const mockCreateClient = jest.fn().mockReturnValue(mockSupabaseClient)
+export const mockCreateClient = jest.fn().mockReturnValue(mockSupabaseClient);

@@ -84,6 +84,7 @@ npm install
 ```
 
 All testing dependencies are in `package.json`:
+
 - `vitest`
 - `@testing-library/react`
 - `@testing-library/user-event`
@@ -117,15 +118,17 @@ npm run test:ui
 Test individual components in isolation.
 
 **Example:**
+
 ```javascript
 // Login.test.jsx
 it('renders login form', () => {
-  render(<Login />)
-  expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
-})
+  render(<Login />);
+  expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+});
 ```
 
 **Files:**
+
 - All `.test.jsx` files in `src/components/`
 - All `.test.jsx` files in `src/contexts/`
 - All `.test.js` files in `src/services/`
@@ -135,14 +138,16 @@ it('renders login form', () => {
 Test multiple components working together.
 
 **Example:**
+
 ```javascript
 // auth-flow.test.jsx
 it('completes signup and login flow', async () => {
   // Test full user journey
-})
+});
 ```
 
 **Files:**
+
 - `src/test/integration/*.test.jsx`
 
 ### 3. Example Tests
@@ -150,6 +155,7 @@ it('completes signup and login flow', async () => {
 Example tests for components that may be implemented differently.
 
 **Files:**
+
 - `src/test/example-components/*.test.jsx`
 
 ---
@@ -159,105 +165,105 @@ Example tests for components that may be implemented differently.
 ### Basic Component Test
 
 ```javascript
-import { describe, it, expect } from 'vitest'
-import { screen } from '@testing-library/react'
-import { renderWithProviders } from '../test/utils/test-utils'
-import MyComponent from './MyComponent'
+import { describe, it, expect } from 'vitest';
+import { screen } from '@testing-library/react';
+import { renderWithProviders } from '../test/utils/test-utils';
+import MyComponent from './MyComponent';
 
 describe('MyComponent', () => {
   it('renders correctly', () => {
-    renderWithProviders(<MyComponent />)
-    
-    expect(screen.getByText('Hello World')).toBeInTheDocument()
-  })
-})
+    renderWithProviders(<MyComponent />);
+
+    expect(screen.getByText('Hello World')).toBeInTheDocument();
+  });
+});
 ```
 
 ### Testing User Interactions
 
 ```javascript
-import userEvent from '@testing-library/user-event'
+import userEvent from '@testing-library/user-event';
 
 it('handles button click', async () => {
-  const user = userEvent.setup()
-  const mockFn = vi.fn()
-  
-  renderWithProviders(<MyComponent onClick={mockFn} />)
-  
-  await user.click(screen.getByRole('button'))
-  
-  expect(mockFn).toHaveBeenCalled()
-})
+  const user = userEvent.setup();
+  const mockFn = vi.fn();
+
+  renderWithProviders(<MyComponent onClick={mockFn} />);
+
+  await user.click(screen.getByRole('button'));
+
+  expect(mockFn).toHaveBeenCalled();
+});
 ```
 
 ### Testing Async Behavior
 
 ```javascript
-import { waitFor } from '@testing-library/react'
+import { waitFor } from '@testing-library/react';
 
 it('loads data', async () => {
-  renderWithProviders(<MyComponent />)
-  
+  renderWithProviders(<MyComponent />);
+
   await waitFor(() => {
-    expect(screen.getByText('Loaded')).toBeInTheDocument()
-  })
-})
+    expect(screen.getByText('Loaded')).toBeInTheDocument();
+  });
+});
 ```
 
 ### Testing Forms
 
 ```javascript
 it('submits form', async () => {
-  const user = userEvent.setup()
-  const mockSubmit = vi.fn()
-  
-  renderWithProviders(<MyForm onSubmit={mockSubmit} />)
-  
-  await user.type(screen.getByLabelText(/email/i), 'test@example.com')
-  await user.type(screen.getByLabelText(/password/i), 'password123')
-  await user.click(screen.getByRole('button', { name: /submit/i }))
-  
+  const user = userEvent.setup();
+  const mockSubmit = vi.fn();
+
+  renderWithProviders(<MyForm onSubmit={mockSubmit} />);
+
+  await user.type(screen.getByLabelText(/email/i), 'test@example.com');
+  await user.type(screen.getByLabelText(/password/i), 'password123');
+  await user.click(screen.getByRole('button', { name: /submit/i }));
+
   await waitFor(() => {
     expect(mockSubmit).toHaveBeenCalledWith({
       email: 'test@example.com',
       password: 'password123',
-    })
-  })
-})
+    });
+  });
+});
 ```
 
 ### Testing Error States
 
 ```javascript
 it('shows error message', async () => {
-  const mockFn = vi.fn().mockRejectedValue(new Error('Failed'))
-  
-  renderWithProviders(<MyComponent onAction={mockFn} />)
-  
-  await user.click(screen.getByRole('button'))
-  
+  const mockFn = vi.fn().mockRejectedValue(new Error('Failed'));
+
+  renderWithProviders(<MyComponent onAction={mockFn} />);
+
+  await user.click(screen.getByRole('button'));
+
   await waitFor(() => {
-    expect(screen.getByText(/failed/i)).toBeInTheDocument()
-  })
-})
+    expect(screen.getByText(/failed/i)).toBeInTheDocument();
+  });
+});
 ```
 
 ### Testing with Auth Context
 
 ```javascript
-import * as AuthContext from '../contexts/AuthContext'
-import { mockUser } from '../test/utils/test-utils'
+import * as AuthContext from '../contexts/AuthContext';
+import { mockUser } from '../test/utils/test-utils';
 
 it('renders for authenticated user', () => {
   vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
     user: mockUser,
     loading: false,
-  })
-  
-  renderWithProviders(<MyComponent />)
-  
-  expect(screen.getByText(mockUser.email)).toBeInTheDocument()
-})
+  });
+
+  renderWithProviders(<MyComponent />);
+
+  expect(screen.getByText(mockUser.email)).toBeInTheDocument();
+});
 ```
 
 ---
@@ -267,12 +273,12 @@ it('renders for authenticated user', () => {
 ### Mock Supabase
 
 ```javascript
-import { mockSupabaseClient } from '../test/mocks/supabase'
+import { mockSupabaseClient } from '../test/mocks/supabase';
 
 mockSupabaseClient.auth.signIn.mockResolvedValue({
   data: { user: mockUser },
   error: null,
-})
+});
 ```
 
 ### Mock Fetch
@@ -281,18 +287,18 @@ mockSupabaseClient.auth.signIn.mockResolvedValue({
 global.fetch = vi.fn().mockResolvedValue({
   ok: true,
   json: () => Promise.resolve({ data: 'test' }),
-})
+});
 ```
 
 ### Mock Router
 
 ```javascript
-const mockNavigate = vi.fn()
+const mockNavigate = vi.fn();
 
 vi.mock('react-router-dom', () => ({
   ...vi.importActual('react-router-dom'),
   useNavigate: () => mockNavigate,
-}))
+}));
 ```
 
 ---
@@ -323,6 +329,7 @@ coverage: {
 ### Coverage Reports
 
 Generated in `coverage/` directory:
+
 - `coverage/index.html` - Interactive HTML report
 - `coverage/lcov.info` - LCOV format for CI
 - `coverage/coverage-final.json` - JSON format
@@ -336,14 +343,17 @@ Generated in `coverage/` directory:
 File: `.github/workflows/test.yml`
 
 **Runs on:**
+
 - Push to main, develop, feature branches
 - Pull requests to main, develop
 
 **Matrix:**
+
 - Node.js 18.x
 - Node.js 20.x
 
 **Steps:**
+
 1. Checkout code
 2. Setup Node.js
 3. Install dependencies
@@ -382,13 +392,14 @@ React Testing Library query priorities (use in order):
    - `getByTestId`
 
 **Example:**
+
 ```javascript
 // Good
-screen.getByRole('button', { name: /submit/i })
-screen.getByLabelText('Email')
+screen.getByRole('button', { name: /submit/i });
+screen.getByLabelText('Email');
 
 // Avoid
-screen.getByTestId('submit-button')
+screen.getByTestId('submit-button');
 ```
 
 ---
@@ -399,33 +410,33 @@ screen.getByTestId('submit-button')
 
 ```javascript
 // Presence
-expect(element).toBeInTheDocument()
-expect(element).not.toBeInTheDocument()
+expect(element).toBeInTheDocument();
+expect(element).not.toBeInTheDocument();
 
 // Visibility
-expect(element).toBeVisible()
-expect(element).not.toBeVisible()
+expect(element).toBeVisible();
+expect(element).not.toBeVisible();
 
 // State
-expect(button).toBeDisabled()
-expect(button).toBeEnabled()
-expect(checkbox).toBeChecked()
+expect(button).toBeDisabled();
+expect(button).toBeEnabled();
+expect(checkbox).toBeChecked();
 
 // Content
-expect(element).toHaveTextContent('Hello')
-expect(input).toHaveValue('test@example.com')
+expect(element).toHaveTextContent('Hello');
+expect(input).toHaveValue('test@example.com');
 
 // Classes
-expect(element).toHaveClass('active')
-expect(element).not.toHaveClass('disabled')
+expect(element).toHaveClass('active');
+expect(element).not.toHaveClass('disabled');
 
 // Attributes
-expect(link).toHaveAttribute('href', '/login')
+expect(link).toHaveAttribute('href', '/login');
 
 // Functions
-expect(mockFn).toHaveBeenCalled()
-expect(mockFn).toHaveBeenCalledWith('arg')
-expect(mockFn).toHaveBeenCalledTimes(2)
+expect(mockFn).toHaveBeenCalled();
+expect(mockFn).toHaveBeenCalledWith('arg');
+expect(mockFn).toHaveBeenCalledTimes(2);
 ```
 
 ---
@@ -437,15 +448,16 @@ expect(mockFn).toHaveBeenCalledTimes(2)
 `renderWithProviders` wraps components with necessary providers:
 
 ```javascript
-import { renderWithProviders } from './test/utils/test-utils'
+import { renderWithProviders } from './test/utils/test-utils';
 
 renderWithProviders(<MyComponent />, {
-  route: '/custom-route',  // Set initial route
-  authValue: mockUser,      // Mock authenticated user
-})
+  route: '/custom-route', // Set initial route
+  authValue: mockUser, // Mock authenticated user
+});
 ```
 
 **Provides:**
+
 - `BrowserRouter` for routing
 - `AuthProvider` for authentication
 - Custom initial route
@@ -453,17 +465,17 @@ renderWithProviders(<MyComponent />, {
 ### Mock Data Helpers
 
 ```javascript
-import { 
-  mockUser, 
-  mockSession, 
+import {
+  mockUser,
+  mockSession,
   createMockPreset,
   createMockGeneratedImage,
-} from './test/utils/test-utils'
+} from './test/utils/test-utils';
 
 // Use in tests
-const user = mockUser
-const preset = createMockPreset({ name: 'Custom Platform' })
-const image = createMockGeneratedImage()
+const user = mockUser;
+const preset = createMockPreset({ name: 'Custom Platform' });
+const image = createMockGeneratedImage();
 ```
 
 ---
@@ -475,13 +487,14 @@ const image = createMockGeneratedImage()
 **Automatic:** Supabase is mocked globally in `src/test/mocks/supabase.js`
 
 **Customize for specific test:**
+
 ```javascript
-import { mockSupabaseClient } from '../test/mocks/supabase'
+import { mockSupabaseClient } from '../test/mocks/supabase';
 
 mockSupabaseClient.auth.signIn.mockResolvedValue({
   data: { user: customUser },
   error: null,
-})
+});
 ```
 
 ### Mocking Fetch
@@ -489,34 +502,35 @@ mockSupabaseClient.auth.signIn.mockResolvedValue({
 **Automatic:** Fetch is mocked globally in `src/test/mocks/fetch.js`
 
 **Customize for specific test:**
+
 ```javascript
 global.fetch = vi.fn().mockResolvedValue({
   ok: true,
   json: () => Promise.resolve({ data: 'custom' }),
-})
+});
 ```
 
 ### Mocking Context
 
 ```javascript
-import * as AuthContext from '../contexts/AuthContext'
+import * as AuthContext from '../contexts/AuthContext';
 
 vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
   user: mockUser,
   signOut: vi.fn(),
   loading: false,
-})
+});
 ```
 
 ### Mocking Router
 
 ```javascript
-const mockNavigate = vi.fn()
+const mockNavigate = vi.fn();
 
 vi.mock('react-router-dom', async () => ({
-  ...await vi.importActual('react-router-dom'),
+  ...(await vi.importActual('react-router-dom')),
   useNavigate: () => mockNavigate,
-}))
+}));
 ```
 
 ---
@@ -527,66 +541,62 @@ vi.mock('react-router-dom', async () => ({
 
 ```javascript
 it('validates and submits form', async () => {
-  const user = userEvent.setup()
-  const mockSubmit = vi.fn()
-  
-  render(<LoginForm onSubmit={mockSubmit} />)
-  
+  const user = userEvent.setup();
+  const mockSubmit = vi.fn();
+
+  render(<LoginForm onSubmit={mockSubmit} />);
+
   // Fill form
-  await user.type(screen.getByLabelText(/email/i), 'test@example.com')
-  await user.type(screen.getByLabelText(/password/i), 'password123')
-  
+  await user.type(screen.getByLabelText(/email/i), 'test@example.com');
+  await user.type(screen.getByLabelText(/password/i), 'password123');
+
   // Submit
-  await user.click(screen.getByRole('button', { name: /submit/i }))
-  
+  await user.click(screen.getByRole('button', { name: /submit/i }));
+
   // Assert
   await waitFor(() => {
     expect(mockSubmit).toHaveBeenCalledWith({
       email: 'test@example.com',
       password: 'password123',
-    })
-  })
-})
+    });
+  });
+});
 ```
 
 ### Testing Loading States
 
 ```javascript
 it('shows loading spinner', async () => {
-  const slowFn = vi.fn(() => 
-    new Promise(resolve => setTimeout(resolve, 1000))
-  )
-  
-  render(<MyComponent onAction={slowFn} />)
-  
-  await user.click(screen.getByRole('button'))
-  
+  const slowFn = vi.fn(() => new Promise((resolve) => setTimeout(resolve, 1000)));
+
+  render(<MyComponent onAction={slowFn} />);
+
+  await user.click(screen.getByRole('button'));
+
   // Should show loading
-  expect(screen.getByText(/loading/i)).toBeInTheDocument()
-  
+  expect(screen.getByText(/loading/i)).toBeInTheDocument();
+
   // Wait for completion
   await waitFor(() => {
-    expect(screen.queryByText(/loading/i)).not.toBeInTheDocument()
-  })
-})
+    expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
+  });
+});
 ```
 
 ### Testing Error States
 
 ```javascript
 it('displays error message', async () => {
-  const mockFn = vi.fn().mockRejectedValue(
-    new Error('Something went wrong')
-  )
-  
-  render(<MyComponent onAction={mockFn} />)
-  
-  await user.click(screen.getByRole('button'))
-  
+  const mockFn = vi.fn().mockRejectedValue(new Error('Something went wrong'));
+
+  render(<MyComponent onAction={mockFn} />);
+
+  await user.click(screen.getByRole('button'));
+
   await waitFor(() => {
-    expect(screen.getByText(/something went wrong/i)).toBeInTheDocument()
-  })
-})
+    expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
+  });
+});
 ```
 
 ### Testing Conditional Rendering
@@ -594,32 +604,32 @@ it('displays error message', async () => {
 ```javascript
 it('renders different UI based on auth state', () => {
   // Not authenticated
-  vi.spyOn(AuthContext, 'useAuth').mockReturnValue({ user: null })
-  const { rerender } = render(<MyComponent />)
-  expect(screen.getByText('Sign In')).toBeInTheDocument()
-  
+  vi.spyOn(AuthContext, 'useAuth').mockReturnValue({ user: null });
+  const { rerender } = render(<MyComponent />);
+  expect(screen.getByText('Sign In')).toBeInTheDocument();
+
   // Authenticated
-  vi.spyOn(AuthContext, 'useAuth').mockReturnValue({ user: mockUser })
-  rerender(<MyComponent />)
-  expect(screen.getByText('Welcome')).toBeInTheDocument()
-})
+  vi.spyOn(AuthContext, 'useAuth').mockReturnValue({ user: mockUser });
+  rerender(<MyComponent />);
+  expect(screen.getByText('Welcome')).toBeInTheDocument();
+});
 ```
 
 ### Testing Accessibility
 
 ```javascript
 it('is accessible', () => {
-  render(<MyComponent />)
-  
+  render(<MyComponent />);
+
   // Has proper labels
-  expect(screen.getByLabelText('Email')).toBeInTheDocument()
-  
+  expect(screen.getByLabelText('Email')).toBeInTheDocument();
+
   // Has proper roles
-  expect(screen.getByRole('button')).toBeInTheDocument()
-  
+  expect(screen.getByRole('button')).toBeInTheDocument();
+
   // Has alt text
-  expect(screen.getByAltText('Profile')).toBeInTheDocument()
-})
+  expect(screen.getByAltText('Profile')).toBeInTheDocument();
+});
 ```
 
 ---
@@ -635,6 +645,7 @@ npm run test:coverage
 ### View Reports
 
 **Terminal Output:**
+
 ```
 ----------------|---------|----------|---------|---------|-------------------
 File            | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
@@ -648,11 +659,13 @@ All files       |   85.23 |    78.45 |   82.11 |   85.67 |
 ```
 
 **HTML Report:**
+
 ```bash
 open coverage/index.html
 ```
 
 Interactive report showing:
+
 - Overall coverage percentages
 - File-by-file breakdown
 - Line-by-line highlighting
@@ -666,29 +679,30 @@ Interactive report showing:
 
 ```javascript
 it('debugs component', () => {
-  render(<MyComponent />)
-  
-  screen.debug() // Prints current DOM
-  
+  render(<MyComponent />);
+
+  screen.debug(); // Prints current DOM
+
   // Or debug specific element
-  screen.debug(screen.getByRole('button'))
-})
+  screen.debug(screen.getByRole('button'));
+});
 ```
 
 ### 2. Use Testing Playground
 
 ```javascript
 it('uses testing playground', () => {
-  render(<MyComponent />)
-  
-  screen.logTestingPlaygroundURL()
+  render(<MyComponent />);
+
+  screen.logTestingPlaygroundURL();
   // Opens https://testing-playground.com with your DOM
-})
+});
 ```
 
 ### 3. Use VS Code Debugger
 
 In `package.json`:
+
 ```json
 {
   "scripts": {
@@ -698,6 +712,7 @@ In `package.json`:
 ```
 
 Then:
+
 1. Set breakpoint in test
 2. Run `npm run test:debug`
 3. Attach VS Code debugger
@@ -726,21 +741,21 @@ it.skip('skips this test', () => { ... })
 
 ```javascript
 // Good - tests what user sees
-expect(screen.getByText('Welcome')).toBeInTheDocument()
+expect(screen.getByText('Welcome')).toBeInTheDocument();
 
 // Bad - tests implementation details
-expect(wrapper.state().isLoggedIn).toBe(true)
+expect(wrapper.state().isLoggedIn).toBe(true);
 ```
 
 ### 2. Use Accessible Queries
 
 ```javascript
 // Good - uses roles and labels
-screen.getByRole('button', { name: /submit/i })
-screen.getByLabelText('Email')
+screen.getByRole('button', { name: /submit/i });
+screen.getByLabelText('Email');
 
 // Bad - uses test IDs
-screen.getByTestId('submit-btn')
+screen.getByTestId('submit-btn');
 ```
 
 ### 3. Await Async Updates
@@ -748,20 +763,20 @@ screen.getByTestId('submit-btn')
 ```javascript
 // Good - waits for updates
 await waitFor(() => {
-  expect(screen.getByText('Success')).toBeInTheDocument()
-})
+  expect(screen.getByText('Success')).toBeInTheDocument();
+});
 
 // Bad - doesn't wait
-expect(screen.getByText('Success')).toBeInTheDocument()
+expect(screen.getByText('Success')).toBeInTheDocument();
 ```
 
 ### 4. Clean Up
 
 ```javascript
 afterEach(() => {
-  cleanup()          // Unmount components
-  vi.clearAllMocks() // Clear mocks
-})
+  cleanup(); // Unmount components
+  vi.clearAllMocks(); // Clear mocks
+});
 ```
 
 ### 5. Organize Tests
@@ -771,7 +786,7 @@ describe('MyComponent', () => {
   describe('when logged in', () => {
     it('shows user menu', () => { ... })
   })
-  
+
   describe('when logged out', () => {
     it('shows sign in button', () => { ... })
   })
@@ -803,19 +818,19 @@ For each component, test:
 ### Testing Custom Hooks
 
 ```javascript
-import { renderHook, waitFor } from '@testing-library/react'
+import { renderHook, waitFor } from '@testing-library/react';
 
 it('custom hook works', async () => {
-  const { result } = renderHook(() => useMyHook())
-  
-  expect(result.current.value).toBe(0)
-  
+  const { result } = renderHook(() => useMyHook());
+
+  expect(result.current.value).toBe(0);
+
   act(() => {
-    result.current.increment()
-  })
-  
-  expect(result.current.value).toBe(1)
-})
+    result.current.increment();
+  });
+
+  expect(result.current.value).toBe(1);
+});
 ```
 
 ### Testing Context
@@ -824,19 +839,19 @@ it('custom hook works', async () => {
 it('provides context value', () => {
   const { result } = renderHook(() => useMyContext(), {
     wrapper: MyContextProvider,
-  })
-  
-  expect(result.current).toHaveProperty('value')
-})
+  });
+
+  expect(result.current).toHaveProperty('value');
+});
 ```
 
 ### Snapshot Testing
 
 ```javascript
 it('matches snapshot', () => {
-  const { container } = render(<MyComponent />)
-  expect(container.firstChild).toMatchSnapshot()
-})
+  const { container } = render(<MyComponent />);
+  expect(container.firstChild).toMatchSnapshot();
+});
 ```
 
 ---

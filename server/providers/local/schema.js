@@ -314,7 +314,7 @@ export function initializeSchema(db) {
   `);
 
   // Migrate existing databases: add columns if missing
-  const userColumns = db.pragma('table_info(users)').map(c => c.name);
+  const userColumns = db.pragma('table_info(users)').map((c) => c.name);
   if (!userColumns.includes('encrypted_openai_key')) {
     db.exec(`ALTER TABLE users ADD COLUMN encrypted_openai_key TEXT DEFAULT NULL`);
   }

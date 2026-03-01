@@ -17,7 +17,10 @@ export const SystemMetricsChart = ({ data }) => {
   }
 
   const chartData = data.map((item) => ({
-    date: new Date(item.metric_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    date: new Date(item.metric_date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    }),
     users: item.active_users,
     images: item.total_images,
     apiCalls: item.total_api_calls,

@@ -16,6 +16,7 @@ Guide to optimizing SnapAsset API performance.
 ### Recommended Setup
 
 **Production:**
+
 - 1-2 API servers (load balanced)
 - 2-5 worker processes
 - Redis cluster (if high traffic)
@@ -23,13 +24,13 @@ Guide to optimizing SnapAsset API performance.
 
 **Scaling Thresholds:**
 
-| Metric | Add Worker | Add API Server |
-|--------|-----------|----------------|
-| Jobs waiting | > 50 | N/A |
-| Active jobs | > 10/worker | N/A |
-| CPU usage | > 80% | > 70% |
-| Memory usage | > 80% | > 80% |
-| Response time | N/A | > 500ms |
+| Metric        | Add Worker  | Add API Server |
+| ------------- | ----------- | -------------- |
+| Jobs waiting  | > 50        | N/A            |
+| Active jobs   | > 10/worker | N/A            |
+| CPU usage     | > 80%       | > 70%          |
+| Memory usage  | > 80%       | > 80%          |
+| Response time | N/A         | > 500ms        |
 
 ## Queue Optimization
 
@@ -46,6 +47,7 @@ imageGenerationQueue.process(
 ```
 
 **Guidelines:**
+
 - Start with 2-3 concurrent jobs per worker
 - Monitor CPU and memory
 - Scale up if resources available
@@ -110,10 +112,7 @@ const resized = await sharp(buffer)
 
 ```javascript
 // Use WebP for smaller files (30-50% reduction)
-const webp = await sharp(buffer)
-  .resize(width, height)
-  .webp({ quality: 85 })
-  .toBuffer();
+const webp = await sharp(buffer).resize(width, height).webp({ quality: 85 }).toBuffer();
 ```
 
 ### Parallel Processing
@@ -136,15 +135,9 @@ const results = await Promise.all(
 import stream from 'stream';
 import { pipeline } from 'stream/promises';
 
-const transform = sharp()
-  .resize(width, height)
-  .png();
+const transform = sharp().resize(width, height).png();
 
-await pipeline(
-  imageStream,
-  transform,
-  uploadStream
-);
+await pipeline(imageStream, transform, uploadStream);
 ```
 
 ## Caching
@@ -176,7 +169,7 @@ async function getCachedResult(generationId) {
 // Cache job status responses
 app.get('/api/jobs/:jobId', async (req, res) => {
   const job = await getJob(req.params.jobId);
-  
+
   if (job.status === 'completed') {
     // Cache completed jobs for 1 hour
     res.set('Cache-Control', 'public, max-age=3600');
@@ -184,7 +177,7 @@ app.get('/api/jobs/:jobId', async (req, res) => {
     // Don't cache active jobs
     res.set('Cache-Control', 'no-cache');
   }
-  
+
   res.json(job);
 });
 ```
@@ -193,11 +186,9 @@ app.get('/api/jobs/:jobId', async (req, res) => {
 
 ```javascript
 // Set aggressive caching for generated images
-await supabase.storage
-  .from('generated-images')
-  .upload(path, buffer, {
-    cacheControl: '31536000', // 1 year
-  });
+await supabase.storage.from('generated-images').upload(path, buffer, {
+  cacheControl: '31536000', // 1 year
+});
 ```
 
 ## Database
@@ -206,13 +197,13 @@ await supabase.storage
 
 ```sql
 -- Use indexes
-CREATE INDEX idx_generations_user_created 
+CREATE INDEX idx_generations_user_created
   ON generations(user_id, created_at DESC);
 
 -- Limit results
-SELECT * FROM generations 
-WHERE user_id = $1 
-ORDER BY created_at DESC 
+SELECT * FROM generations
+WHERE user_id = $1
+ORDER BY created_at DESC
 LIMIT 20;
 
 -- Use explain to analyze
@@ -235,9 +226,7 @@ const pool = new Pool({
 
 ```javascript
 // Insert multiple images at once
-const { data, error } = await supabase
-  .from('generated_images')
-  .insert(images); // Array of images
+const { data, error } = await supabase.from('generated_images').insert(images); // Array of images
 ```
 
 ## Monitoring
@@ -245,6 +234,7 @@ const { data, error } = await supabase
 ### Key Metrics
 
 **API Server:**
+
 - Request rate (req/s)
 - Response time (ms)
 - Error rate (%)
@@ -252,12 +242,14 @@ const { data, error } = await supabase
 - Memory usage (MB)
 
 **Worker:**
+
 - Jobs processed/min
 - Average job duration
 - Failed job rate
 - Worker CPU/memory
 
 **Queue:**
+
 - Queue depth
 - Processing rate
 - Failed jobs
@@ -265,14 +257,14 @@ const { data, error } = await supabase
 
 ### Performance Targets
 
-| Metric | Target | Critical |
-|--------|--------|----------|
+| Metric            | Target  | Critical |
+| ----------------- | ------- | -------- |
 | API response time | < 200ms | > 1000ms |
-| Job processing | < 60s | > 300s |
-| Queue depth | < 50 | > 200 |
-| Error rate | < 1% | > 5% |
-| Worker CPU | < 70% | > 90% |
-| Memory usage | < 512MB | > 1GB |
+| Job processing    | < 60s   | > 300s   |
+| Queue depth       | < 50    | > 200    |
+| Error rate        | < 1%    | > 5%     |
+| Worker CPU        | < 70%   | > 90%    |
+| Memory usage      | < 512MB | > 1GB    |
 
 ### Alerting
 
@@ -286,7 +278,7 @@ const ALERTS = {
 
 setInterval(async () => {
   const stats = await getStats();
-  
+
   if (ALERTS.queueBacklog(stats.queueDepth)) {
     sendAlert('Queue backlog detected', stats);
   }
@@ -304,35 +296,36 @@ config:
   phases:
     - duration: 60
       arrivalRate: 5
-      name: "Warm up"
+      name: 'Warm up'
     - duration: 120
       arrivalRate: 10
-      name: "Sustained load"
+      name: 'Sustained load'
     - duration: 60
       arrivalRate: 20
-      name: "High load"
+      name: 'High load'
 
 scenarios:
-  - name: "Create and monitor job"
+  - name: 'Create and monitor job'
     flow:
       - post:
-          url: "/api/jobs"
+          url: '/api/jobs'
           json:
-            userId: "test-user"
-            prompt: "Test image"
+            userId: 'test-user'
+            prompt: 'Test image'
             platforms:
-              - "instagram-post"
+              - 'instagram-post'
           capture:
-            - json: "$.jobId"
-              as: "jobId"
+            - json: '$.jobId'
+              as: 'jobId'
       - get:
-          url: "/api/jobs/{{ jobId }}"
+          url: '/api/jobs/{{ jobId }}'
       - think: 5
       - get:
-          url: "/api/jobs/{{ jobId }}"
+          url: '/api/jobs/{{ jobId }}'
 ```
 
 Run:
+
 ```bash
 npm install -g artillery
 arteillery run load-test.yml
@@ -361,6 +354,7 @@ Summary:
 ```
 
 **Targets:**
+
 - p95 response time < 500ms
 - Error rate < 1%
 - RPS > 10
@@ -372,15 +366,17 @@ Summary:
 ```javascript
 import compression from 'compression';
 
-app.use(compression({
-  filter: (req, res) => {
-    if (req.headers['x-no-compression']) {
-      return false;
-    }
-    return compression.filter(req, res);
-  },
-  level: 6,
-}));
+app.use(
+  compression({
+    filter: (req, res) => {
+      if (req.headers['x-no-compression']) {
+        return false;
+      }
+      return compression.filter(req, res);
+    },
+    level: 6,
+  })
+);
 ```
 
 ### 2. Use Clustering
@@ -391,11 +387,11 @@ import os from 'os';
 
 if (cluster.isPrimary) {
   const numCPUs = os.cpus().length;
-  
+
   for (let i = 0; i < numCPUs; i++) {
     cluster.fork();
   }
-  
+
   cluster.on('exit', (worker) => {
     console.log(`Worker ${worker.process.pid} died`);
     cluster.fork();
@@ -416,12 +412,12 @@ const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: winston.format.json(),
   transports: [
-    new winston.transports.File({ 
-      filename: 'error.log', 
-      level: 'error' 
+    new winston.transports.File({
+      filename: 'error.log',
+      level: 'error',
     }),
-    new winston.transports.File({ 
-      filename: 'combined.log' 
+    new winston.transports.File({
+      filename: 'combined.log',
     }),
   ],
 });
@@ -464,12 +460,14 @@ await imageGenerationQueue.add(jobData, {
 ### Target Performance
 
 **API Endpoints:**
+
 - GET /health: < 10ms
 - POST /api/jobs: < 100ms
 - GET /api/jobs/:id: < 50ms
 - GET /api/queue/stats: < 30ms
 
 **Job Processing:**
+
 - DALL-E generation: 10-20s
 - Single platform resize: 0.5-2s
 - Upload to storage: 1-3s
@@ -502,6 +500,7 @@ await imageGenerationQueue.add(jobData, {
 - DALL-E 3 HD: $0.080 per image
 
 **Strategies:**
+
 - Cache frequently requested images
 - Batch similar requests
 - Use standard quality when HD not needed
@@ -512,6 +511,7 @@ await imageGenerationQueue.add(jobData, {
 - Bandwidth: $0.09 per GB
 
 **Strategies:**
+
 - Compress images (WebP)
 - Set up CDN caching
 - Clean old images regularly
@@ -523,6 +523,7 @@ await imageGenerationQueue.add(jobData, {
 - Redis Cloud: Free tier (30MB)
 
 **Strategies:**
+
 - Clean completed jobs regularly
 - Use short TTLs for cache
 - Monitor memory usage

@@ -12,12 +12,16 @@ SnapAsset is a modern web application that simplifies the process of generating 
 
 ## ✨ Features
 
-- 🎨 **AI Image Generation** - Powered by OpenAI DALL-E 3
+- 🎨 **AI Image Generation** - Powered by OpenAI DALL-E 3 with BYOK (Bring Your Own Key) support
 - 📱 **20+ Platform Presets** - Instagram, Twitter, Facebook, LinkedIn, iOS, Android, and more
 - ⚡ **Fast Processing** - Built with React + Vite for lightning-fast performance
-- 🔒 **Secure Authentication** - Multiple auth methods via Supabase (email, Google, GitHub, Discord)
+- 🔒 **Flexible Authentication** - Supabase auth (email, Google, GitHub, Discord) or local mode with JWT
+- 🔑 **BYOK API Key Management** - Use your own OpenAI key via a secure Settings page
+- 🌗 **Light/Dark Theme** - Toggle between light and dark modes with system preference detection
+- 🎨 **Premium UI** - Colorful branding with polished, modern design
 - ☁️ **Cloud Storage** - Automatic image storage with CDN-backed URLs
-- 🚢 **One-Click Deploy** - Deploy to Railway in under 5 minutes
+- 🐳 **Fully Dockerized** - Frontend and backend with configurable ports
+- 🏠 **Local Mode** - Run without Supabase using SQLite/filesystem/JWT fallback
 - 📱 **Responsive Design** - Works seamlessly on desktop and mobile
 - 🧪 **Fully Tested** - 124+ tests with 80%+ coverage
 - 📊 **Health Monitoring** - Built-in health checks and metrics
@@ -25,23 +29,27 @@ SnapAsset is a modern web application that simplifies the process of generating 
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - **React 18** - Modern UI library
 - **Vite** - Next-generation frontend tooling
 - **React Router** - Client-side routing
 - **Supabase Client** - Database and auth integration
 
 ### Backend
+
 - **Express.js** - Fast, minimalist web framework
 - **Node.js 18** - JavaScript runtime
 - **Sharp** - High-performance image processing
 - **OpenAI SDK** - DALL-E 3 integration
 
 ### Database & Services
+
 - **Supabase** - PostgreSQL database, authentication, and storage
 - **OpenAI** - AI image generation
 - **Railway** - Deployment platform
 
 ### Testing
+
 - **Vitest** - Frontend testing
 - **React Testing Library** - Component testing
 - **Jest** - Backend testing
@@ -50,8 +58,9 @@ SnapAsset is a modern web application that simplifies the process of generating 
 ## 📋 Prerequisites
 
 - Node.js 18+ and npm
-- Supabase account ([app.supabase.com](https://app.supabase.com))
-- OpenAI API key ([platform.openai.com](https://platform.openai.com)) (optional)
+- Docker (optional, for containerized deployment)
+- Supabase account ([app.supabase.com](https://app.supabase.com)) (optional — local mode available)
+- OpenAI API key ([platform.openai.com](https://platform.openai.com)) (optional — can be added via Settings)
 - Railway account ([railway.app](https://railway.app)) (for deployment)
 
 ## 🚦 Getting Started
@@ -163,35 +172,41 @@ REDIS_URL=redis://...
 snapasset/
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml                 # Testing & validation
+│       ├── ci.yml                 # CI/CD pipeline
+│       ├── code-quality.yml       # Lint, format, bundle analysis
+│       ├── test.yml               # Cross-platform test matrix
 │       └── railway-deploy.yml     # Railway deployment
 ├── docs/
 │   ├── RAILWAY_DEPLOYMENT.md      # Complete deployment guide
 │   ├── DEPLOYMENT_QUICK_START.md  # 5-minute quick start
 │   ├── DEPLOYMENT_ARCHITECTURE.md # Architecture overview
 │   └── DEPLOYMENT_CHECKLIST.md    # Pre/post deployment checklist
-├── scripts/
-│   └── deploy.sh                  # Deployment validation script
 ├── server/
-│   ├── middleware/
-│   │   └── monitoring.js          # Monitoring & logging
-│   ├── routes/                    # API routes
+│   ├── middleware/                 # Auth, rate limiting, monitoring
+│   ├── routes/                    # API routes (images, jobs, projects, settings)
 │   ├── services/                  # Business logic
-│   ├── index.js                   # Server entry point
-│   └── package.json               # Backend dependencies
+│   ├── workers/                   # Background job processors
+│   ├── utils/                     # Logger, encryption
+│   ├── Dockerfile                 # Backend container
+│   └── docker-compose.yml         # Full stack orchestration
 ├── src/
 │   ├── components/
-│   │   ├── auth/                  # Authentication components
-│   │   └── ...                    # Other components
+│   │   ├── auth/                  # Login, Signup, AuthCallback
+│   │   ├── Analytics/             # Real-time analytics components
+│   │   └── Projects/              # Project management UI
 │   ├── contexts/
-│   │   └── AuthContext.jsx        # Auth state management
+│   │   ├── AuthContext.jsx        # Auth state management
+│   │   ├── ThemeContext.jsx       # Light/dark theme
+│   │   └── ToastContext.jsx       # Toast notifications
+│   ├── pages/
+│   │   ├── Home.jsx               # Main generation interface
+│   │   └── Settings.jsx           # BYOK keys and preferences
 │   ├── services/
-│   │   └── supabase.js            # Supabase client
-│   ├── App.jsx                    # Main app component
+│   │   └── supabase.js            # Supabase client (with local fallback)
+│   ├── App.jsx                    # Main app with routing
 │   └── main.jsx                   # Entry point
+├── Dockerfile                     # Frontend container
 ├── railway.json                   # Railway configuration
-├── nixpacks.toml                  # Build configuration
-├── railway-template.json          # One-click deploy template
 └── package.json                   # Frontend dependencies
 ```
 
@@ -212,6 +227,7 @@ npm run test:coverage
 ```
 
 **Test Stats:**
+
 - 73+ frontend tests
 - 51+ backend tests
 - 124+ total tests
@@ -238,6 +254,7 @@ curl https://your-app.railway.app/live
 ## 📁 Available Scripts
 
 ### Frontend
+
 - `npm run dev` - Start development server (Vite)
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
@@ -245,11 +262,13 @@ curl https://your-app.railway.app/live
 - `npm test` - Run tests
 
 ### Backend
+
 - `npm run dev` - Start development server (nodemon)
 - `npm start` - Start production server
 - `npm test` - Run backend tests
 
 ### Deployment
+
 - `chmod +x scripts/deploy.sh` - Make deploy script executable
 - `./scripts/deploy.sh` - Run deployment validation
 
@@ -265,6 +284,7 @@ git push origin main
 ```
 
 **GitHub Actions:**
+
 - ✅ Runs tests on PRs
 - ✅ Validates build
 - ✅ Deploys to Railway
@@ -276,6 +296,7 @@ git push origin main
 SnapAsset supports 20+ platform presets:
 
 **Social Media:**
+
 - Instagram (Post, Story, Profile)
 - Twitter/X (Post, Header, Profile)
 - Facebook (Post, Cover, Profile)
@@ -284,10 +305,12 @@ SnapAsset supports 20+ platform presets:
 - YouTube (Thumbnail, Banner, Profile)
 
 **App Stores:**
+
 - iOS App Icon (various sizes)
 - Android App Icon (various densities)
 
 **Web:**
+
 - Favicon (multiple sizes)
 - Open Graph images
 - Twitter Cards
@@ -315,7 +338,8 @@ SnapAsset supports 20+ platform presets:
 - ✅ **Environment Protection** - Secrets not exposed
 - ✅ **HTTPS** - Enforced in production
 - ✅ **Row Level Security** - Database-level access control
-- ✅ **Authentication** - Supabase Auth with multiple providers
+- ✅ **Authentication** - Supabase Auth with multiple providers + local JWT
+- ✅ **API Key Encryption** - BYOK keys encrypted at rest
 - ✅ **Input Validation** - Request validation and sanitization
 - ✅ **Security Logging** - Attack pattern detection
 
@@ -342,14 +366,23 @@ Contributions are welcome! Please follow these steps:
 
 - [x] Basic image generation interface
 - [x] Platform preset selection
-- [x] User authentication (Supabase)
+- [x] User authentication (Supabase + local mode)
 - [x] Database schema and storage
 - [x] Testing infrastructure
 - [x] Railway deployment configuration
-- [ ] Background job processing (Issue #6)
-- [ ] API documentation (Issue #12)
-- [ ] Project management features
-- [ ] Usage analytics dashboard
+- [x] Background job processing
+- [x] API documentation (Swagger/OpenAPI)
+- [x] Project management features
+- [x] Usage analytics dashboard
+- [x] Light/dark theme toggle
+- [x] BYOK API key management
+- [x] Docker support (frontend + backend)
+- [x] Local mode (no Supabase required)
+- [x] Premium UI design polish
+- [ ] Video generation support
+- [ ] Multiple AI providers
+- [ ] Advanced image editing
+- [ ] Collaboration features
 
 ## 📄 License
 

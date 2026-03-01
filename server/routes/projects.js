@@ -428,7 +428,12 @@ router.post('/bulk', async (req, res) => {
       });
     }
 
-    const result = await req.projectService.bulkOperation(req.user.id, operation, project_ids, data);
+    const result = await req.projectService.bulkOperation(
+      req.user.id,
+      operation,
+      project_ids,
+      data
+    );
 
     res.json({
       success: true,

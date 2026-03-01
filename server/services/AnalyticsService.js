@@ -22,7 +22,7 @@ export class AnalyticsService {
   }
 
   async getUserDashboard(userId, period = '30d') {
-    const dashboard = await this.db.analytics.getDashboard(userId, period) || {};
+    const dashboard = (await this.db.analytics.getDashboard(userId, period)) || {};
     const days = this.parsePeriod(period);
 
     const trends = this.calculateTrends(dashboard.dailyUsage || [], days);
@@ -133,12 +133,18 @@ export class AnalyticsService {
     const value = parseInt(match[1]);
     const unit = match[2];
     switch (unit) {
-      case 'd': return value;
-      case 'w': return value * 7;
-      case 'm': return value * 30;
-      case 'y': return value * 365;
-      case 'h': return Math.max(1, Math.ceil(value / 24));
-      default: return 30;
+      case 'd':
+        return value;
+      case 'w':
+        return value * 7;
+      case 'm':
+        return value * 30;
+      case 'y':
+        return value * 365;
+      case 'h':
+        return Math.max(1, Math.ceil(value / 24));
+      default:
+        return 30;
     }
   }
 

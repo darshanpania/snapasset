@@ -38,6 +38,7 @@
 4. Add to your `.env` files:
 
 **Frontend `.env`:**
+
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGc...
@@ -45,6 +46,7 @@ VITE_API_URL=http://localhost:3001
 ```
 
 **Backend `server/.env`:**
+
 ```env
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_KEY=eyJhbGc...
@@ -68,9 +70,11 @@ SUPABASE_SERVICE_KEY=eyJhbGc...
 
 1. Go to **Authentication** > **URL Configuration**
 2. Set **Site URL:**
+
    ```
    http://localhost:5173
    ```
+
    (Change to production URL when deploying)
 
 3. Add **Redirect URLs:**
@@ -117,7 +121,7 @@ SUPABASE_SERVICE_KEY=eyJhbGc...
 3. Fill in:
    - **Application name:** SnapAsset
    - **Homepage URL:** `http://localhost:5173`
-   - **Authorization callback URL:** 
+   - **Authorization callback URL:**
      ```
      https://your-project.supabase.co/auth/v1/callback
      ```
@@ -167,6 +171,7 @@ SUPABASE_SERVICE_KEY=eyJhbGc...
    - **Change Email** - Email change confirmation
 
 **Example Magic Link Template:**
+
 ```html
 <h2>Welcome to SnapAsset!</h2>
 <p>Click the link below to sign in:</p>
@@ -179,6 +184,7 @@ SUPABASE_SERVICE_KEY=eyJhbGc...
 ### Step 6: Test Authentication
 
 1. Start your development servers:
+
    ```bash
    npm run dev
    cd server && npm run dev
@@ -211,6 +217,7 @@ ALTER TABLE your_table ENABLE ROW LEVEL SECURITY;
 ### Email Rate Limiting
 
 Supabase automatically rate limits:
+
 - Email sends: 4 per hour per user
 - Password resets: 2 per hour per user
 
@@ -250,6 +257,7 @@ Configure in **Authentication** > **Rate Limits**
 ### Update Environment Variables
 
 **Frontend:**
+
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-production-key
@@ -257,6 +265,7 @@ VITE_API_URL=https://your-api-domain.com
 ```
 
 **Backend:**
+
 ```env
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_KEY=your-service-key
@@ -275,6 +284,7 @@ SUPABASE_SERVICE_KEY=your-service-key
 ### Update OAuth Apps
 
 For each OAuth provider:
+
 1. Add production callback URL
 2. Add production homepage URL
 3. Update authorized domains
@@ -284,6 +294,7 @@ For each OAuth provider:
 ## 💰 Pricing
 
 **Supabase Free Tier:**
+
 - 50,000 monthly active users
 - 500 MB database space
 - 1 GB file storage
@@ -292,12 +303,14 @@ For each OAuth provider:
 - Social OAuth included
 
 **Perfect for:**
+
 - Development
 - Small projects
 - MVPs
 - Testing
 
 **Upgrade when:**
+
 - Need more storage
 - Higher bandwidth
 - Custom SMTP

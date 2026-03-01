@@ -12,7 +12,9 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 1.75rem;
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 }
 
 .settings-header {
@@ -38,17 +40,32 @@
   color: var(--text-muted);
   transition: all 0.15s;
 }
-.back-button:hover { background: var(--btn-hover-bg); color: var(--text-primary); }
+.back-button:hover {
+  background: var(--btn-hover-bg);
+  color: var(--text-primary);
+}
 
 .settings-section {
   margin-bottom: 1.75rem;
   padding-bottom: 1.75rem;
   border-bottom: 1px solid var(--border);
 }
-.settings-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.settings-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
 
-.settings-section h2 { margin: 0 0 0.4rem; font-size: 1rem; color: var(--text-primary); }
-.section-desc { color: var(--text-dim); font-size: 0.8rem; margin-bottom: 1rem; }
+.settings-section h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+.section-desc {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+}
 
 .key-status {
   background: var(--bg-input);
@@ -56,13 +73,27 @@
   border-radius: 8px;
   padding: 0.85rem;
   margin-bottom: 0.85rem;
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 }
 
-.key-status-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem; }
-.key-status-row:last-child { margin-bottom: 0; }
+.key-status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+.key-status-row:last-child {
+  margin-bottom: 0;
+}
 
-.label { font-weight: 600; font-size: 0.8rem; color: var(--text-dim); min-width: 50px; }
+.label {
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  min-width: 50px;
+}
 
 .badge {
   display: inline-block;
@@ -71,10 +102,22 @@
   font-size: 0.7rem;
   font-weight: 600;
 }
-.badge-default { background: var(--bg-badge); color: var(--text-muted); }
-.badge-warning { background: var(--warning-bg); color: var(--warning-color); }
-.badge-chatgpt { background: var(--chatgpt-bg); color: var(--chatgpt); }
-.badge-manual { background: var(--manual-badge-bg); color: var(--manual-badge); }
+.badge-default {
+  background: var(--bg-badge);
+  color: var(--text-muted);
+}
+.badge-warning {
+  background: var(--warning-bg);
+  color: var(--warning-color);
+}
+.badge-chatgpt {
+  background: var(--chatgpt-bg);
+  color: var(--chatgpt);
+}
+.badge-manual {
+  background: var(--manual-badge-bg);
+  color: var(--manual-badge);
+}
 
 .masked-key {
   background: var(--bg-input);
@@ -85,7 +128,11 @@
   color: var(--text-muted);
 }
 
-.key-input-group { display: flex; gap: 0.6rem; margin-bottom: 0.6rem; }
+.key-input-group {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
 .key-input {
   flex: 1;
   padding: 0.55rem 0.85rem;
@@ -95,9 +142,14 @@
   font-family: monospace;
   background: var(--bg-input);
   color: var(--text-primary);
-  transition: border-color 0.15s, background 0.2s;
+  transition:
+    border-color 0.15s,
+    background 0.2s;
 }
-.key-input:focus { outline: none; border-color: var(--accent); }
+.key-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
 
 .btn-primary {
   background: var(--accent);
@@ -111,8 +163,13 @@
   white-space: nowrap;
   transition: background 0.15s;
 }
-.btn-primary:hover { background: var(--accent-hover); }
-.btn-primary:disabled { opacity: 0.4; cursor: default; }
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
 
 .btn-danger {
   background: none;
@@ -124,7 +181,9 @@
   cursor: pointer;
   transition: all 0.15s;
 }
-.btn-danger:hover { background: var(--error-bg); }
+.btn-danger:hover {
+  background: var(--error-bg);
+}
 
 .btn-logout-settings {
   margin-top: 0.85rem;
@@ -137,19 +196,37 @@
   color: var(--text-muted);
   transition: all 0.15s;
 }
-.btn-logout-settings:hover { background: var(--btn-hover-bg); color: var(--text-primary); }
+.btn-logout-settings:hover {
+  background: var(--btn-hover-bg);
+  color: var(--text-primary);
+}
 
 .account-info {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.85rem;
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 }
-.account-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem; color: var(--text-secondary); font-size: 0.85rem; }
-.account-row:last-child { margin-bottom: 0; }
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+.account-row:last-child {
+  margin-bottom: 0;
+}
 
-.hint { font-size: 0.75rem; color: var(--text-dim); font-style: italic; }
+.hint {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  font-style: italic;
+}
 
 .key-divider {
   position: relative;
@@ -190,7 +267,9 @@
   transition: all 0.15s;
   margin-bottom: 0.5rem;
 }
-.btn-chatgpt-connect:hover { background: var(--chatgpt-bg); }
+.btn-chatgpt-connect:hover {
+  background: var(--chatgpt-bg);
+}
 
 .alert {
   padding: 0.65rem 0.85rem;
@@ -198,5 +277,13 @@
   margin-bottom: 0.85rem;
   font-size: 0.8rem;
 }
-.alert-error { background: var(--error-bg); color: var(--error); border: 1px solid var(--error-border); }
-.alert-success { background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); }
+.alert-error {
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid var(--error-border);
+}
+.alert-success {
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid var(--success-border);
+}

@@ -5,18 +5,24 @@ export const StatCard = ({ title, value, subtitle, change, trend, icon }) => {
   const getTrendColor = () => {
     if (!trend) return '#6b7280';
     switch (trend) {
-      case 'up': return '#10b981';
-      case 'down': return '#ef4444';
-      default: return '#6b7280';
+      case 'up':
+        return '#10b981';
+      case 'down':
+        return '#ef4444';
+      default:
+        return '#6b7280';
     }
   };
 
   const getTrendIcon = () => {
     if (!trend) return null;
     switch (trend) {
-      case 'up': return '↗';
-      case 'down': return '↘';
-      default: return '→';
+      case 'up':
+        return '↗';
+      case 'down':
+        return '↘';
+      default:
+        return '→';
     }
   };
 
@@ -32,9 +38,7 @@ export const StatCard = ({ title, value, subtitle, change, trend, icon }) => {
         <div className="stat-change" style={{ color: getTrendColor() }}>
           <span className="trend-icon">{getTrendIcon()}</span>
           <span>{Math.abs(change)}%</span>
-          <span className="change-label">
-            {parseFloat(change) >= 0 ? 'increase' : 'decrease'}
-          </span>
+          <span className="change-label">{parseFloat(change) >= 0 ? 'increase' : 'decrease'}</span>
         </div>
       )}
     </div>

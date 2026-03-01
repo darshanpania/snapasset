@@ -28,9 +28,9 @@ Get comprehensive dashboard analytics for the authenticated user.
 
 **Query Parameters:**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| period | string | 30d | Time period (7d, 30d, 90d, 6m, 1y, all) |
+| Parameter | Type   | Default | Description                             |
+| --------- | ------ | ------- | --------------------------------------- |
+| period    | string | 30d     | Time period (7d, 30d, 90d, 6m, 1y, all) |
 
 **Response:**
 
@@ -104,10 +104,10 @@ Get usage timeline data.
 
 **Query Parameters:**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| period | string | 30d | Time period |
-| granularity | string | day | day, week, month |
+| Parameter   | Type   | Default | Description      |
+| ----------- | ------ | ------- | ---------------- |
+| period      | string | 30d     | Time period      |
+| granularity | string | day     | day, week, month |
 
 **Response:**
 
@@ -159,9 +159,9 @@ Get user engagement metrics.
 
 **Query Parameters:**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| weeks | number | 12 | Number of weeks |
+| Parameter | Type   | Default | Description     |
+| --------- | ------ | ------- | --------------- |
+| weeks     | number | 12      | Number of weeks |
 
 **Response:**
 
@@ -208,10 +208,10 @@ Get performance metrics.
 
 **Query Parameters:**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| type | string | null | Filter by metric type |
-| hours | number | 24 | Time range in hours |
+| Parameter | Type   | Default | Description           |
+| --------- | ------ | ------- | --------------------- |
+| type      | string | null    | Filter by metric type |
+| hours     | number | 24      | Time range in hours   |
 
 **Response:**
 
@@ -274,10 +274,10 @@ Export analytics data.
 
 **Query Parameters:**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| format | string | json | json, csv, pdf |
-| period | string | 30d | Time period |
+| Parameter | Type   | Default | Description    |
+| --------- | ------ | ------- | -------------- |
+| format    | string | json    | json, csv, pdf |
+| period    | string | 30d     | Time period    |
 
 **Response:**
 
@@ -292,14 +292,11 @@ Server-Sent Events stream for real-time analytics.
 **Connection:**
 
 ```javascript
-const eventSource = new EventSource(
-  '/api/analytics/realtime',
-  {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  }
-);
+const eventSource = new EventSource('/api/analytics/realtime', {
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+});
 
 eventSource.onmessage = (event) => {
   const data = JSON.parse(event.data);
@@ -333,9 +330,9 @@ Get system-wide analytics (admin only).
 
 **Query Parameters:**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| period | string | 30d | Time period |
+| Parameter | Type   | Default | Description |
+| --------- | ------ | ------- | ----------- |
+| period    | string | 30d     | Time period |
 
 **Response:**
 
@@ -368,7 +365,7 @@ Get system-wide analytics (admin only).
         "email": "user@example.com",
         "total_images_generated": 500,
         "total_projects_created": 25,
-        "this_month_cost_usd": 15.50
+        "this_month_cost_usd": 15.5
       }
     ],
     "retention": {
@@ -449,7 +446,7 @@ const dashboard = await analyticsApi.getDashboard('30d');
 await analyticsApi.trackEvent({
   event_type: 'button_click',
   event_category: 'user',
-  metadata: { button: 'export' }
+  metadata: { button: 'export' },
 });
 
 // Export data

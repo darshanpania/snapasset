@@ -12,12 +12,12 @@
 
 ## Decisions
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Gateway topology | Embedded in API server | No extra service to manage |
-| Key storage | AES-256-GCM encrypted in DB | Secure at rest, decrypted only at job time |
-| Account model | Auto-create local account on ChatGPT login | Unified user table, can switch auth methods |
-| Fallback key | Yes — use server `OPENAI_API_KEY` if user has none | Good for demos and self-hosted |
+| Decision         | Choice                                             | Rationale                                   |
+| ---------------- | -------------------------------------------------- | ------------------------------------------- |
+| Gateway topology | Embedded in API server                             | No extra service to manage                  |
+| Key storage      | AES-256-GCM encrypted in DB                        | Secure at rest, decrypted only at job time  |
+| Account model    | Auto-create local account on ChatGPT login         | Unified user table, can switch auth methods |
+| Fallback key     | Yes — use server `OPENAI_API_KEY` if user has none | Good for demos and self-hosted              |
 
 ## Database Changes
 
@@ -46,19 +46,19 @@ ALTER TABLE users ADD COLUMN chatgpt_account_id TEXT DEFAULT NULL;
 
 ### New Files (ported from divyekant/SignInWithChatGPT)
 
-| File | Purpose |
-|------|---------|
-| `server/auth/pkce.js` | `generateCodeVerifier()`, `createCodeChallenge()` |
-| `server/auth/chatgpt-oauth.js` | Build authorize URL, exchange code, exchange API key |
-| `server/auth/oauth-state-store.js` | In-memory state store with TTL + cleanup |
-| `server/routes/chatgpt-auth.js` | Express router for `/api/auth/chatgpt/*` |
+| File                               | Purpose                                              |
+| ---------------------------------- | ---------------------------------------------------- |
+| `server/auth/pkce.js`              | `generateCodeVerifier()`, `createCodeChallenge()`    |
+| `server/auth/chatgpt-oauth.js`     | Build authorize URL, exchange code, exchange API key |
+| `server/auth/oauth-state-store.js` | In-memory state store with TTL + cleanup             |
+| `server/routes/chatgpt-auth.js`    | Express router for `/api/auth/chatgpt/*`             |
 
 ### Endpoints
 
-| Route | Method | Auth | Description |
-|-------|--------|------|-------------|
-| `/api/auth/chatgpt/start` | GET | No | Generate PKCE pair, store state, return `authorizationUrl` |
-| `/api/auth/chatgpt/callback` | GET | No | Validate state, exchange code, create user, issue JWT, redirect |
+| Route                        | Method | Auth | Description                                                     |
+| ---------------------------- | ------ | ---- | --------------------------------------------------------------- |
+| `/api/auth/chatgpt/start`    | GET    | No   | Generate PKCE pair, store state, return `authorizationUrl`      |
+| `/api/auth/chatgpt/callback` | GET    | No   | Validate state, exchange code, create user, issue JWT, redirect |
 
 ### OAuth Flow
 
@@ -75,12 +75,12 @@ ALTER TABLE users ADD COLUMN chatgpt_account_id TEXT DEFAULT NULL;
 
 ## Settings API (Backend)
 
-| Route | Method | Auth | Description |
-|-------|--------|------|-------------|
-| `/api/settings/api-key` | GET | Yes | Returns `{ hasKey, source, maskedKey }` |
-| `/api/settings/api-key` | PUT | Yes | Validates key format, encrypts, stores |
-| `/api/settings/api-key` | DELETE | Yes | Removes stored key |
-| `/api/config` | GET | No | Returns `{ chatgptAuthEnabled }` feature flag |
+| Route                   | Method | Auth | Description                                   |
+| ----------------------- | ------ | ---- | --------------------------------------------- |
+| `/api/settings/api-key` | GET    | Yes  | Returns `{ hasKey, source, maskedKey }`       |
+| `/api/settings/api-key` | PUT    | Yes  | Validates key format, encrypts, stores        |
+| `/api/settings/api-key` | DELETE | Yes  | Removes stored key                            |
+| `/api/config`           | GET    | No   | Returns `{ chatgptAuthEnabled }` feature flag |
 
 ## Settings Page (Frontend)
 
@@ -98,11 +98,11 @@ ALTER TABLE users ADD COLUMN chatgpt_account_id TEXT DEFAULT NULL;
 
 ## New Environment Variables
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `CHATGPT_CLIENT_ID` | For ChatGPT auth | — | OAuth client ID from OpenAI |
-| `CHATGPT_CLIENT_SECRET` | No | — | Optional client secret |
-| `KEY_ENCRYPTION_SECRET` | No | Derived from JWT_SECRET | AES-256-GCM encryption key |
+| Variable                | Required         | Default                 | Description                 |
+| ----------------------- | ---------------- | ----------------------- | --------------------------- |
+| `CHATGPT_CLIENT_ID`     | For ChatGPT auth | —                       | OAuth client ID from OpenAI |
+| `CHATGPT_CLIENT_SECRET` | No               | —                       | Optional client secret      |
+| `KEY_ENCRYPTION_SECRET` | No               | Derived from JWT_SECRET | AES-256-GCM encryption key  |
 
 ## Error Handling
 

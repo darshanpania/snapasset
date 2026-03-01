@@ -15,7 +15,8 @@ export class ChatgptOAuthClient {
   constructor() {
     this.clientId = process.env.CHATGPT_OAUTH_CLIENT_ID || DEFAULT_CLIENT_ID;
     const callbackPort = process.env.OAUTH_CALLBACK_PORT || DEFAULT_CALLBACK_PORT;
-    this.redirectUri = process.env.CHATGPT_OAUTH_REDIRECT_URI || `http://localhost:${callbackPort}/auth/callback`;
+    this.redirectUri =
+      process.env.CHATGPT_OAUTH_REDIRECT_URI || `http://localhost:${callbackPort}/auth/callback`;
   }
 
   buildAuthorizeUrl({ codeChallenge, state }) {

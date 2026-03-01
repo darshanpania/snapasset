@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const useRedis = !!(process.env.REDIS_HOST);
+const useRedis = !!process.env.REDIS_HOST;
 
 /**
  * In-memory job queue fallback when Redis is not available.
@@ -31,8 +31,12 @@ class InMemoryQueue {
       _state: 'waiting',
       getState: async () => job._state,
       log: async () => [],
-      retry: async () => { job._state = 'waiting'; },
-      remove: async () => { this.jobs.delete(id); },
+      retry: async () => {
+        job._state = 'waiting';
+      },
+      remove: async () => {
+        this.jobs.delete(id);
+      },
     };
     this.jobs.set(id, job);
     console.log(`[InMemoryQueue] Job ${id} added to ${this.name}`);
@@ -61,7 +65,7 @@ class InMemoryQueue {
   }
 
   async getJobs(states, start = 0, end = 19) {
-    const all = [...this.jobs.values()].filter(j => states.includes(j._state));
+    const all = [...this.jobs.values()].filter((j) => states.includes(j._state));
     return all.slice(start, end + 1);
   }
 
@@ -108,7 +112,7 @@ class InMemoryQueue {
     const now = Date.now();
     const cleaned = [];
     for (const [id, job] of this.jobs.entries()) {
-      if (job._state === status && (now - job.timestamp) > grace) {
+      if (job._state === status && now - job.timestamp > grace) {
         this.jobs.delete(id);
         cleaned.push(job);
       }
@@ -125,7 +129,7 @@ class InMemoryQueue {
   async _processNext() {
     if (this._paused || !this._handler) return;
 
-    const waiting = [...this.jobs.values()].find(j => j._state === 'waiting');
+    const waiting = [...this.jobs.values()].find((j) => j._state === 'waiting');
     if (!waiting) return;
 
     waiting._state = 'active';
@@ -142,7 +146,9 @@ class InMemoryQueue {
       waiting.attemptsMade++;
       if (waiting.attemptsMade < (waiting.opts.attempts || 3)) {
         waiting._state = 'waiting';
-        console.log(`[InMemoryQueue] Job ${waiting.id} failed, retrying (${waiting.attemptsMade}/${waiting.opts.attempts || 3})`);
+        console.log(
+          `[InMemoryQueue] Job ${waiting.id} failed, retrying (${waiting.attemptsMade}/${waiting.opts.attempts || 3})`
+        );
       } else {
         waiting._state = 'failed';
         console.error(`[InMemoryQueue] Job ${waiting.id} failed permanently:`, error.message);
@@ -158,12 +164,12 @@ class InMemoryQueue {
   on() {}
 
   _getByState(state, start, end) {
-    const filtered = [...this.jobs.values()].filter(j => j._state === state);
+    const filtered = [...this.jobs.values()].filter((j) => j._state === state);
     return filtered.slice(start, end + 1);
   }
 
   _countByState(state) {
-    return [...this.jobs.values()].filter(j => j._state === state).length;
+    return [...this.jobs.values()].filter((j) => j._state === state).length;
   }
 }
 

@@ -5,6 +5,7 @@ Comprehensive guide to the SnapAsset Analytics Dashboard.
 ## Overview
 
 The analytics system provides:
+
 - **User Analytics**: Personal usage statistics and insights
 - **Performance Monitoring**: System performance metrics
 - **Cost Tracking**: API cost analysis and optimization
@@ -32,6 +33,7 @@ User Action → Analytics Middleware → Event Tracking → Database
 ### Tables
 
 #### 1. `analytics_events`
+
 Stores all user events and actions.
 
 ```sql
@@ -52,6 +54,7 @@ created_at        TIMESTAMP
 ```
 
 #### 2. `user_usage_stats`
+
 Aggregated user-level statistics.
 
 ```sql
@@ -69,6 +72,7 @@ updated_at                  TIMESTAMP
 ```
 
 #### 3. `daily_usage_aggregates`
+
 Daily aggregated usage per user.
 
 ```sql
@@ -85,6 +89,7 @@ created_at            TIMESTAMP
 ```
 
 #### 4. `platform_usage_stats`
+
 Track platform-specific usage.
 
 ```sql
@@ -98,6 +103,7 @@ updated_at     TIMESTAMP
 ```
 
 #### 5. `cost_tracking`
+
 API cost tracking.
 
 ```sql
@@ -114,6 +120,7 @@ created_at          TIMESTAMP
 ```
 
 #### 6. `performance_metrics`
+
 System performance tracking.
 
 ```sql
@@ -127,6 +134,7 @@ created_at    TIMESTAMP
 ```
 
 #### 7. `user_engagement`
+
 User engagement and retention.
 
 ```sql
@@ -142,6 +150,7 @@ created_at        TIMESTAMP
 ```
 
 #### 8. `system_metrics`
+
 System-wide metrics for admin.
 
 ```sql
@@ -166,12 +175,15 @@ created_at               TIMESTAMP
 ### User Analytics
 
 #### GET `/api/analytics/dashboard`
+
 Get user dashboard analytics.
 
 **Query Parameters:**
+
 - `period` - Time period (7d, 30d, 90d, 1y, all)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -191,35 +203,45 @@ Get user dashboard analytics.
 ```
 
 #### GET `/api/analytics/timeline`
+
 Get usage timeline data.
 
 **Query Parameters:**
+
 - `period` - Time period
 - `granularity` - day, week, month
 
 #### GET `/api/analytics/platforms`
+
 Get platform usage breakdown.
 
 #### GET `/api/analytics/engagement`
+
 Get user engagement metrics.
 
 **Query Parameters:**
+
 - `weeks` - Number of weeks (default: 12)
 
 #### GET `/api/analytics/costs`
+
 Get cost analytics.
 
 #### GET `/api/analytics/performance`
+
 Get performance metrics.
 
 **Query Parameters:**
+
 - `type` - Metric type filter
 - `hours` - Time range in hours
 
 #### POST `/api/analytics/track`
+
 Track a custom event.
 
 **Body:**
+
 ```json
 {
   "event_type": "custom_action",
@@ -230,24 +252,30 @@ Track a custom event.
 ```
 
 #### GET `/api/analytics/export`
+
 Export analytics data.
 
 **Query Parameters:**
+
 - `format` - json, csv, pdf
 - `period` - Time period
 
 #### GET `/api/analytics/realtime`
+
 Server-Sent Events stream for real-time updates.
 
 ### Admin Analytics
 
 #### GET `/api/analytics/admin/dashboard`
+
 Get system-wide analytics (admin only).
 
 **Query Parameters:**
+
 - `period` - Time period
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -278,6 +306,7 @@ function App() {
 ```
 
 **Features:**
+
 - Overview tab with key metrics
 - Usage tab with detailed charts
 - Costs tab with cost analysis
@@ -301,19 +330,15 @@ function AdminPanel() {
 ### Individual Components
 
 #### StatCard
+
 Display key metric with trend.
 
 ```jsx
-<StatCard
-  title="Images Generated"
-  value={150}
-  change={12.5}
-  trend="up"
-  icon="🖼️"
-/>
+<StatCard title="Images Generated" value={150} change={12.5} trend="up" icon="🖼️" />
 ```
 
 #### UsageChart
+
 Line/Area chart for usage timeline.
 
 ```jsx
@@ -321,6 +346,7 @@ Line/Area chart for usage timeline.
 ```
 
 #### PlatformChart
+
 Pie chart for platform distribution.
 
 ```jsx
@@ -328,6 +354,7 @@ Pie chart for platform distribution.
 ```
 
 #### CostAnalytics
+
 Cost analysis with recommendations.
 
 ```jsx
@@ -335,6 +362,7 @@ Cost analysis with recommendations.
 ```
 
 #### EngagementMetrics
+
 User engagement and retention.
 
 ```jsx
@@ -342,6 +370,7 @@ User engagement and retention.
 ```
 
 #### PerformanceMonitor
+
 System performance metrics.
 
 ```jsx
@@ -349,6 +378,7 @@ System performance metrics.
 ```
 
 #### RealtimeUpdates
+
 Live activity display.
 
 ```jsx
@@ -375,9 +405,7 @@ function MyComponent() {
     analytics.trackPageView('Dashboard');
   };
 
-  return (
-    <button onClick={handleImageGenerate}>Generate Image</button>
-  );
+  return <button onClick={handleImageGenerate}>Generate Image</button>;
 }
 ```
 
@@ -455,6 +483,7 @@ SELECT cron.schedule(
 ### 1. Usage Analytics
 
 **Tracks:**
+
 - Images generated
 - Images downloaded
 - Projects created
@@ -463,6 +492,7 @@ SELECT cron.schedule(
 - Session count
 
 **Visualizations:**
+
 - Line charts for trends
 - Area charts for cumulative data
 - Activity heatmap (GitHub-style)
@@ -470,11 +500,13 @@ SELECT cron.schedule(
 ### 2. Platform Analytics
 
 **Tracks:**
+
 - Most used platforms
 - Usage distribution
 - Platform trends over time
 
 **Visualizations:**
+
 - Pie chart for distribution
 - Bar chart for comparison
 - Top platforms list
@@ -482,12 +514,14 @@ SELECT cron.schedule(
 ### 3. Cost Analytics
 
 **Tracks:**
+
 - Total costs per period
 - Cost per image
 - Cost by provider
 - Cost trends
 
 **Features:**
+
 - Cost optimization recommendations
 - Provider comparison
 - Budget alerts (future)
@@ -495,6 +529,7 @@ SELECT cron.schedule(
 ### 4. Engagement Metrics
 
 **Tracks:**
+
 - Days active per week
 - Session frequency
 - Feature usage
@@ -507,12 +542,14 @@ SELECT cron.schedule(
 ### 5. Performance Monitoring
 
 **Tracks:**
+
 - API response times
 - Error rates
 - Request volume
 - System health
 
 **Metrics:**
+
 - Average response time
 - P50, P95, P99 percentiles
 - Min/Max values
@@ -521,6 +558,7 @@ SELECT cron.schedule(
 ### 6. Real-time Updates
 
 **Features:**
+
 - Live event counter
 - Last hour activity
 - Connection status indicator
@@ -529,6 +567,7 @@ SELECT cron.schedule(
 ### 7. Admin Dashboard
 
 **System Metrics:**
+
 - Total users
 - Active users
 - New user signups
@@ -537,6 +576,7 @@ SELECT cron.schedule(
 - Storage usage
 
 **User Insights:**
+
 - Top users by activity
 - User retention breakdown
 - Churn analysis
@@ -545,11 +585,13 @@ SELECT cron.schedule(
 ### 8. Export Functionality
 
 **Formats:**
+
 - **JSON**: Complete data export
 - **CSV**: Spreadsheet-compatible
 - **PDF**: Formatted report
 
 **Includes:**
+
 - Overview statistics
 - Timeline data
 - Platform breakdown
@@ -559,6 +601,7 @@ SELECT cron.schedule(
 ## Event Types
 
 ### User Events
+
 - `session_start` - User session begins
 - `session_end` - User session ends
 - `page_view` - Page navigation
@@ -569,6 +612,7 @@ SELECT cron.schedule(
 - `project_deleted` - Project removed
 
 ### System Events
+
 - `api_call` - API request made
 - `error` - Error occurred
 - `timing` - Performance timing
@@ -578,6 +622,7 @@ SELECT cron.schedule(
 ### Automatic Tracking
 
 The `analyticsMiddleware` automatically tracks:
+
 - All API requests
 - Response times
 - Error rates
@@ -613,7 +658,7 @@ analyticsService.trackEvent({
   user_id: userId,
   event_type: 'custom_event',
   event_category: 'category',
-  metadata: { key: 'value' }
+  metadata: { key: 'value' },
 });
 ```
 
@@ -622,6 +667,7 @@ analyticsService.trackEvent({
 ### Indexing
 
 All analytics tables have indexes on:
+
 - `user_id` for user-specific queries
 - `created_at` for time-based queries
 - `event_type` for filtering
@@ -630,6 +676,7 @@ All analytics tables have indexes on:
 ### Aggregation
 
 Daily aggregation reduces query load:
+
 - Events aggregated nightly
 - Reduces table size
 - Faster dashboard queries
@@ -637,6 +684,7 @@ Daily aggregation reduces query load:
 ### Caching
 
 Implement caching for:
+
 - Dashboard data (5 minutes)
 - Platform stats (15 minutes)
 - System metrics (30 minutes)
@@ -646,6 +694,7 @@ Implement caching for:
 ### Row Level Security (RLS)
 
 All analytics tables have RLS:
+
 - Users can only view their own data
 - Admins can view system metrics
 - No cross-user data leakage
@@ -662,19 +711,21 @@ All analytics tables have RLS:
 ### 1. Event Naming
 
 Use consistent naming:
+
 ```javascript
 // Good
-event_type: 'image_generated'
-event_category: 'generation'
+event_type: 'image_generated';
+event_category: 'generation';
 
 // Avoid
-event_type: 'imgGen'
-event_category: 'misc'
+event_type: 'imgGen';
+event_category: 'misc';
 ```
 
 ### 2. Metadata
 
 Include useful context:
+
 ```javascript
 metadata: {
   platform: 'instagram',
@@ -687,6 +738,7 @@ metadata: {
 ### 3. Sampling
 
 For high-volume events, use sampling:
+
 ```javascript
 if (Math.random() < 0.1) { // 10% sample
   trackEvent(...);
@@ -696,6 +748,7 @@ if (Math.random() < 0.1) { // 10% sample
 ### 4. Batch Updates
 
 Batch analytics updates for performance:
+
 ```javascript
 // Collect events
 const events = [];
@@ -730,11 +783,13 @@ await supabase.from('analytics_events').insert(events);
 ### Issue: Dashboard Not Loading
 
 **Possible Causes:**
+
 - Missing analytics data
 - Database connection issue
 - RLS policy blocking access
 
 **Solutions:**
+
 1. Check browser console for errors
 2. Verify user is authenticated
 3. Check database has data
@@ -743,11 +798,13 @@ await supabase.from('analytics_events').insert(events);
 ### Issue: Real-time Updates Not Working
 
 **Possible Causes:**
+
 - SSE connection blocked
 - CORS issues
 - Token expired
 
 **Solutions:**
+
 1. Check browser supports EventSource
 2. Verify CORS headers
 3. Check authentication token
@@ -756,11 +813,13 @@ await supabase.from('analytics_events').insert(events);
 ### Issue: Export Fails
 
 **Possible Causes:**
+
 - Too much data
 - Format not supported
 - Permission denied
 
 **Solutions:**
+
 1. Reduce time period
 2. Try different format
 3. Check user permissions
@@ -799,6 +858,7 @@ await supabase.from('analytics_events').insert(events);
 ## Support
 
 For issues or questions:
+
 1. Check this documentation
 2. Review API endpoint responses
 3. Check browser console for errors

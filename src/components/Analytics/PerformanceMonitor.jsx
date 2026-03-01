@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { analyticsApi } from '../../services/api';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 import './PerformanceMonitor.css';
 
 export const PerformanceMonitor = () => {
@@ -56,10 +65,7 @@ export const PerformanceMonitor = () => {
       <div className="kpi-grid">
         <div className="kpi-card">
           <h3>Average Response Time</h3>
-          <div
-            className="kpi-value"
-            style={{ color: getStatusColor(metrics.average, 500) }}
-          >
+          <div className="kpi-value" style={{ color: getStatusColor(metrics.average, 500) }}>
             {metrics.average || 0}ms
           </div>
           <div className="kpi-range">
@@ -70,10 +76,7 @@ export const PerformanceMonitor = () => {
 
         <div className="kpi-card">
           <h3>95th Percentile</h3>
-          <div
-            className="kpi-value"
-            style={{ color: getStatusColor(metrics.p95, 1000) }}
-          >
+          <div className="kpi-value" style={{ color: getStatusColor(metrics.p95, 1000) }}>
             {metrics.p95 || 0}ms
           </div>
           <div className="kpi-subtitle">95% of requests faster than this</div>
@@ -81,10 +84,7 @@ export const PerformanceMonitor = () => {
 
         <div className="kpi-card">
           <h3>99th Percentile</h3>
-          <div
-            className="kpi-value"
-            style={{ color: getStatusColor(metrics.p99, 2000) }}
-          >
+          <div className="kpi-value" style={{ color: getStatusColor(metrics.p99, 2000) }}>
             {metrics.p99 || 0}ms
           </div>
           <div className="kpi-subtitle">99% of requests faster than this</div>

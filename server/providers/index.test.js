@@ -6,14 +6,19 @@ describe('createProviders', () => {
   const tempDirs = [];
 
   function makeTempDir() {
-    const dir = path.join('/tmp', 'snapasset-test-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+    const dir = path.join(
+      '/tmp',
+      'snapasset-test-' + Date.now() + '-' + Math.random().toString(36).slice(2)
+    );
     tempDirs.push(dir);
     return dir;
   }
 
   afterAll(() => {
     for (const dir of tempDirs) {
-      try { fs.rmSync(dir, { recursive: true, force: true }); } catch {}
+      try {
+        fs.rmSync(dir, { recursive: true, force: true });
+      } catch {}
     }
   });
 
@@ -43,7 +48,10 @@ describe('createProviders', () => {
 
   it('auto-detects supabase when supabaseUrl is present', () => {
     const mockSupabase = { auth: {}, storage: { from: vi.fn() }, from: vi.fn() };
-    const providers = createProviders({ supabaseUrl: 'https://x.supabase.co', supabaseClient: mockSupabase });
+    const providers = createProviders({
+      supabaseUrl: 'https://x.supabase.co',
+      supabaseClient: mockSupabase,
+    });
     expect(providers.type).toBe('supabase');
   });
 

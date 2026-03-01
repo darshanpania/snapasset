@@ -1,14 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '../tests/utils/test-utils'
-import PlatformPresets from './PlatformPresets'
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent } from '../tests/utils/test-utils';
+import PlatformPresets from './PlatformPresets';
 
 describe('PlatformPresets Component', () => {
-  const mockOnPlatformToggle = vi.fn()
-  const mockSelectedPlatforms = []
+  const mockOnPlatformToggle = vi.fn();
+  const mockSelectedPlatforms = [];
 
   beforeEach(() => {
-    mockOnPlatformToggle.mockClear()
-  })
+    mockOnPlatformToggle.mockClear();
+  });
 
   it('renders platform presets component', () => {
     render(
@@ -17,10 +17,10 @@ describe('PlatformPresets Component', () => {
         onPlatformToggle={mockOnPlatformToggle}
         isGenerating={false}
       />
-    )
-    
-    expect(screen.getByText(/select target platforms/i)).toBeInTheDocument()
-  })
+    );
+
+    expect(screen.getByText(/select target platforms/i)).toBeInTheDocument();
+  });
 
   it('displays selection summary', () => {
     render(
@@ -29,10 +29,10 @@ describe('PlatformPresets Component', () => {
         onPlatformToggle={mockOnPlatformToggle}
         isGenerating={false}
       />
-    )
-    
-    expect(screen.getByText(/1 platform/i)).toBeInTheDocument()
-  })
+    );
+
+    expect(screen.getByText(/1 platform/i)).toBeInTheDocument();
+  });
 
   it('shows multiple platforms selected', () => {
     render(
@@ -41,10 +41,10 @@ describe('PlatformPresets Component', () => {
         onPlatformToggle={mockOnPlatformToggle}
         isGenerating={false}
       />
-    )
-    
-    expect(screen.getByText(/3 platforms/i)).toBeInTheDocument()
-  })
+    );
+
+    expect(screen.getByText(/3 platforms/i)).toBeInTheDocument();
+  });
 
   it('expands category when clicked', async () => {
     render(
@@ -53,14 +53,14 @@ describe('PlatformPresets Component', () => {
         onPlatformToggle={mockOnPlatformToggle}
         isGenerating={false}
       />
-    )
-    
-    const socialCategory = screen.getByText(/social media/i)
-    fireEvent.click(socialCategory.closest('.category-header'))
-    
+    );
+
+    const socialCategory = screen.getByText(/social media/i);
+    fireEvent.click(socialCategory.closest('.category-header'));
+
     // Should show preset cards
-    expect(screen.getByText(/instagram/i)).toBeInTheDocument()
-  })
+    expect(screen.getByText(/instagram/i)).toBeInTheDocument();
+  });
 
   it('toggles platform selection when clicked', async () => {
     render(
@@ -69,18 +69,18 @@ describe('PlatformPresets Component', () => {
         onPlatformToggle={mockOnPlatformToggle}
         isGenerating={false}
       />
-    )
-    
+    );
+
     // Expand social category first
-    const socialHeader = screen.getByText(/social media/i).closest('.category-header')
-    fireEvent.click(socialHeader)
-    
+    const socialHeader = screen.getByText(/social media/i).closest('.category-header');
+    fireEvent.click(socialHeader);
+
     // Click on Instagram preset
-    const instagramCard = screen.getByText(/instagram/i).closest('.preset-card')
-    fireEvent.click(instagramCard)
-    
-    expect(mockOnPlatformToggle).toHaveBeenCalledWith('instagram', true)
-  })
+    const instagramCard = screen.getByText(/instagram/i).closest('.preset-card');
+    fireEvent.click(instagramCard);
+
+    expect(mockOnPlatformToggle).toHaveBeenCalledWith('instagram', true);
+  });
 
   it('filters platforms by search term', async () => {
     render(
@@ -89,14 +89,14 @@ describe('PlatformPresets Component', () => {
         onPlatformToggle={mockOnPlatformToggle}
         isGenerating={false}
       />
-    )
-    
-    const searchInput = screen.getByPlaceholderText(/search platforms/i)
-    fireEvent.change(searchInput, { target: { value: 'instagram' } })
-    
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search platforms/i);
+    fireEvent.change(searchInput, { target: { value: 'instagram' } });
+
     // Should filter results
-    expect(searchInput.value).toBe('instagram')
-  })
+    expect(searchInput.value).toBe('instagram');
+  });
 
   it('clears search when clear button clicked', async () => {
     render(
@@ -105,16 +105,16 @@ describe('PlatformPresets Component', () => {
         onPlatformToggle={mockOnPlatformToggle}
         isGenerating={false}
       />
-    )
-    
-    const searchInput = screen.getByPlaceholderText(/search platforms/i)
-    fireEvent.change(searchInput, { target: { value: 'test' } })
-    
-    const clearButton = screen.getByLabelText(/clear search/i)
-    fireEvent.click(clearButton)
-    
-    expect(searchInput.value).toBe('')
-  })
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search platforms/i);
+    fireEvent.change(searchInput, { target: { value: 'test' } });
+
+    const clearButton = screen.getByLabelText(/clear search/i);
+    fireEvent.click(clearButton);
+
+    expect(searchInput.value).toBe('');
+  });
 
   it('disables interaction when generating', () => {
     render(
@@ -123,11 +123,11 @@ describe('PlatformPresets Component', () => {
         onPlatformToggle={mockOnPlatformToggle}
         isGenerating={true}
       />
-    )
-    
-    const searchInput = screen.getByPlaceholderText(/search platforms/i)
-    expect(searchInput).toBeDisabled()
-  })
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search platforms/i);
+    expect(searchInput).toBeDisabled();
+  });
 
   it('shows clear all button when platforms selected', () => {
     render(
@@ -136,10 +136,10 @@ describe('PlatformPresets Component', () => {
         onPlatformToggle={mockOnPlatformToggle}
         isGenerating={false}
       />
-    )
-    
-    expect(screen.getByText(/clear all selections/i)).toBeInTheDocument()
-  })
+    );
+
+    expect(screen.getByText(/clear all selections/i)).toBeInTheDocument();
+  });
 
   it('handles select all in category', async () => {
     render(
@@ -148,17 +148,17 @@ describe('PlatformPresets Component', () => {
         onPlatformToggle={mockOnPlatformToggle}
         isGenerating={false}
       />
-    )
-    
+    );
+
     // Expand category
-    const socialHeader = screen.getByText(/social media/i).closest('.category-header')
-    fireEvent.click(socialHeader)
-    
+    const socialHeader = screen.getByText(/social media/i).closest('.category-header');
+    fireEvent.click(socialHeader);
+
     // Click select all button
-    const selectAllButton = screen.getByText(/select all/i)
-    fireEvent.click(selectAllButton)
-    
+    const selectAllButton = screen.getByText(/select all/i);
+    fireEvent.click(selectAllButton);
+
     // Should call toggle for each platform in category
-    expect(mockOnPlatformToggle).toHaveBeenCalled()
-  })
-})
+    expect(mockOnPlatformToggle).toHaveBeenCalled();
+  });
+});

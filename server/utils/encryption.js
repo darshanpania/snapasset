@@ -7,7 +7,8 @@ const KEY_LENGTH = 32;
 
 function deriveKey() {
   const secret = process.env.KEY_ENCRYPTION_SECRET || process.env.JWT_SECRET;
-  if (!secret) throw new Error('No encryption secret configured (KEY_ENCRYPTION_SECRET or JWT_SECRET)');
+  if (!secret)
+    throw new Error('No encryption secret configured (KEY_ENCRYPTION_SECRET or JWT_SECRET)');
   return crypto.createHash('sha256').update(secret).digest();
 }
 

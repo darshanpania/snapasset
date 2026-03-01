@@ -1,7 +1,7 @@
-import { jest } from '@jest/globals'
+import { jest } from '@jest/globals';
 
 // Mock DALL-E generated image URL
-export const mockDallEImageUrl = 'https://example.com/dalle-generated-image.png'
+export const mockDallEImageUrl = 'https://example.com/dalle-generated-image.png';
 
 // Mock OpenAI client
 export const mockOpenAI = {
@@ -15,9 +15,9 @@ export const mockOpenAI = {
       ],
     }),
   },
-}
+};
 
 // Mock OpenAI module
 export function mockOpenAIModule() {
-  return jest.fn().mockImplementation(() => mockOpenAI)
+  return jest.fn().mockImplementation(() => mockOpenAI);
 }

@@ -1,54 +1,54 @@
-import { useState, useEffect } from 'react'
-import { useAuth } from '../../contexts/AuthContext'
-import { useNavigate } from 'react-router-dom'
-import './UserProfile.css'
+import { useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import './UserProfile.css';
 
 const UserProfile = () => {
-  const { user, updateProfile, signOut } = useAuth()
-  const navigate = useNavigate()
-  
-  const [fullName, setFullName] = useState('')
-  const [avatar, setAvatar] = useState('')
-  const [isEditing, setIsEditing] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [success, setSuccess] = useState('')
-  const [error, setError] = useState('')
+  const { user, updateProfile, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const [fullName, setFullName] = useState('');
+  const [avatar, setAvatar] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (user) {
-      setFullName(user.user_metadata?.full_name || '')
-      setAvatar(user.user_metadata?.avatar_url || '')
+      setFullName(user.user_metadata?.full_name || '');
+      setAvatar(user.user_metadata?.avatar_url || '');
     }
-  }, [user])
+  }, [user]);
 
   const handleSave = async () => {
-    setError('')
-    setSuccess('')
-    setIsSaving(true)
+    setError('');
+    setSuccess('');
+    setIsSaving(true);
 
     const { error: updateError } = await updateProfile({
       full_name: fullName,
-      avatar_url: avatar
-    })
+      avatar_url: avatar,
+    });
 
-    setIsSaving(false)
+    setIsSaving(false);
 
     if (updateError) {
-      setError(updateError.message)
+      setError(updateError.message);
     } else {
-      setSuccess('Profile updated successfully!')
-      setIsEditing(false)
-      setTimeout(() => setSuccess(''), 3000)
+      setSuccess('Profile updated successfully!');
+      setIsEditing(false);
+      setTimeout(() => setSuccess(''), 3000);
     }
-  }
+  };
 
   const handleSignOut = async () => {
-    await signOut()
-    navigate('/auth/login')
-  }
+    await signOut();
+    navigate('/auth/login');
+  };
 
   if (!user) {
-    return null
+    return null;
   }
 
   return (
@@ -77,8 +77,11 @@ const UserProfile = () => {
 
         <div className="profile-content">
           <div className="profile-avatar">
-            <img 
-              src={avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName || user.email)}&background=667eea&color=fff&size=200`}
+            <img
+              src={
+                avatar ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName || user.email)}&background=667eea&color=fff&size=200`
+              }
               alt="Profile"
               className="avatar-img"
             />
@@ -137,7 +140,7 @@ const UserProfile = () => {
                 {new Date(user.created_at).toLocaleDateString('en-US', {
                   year: 'numeric',
                   month: 'long',
-                  day: 'numeric'
+                  day: 'numeric',
                 })}
               </div>
             </div>
@@ -151,7 +154,7 @@ const UserProfile = () => {
                     month: 'short',
                     day: 'numeric',
                     hour: '2-digit',
-                    minute: '2-digit'
+                    minute: '2-digit',
                   })
                 ) : (
                   <span className="text-muted">N/A</span>
@@ -163,11 +166,7 @@ const UserProfile = () => {
           <div className="profile-actions">
             {isEditing ? (
               <>
-                <button
-                  onClick={handleSave}
-                  className="btn btn-primary"
-                  disabled={isSaving}
-                >
+                <button onClick={handleSave} className="btn btn-primary" disabled={isSaving}>
                   {isSaving ? (
                     <>
                       <span className="spinner"></span>
@@ -179,10 +178,10 @@ const UserProfile = () => {
                 </button>
                 <button
                   onClick={() => {
-                    setIsEditing(false)
-                    setFullName(user.user_metadata?.full_name || '')
-                    setAvatar(user.user_metadata?.avatar_url || '')
-                    setError('')
+                    setIsEditing(false);
+                    setFullName(user.user_metadata?.full_name || '');
+                    setAvatar(user.user_metadata?.avatar_url || '');
+                    setError('');
                   }}
                   className="btn btn-secondary"
                   disabled={isSaving}
@@ -192,16 +191,10 @@ const UserProfile = () => {
               </>
             ) : (
               <>
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="btn btn-primary"
-                >
+                <button onClick={() => setIsEditing(true)} className="btn btn-primary">
                   Edit Profile
                 </button>
-                <button
-                  onClick={handleSignOut}
-                  className="btn btn-danger"
-                >
+                <button onClick={handleSignOut} className="btn btn-danger">
                   Sign Out
                 </button>
               </>
@@ -210,7 +203,7 @@ const UserProfile = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default UserProfile
+export default UserProfile;

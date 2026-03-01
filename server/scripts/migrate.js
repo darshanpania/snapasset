@@ -14,20 +14,14 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
-const migrations = [
-  '001_create_projects.sql',
-  '002_create_analytics.sql',
-];
+const migrations = ['001_create_projects.sql', '002_create_analytics.sql'];
 
 const runMigration = async (filename) => {
   try {
     console.log(`Running migration: ${filename}`);
-    
+
     const filePath = join(__dirname, '..', 'database', 'migrations', filename);
     const sql = readFileSync(filePath, 'utf-8');
 
@@ -36,7 +30,7 @@ const runMigration = async (filename) => {
     console.log(`\nPlease run this migration manually:`);
     console.log(`psql $DATABASE_URL -f ${filePath}`);
     console.log('\nOr copy the SQL to Supabase SQL Editor');
-    
+
     return true;
   } catch (error) {
     console.error(`Failed to read migration ${filename}:`, error);
@@ -57,7 +51,7 @@ const runMigrations = async () => {
   console.log('\nTo run all migrations at once:');
   console.log('psql $DATABASE_URL -f server/database/migrations/001_create_projects.sql');
   console.log('psql $DATABASE_URL -f server/database/migrations/002_create_analytics.sql');
-  
+
   process.exit(0);
 };
 

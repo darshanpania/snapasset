@@ -151,9 +151,8 @@ export class CostTracking {
       total_cost_usd: parseFloat(this.total_cost_usd).toFixed(4),
       tokens_used: this.tokens_used,
       images_generated: this.images_generated,
-      cost_per_image: this.images_generated > 0 
-        ? (this.total_cost_usd / this.images_generated).toFixed(4)
-        : 0,
+      cost_per_image:
+        this.images_generated > 0 ? (this.total_cost_usd / this.images_generated).toFixed(4) : 0,
       metadata: this.metadata,
       created_at: this.created_at,
     };

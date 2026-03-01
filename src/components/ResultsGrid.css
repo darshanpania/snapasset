@@ -29,9 +29,19 @@
   cursor: pointer;
   transition: all 0.15s;
 }
-.rg-dl-all:hover { background: var(--btn-hover-bg); color: var(--text-primary); }
-.rg-dl-all:disabled { opacity: 0.5; cursor: default; }
-.rg-dl-all { display: flex; align-items: center; gap: 0.4rem; }
+.rg-dl-all:hover {
+  background: var(--btn-hover-bg);
+  color: var(--text-primary);
+}
+.rg-dl-all:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.rg-dl-all {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
 
 .spinner-sm {
   width: 12px;
@@ -41,7 +51,11 @@
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* Grid */
 .rg-grid {
@@ -56,7 +70,10 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
-  transition: border-color 0.15s, transform 0.15s, background 0.2s;
+  transition:
+    border-color 0.15s,
+    transform 0.15s,
+    background 0.2s;
 }
 .rg-card:hover {
   border-color: var(--border-hover);
@@ -77,21 +94,25 @@
   object-fit: cover;
   transition: transform 0.3s;
 }
-.rg-img-wrap:hover .rg-img { transform: scale(1.04); }
+.rg-img-wrap:hover .rg-img {
+  transform: scale(1.04);
+}
 .rg-hover {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   color: #fff;
   font-size: 0.8rem;
   font-weight: 500;
   opacity: 0;
   transition: opacity 0.2s;
 }
-.rg-img-wrap:hover .rg-hover { opacity: 1; }
+.rg-img-wrap:hover .rg-hover {
+  opacity: 1;
+}
 
 /* Meta */
 .rg-meta {
@@ -105,8 +126,15 @@
   flex-direction: column;
   gap: 0.1rem;
 }
-.rg-name { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; }
-.rg-dims { font-size: 0.7rem; color: var(--text-dim); }
+.rg-name {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.rg-dims {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
 
 .rg-dl {
   display: flex;
@@ -121,7 +149,11 @@
   font-size: 0.8rem;
   transition: all 0.15s;
 }
-.rg-dl:hover { background: var(--btn-hover-bg); color: var(--text-primary); border-color: var(--border-hover); }
+.rg-dl:hover {
+  background: var(--btn-hover-bg);
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+}
 
 /* Modal */
 .rg-modal {
@@ -135,7 +167,11 @@
   padding: 2rem;
   animation: fadeIn 0.2s;
 }
-@keyframes fadeIn { from { opacity: 0; } }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
 
 .rg-modal-body {
   position: relative;
@@ -156,14 +192,16 @@
   height: 32px;
   border-radius: 50%;
   border: none;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0, 0, 0, 0.6);
   color: #fff;
   font-size: 1rem;
   cursor: pointer;
   z-index: 1;
   transition: background 0.15s;
 }
-.rg-modal-close:hover { background: rgba(0,0,0,0.8); }
+.rg-modal-close:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
 .rg-modal-img {
   max-width: 100%;
   max-height: 72vh;
@@ -180,6 +218,10 @@
 }
 
 @media (max-width: 768px) {
-  .rg-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
-  .rg-modal { padding: 1rem; }
+  .rg-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+  .rg-modal {
+    padding: 1rem;
+  }
 }

@@ -54,12 +54,14 @@ export const generateAnalyticsPDF = async (data, options = {}) => {
       doc.setFontSize(14);
       doc.text('Daily Usage', 20, finalY + 15);
 
-      const dailyData = data.dailyUsage.slice(0, 10).map((day) => [
-        day.date,
-        day.images_generated || day.images || 0,
-        day.images_downloaded || day.downloads || 0,
-        day.api_calls || day.apiCalls || 0,
-      ]);
+      const dailyData = data.dailyUsage
+        .slice(0, 10)
+        .map((day) => [
+          day.date,
+          day.images_generated || day.images || 0,
+          day.images_downloaded || day.downloads || 0,
+          day.api_calls || day.apiCalls || 0,
+        ]);
 
       doc.autoTable({
         startY: finalY + 20,
@@ -72,13 +74,13 @@ export const generateAnalyticsPDF = async (data, options = {}) => {
     // Platform Usage
     if (data.platformUsage && data.platformUsage.length > 0) {
       const finalY = doc.lastAutoTable.finalY || 120;
-      
+
       if (finalY > 250) {
         doc.addPage();
       }
 
       doc.setFontSize(14);
-      doc.text('Platform Usage', 20, (finalY > 250 ? 20 : finalY + 15));
+      doc.text('Platform Usage', 20, finalY > 250 ? 20 : finalY + 15);
 
       const platformData = data.platformUsage.map((platform) => [
         platform.platform,
@@ -86,7 +88,7 @@ export const generateAnalyticsPDF = async (data, options = {}) => {
       ]);
 
       doc.autoTable({
-        startY: (finalY > 250 ? 25 : finalY + 20),
+        startY: finalY > 250 ? 25 : finalY + 20,
         head: [['Platform', 'Usage Count']],
         body: platformData,
         theme: 'grid',
@@ -95,10 +97,12 @@ export const generateAnalyticsPDF = async (data, options = {}) => {
 
     // Save the PDF
     doc.save(`analytics-report-${Date.now()}.pdf`);
-    
+
     return true;
   } catch (error) {
     console.error('PDF generation failed:', error);
-    throw new Error('PDF export requires jsPDF library. Install with: npm install jspdf jspdf-autotable');
+    throw new Error(
+      'PDF export requires jsPDF library. Install with: npm install jspdf jspdf-autotable'
+    );
   }
 };

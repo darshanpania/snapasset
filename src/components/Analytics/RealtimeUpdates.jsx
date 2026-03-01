@@ -40,7 +40,7 @@ export const RealtimeUpdates = () => {
     eventSource.onerror = () => {
       setConnected(false);
       eventSource.close();
-      
+
       // Reconnect after 5 seconds
       setTimeout(() => {
         connectToRealtime();

@@ -39,11 +39,7 @@ Wrap your app with the AnalyticsProvider:
 import { AnalyticsProvider } from './contexts/AnalyticsContext';
 
 function App() {
-  return (
-    <AnalyticsProvider>
-      {/* Your app components */}
-    </AnalyticsProvider>
-  );
+  return <AnalyticsProvider>{/* Your app components */}</AnalyticsProvider>;
 }
 ```
 
@@ -74,6 +70,7 @@ npm install compression express-rate-limit
 ### Automatic Tracking
 
 The `analyticsMiddleware` automatically tracks:
+
 - All API requests
 - Response times
 - Error rates
@@ -93,19 +90,19 @@ function ImageGenerator() {
   const handleGenerate = async (platform, size) => {
     try {
       const image = await generateImage(platform, size);
-      
+
       // Track successful generation
       analytics.trackImageGeneration(platform, size, 'png', {
         prompt_length: promptText.length,
-        generation_time: Date.now() - startTime
+        generation_time: Date.now() - startTime,
       });
-      
+
       return image;
     } catch (error) {
       // Track error
       analytics.trackError(error.message, error.stack, {
         platform,
-        size
+        size,
       });
     }
   };
@@ -135,12 +132,12 @@ const analytics = useAnalytics();
 // Track button click
 analytics.trackAction('button_click', 'ui', 'export_button', 1, {
   location: 'header',
-  format: 'pdf'
+  format: 'pdf',
 });
 
 // Track form submission
 analytics.trackAction('form_submit', 'user', 'settings_form', 1, {
-  fields_changed: 3
+  fields_changed: 3,
 });
 
 // Track timing
@@ -155,7 +152,8 @@ analytics.trackTiming('api', 'image_generation', 1250, 'instagram_post');
 import { trackEvent } from './middleware/analytics.js';
 
 // Track specific route
-router.post('/images',
+router.post(
+  '/images',
   authMiddleware,
   trackEvent('image_generated', 'generation'),
   async (req, res) => {
@@ -181,8 +179,8 @@ await analyticsService.trackEvent({
   metadata: {
     operation: 'delete',
     count: processedCount,
-    duration: Date.now() - startTime
-  }
+    duration: Date.now() - startTime,
+  },
 });
 ```
 
@@ -219,9 +217,9 @@ function CustomDashboard({ data }) {
         trend="up"
         icon="🖼️"
       />
-      
+
       <UsageChart data={data.timeline} />
-      
+
       <PlatformChart data={data.platforms} />
     </div>
   );
@@ -287,6 +285,7 @@ node scripts/seedAnalytics.js
 ```
 
 This generates:
+
 - 300 sample events over 30 days
 - Platform usage data
 - Daily aggregates
@@ -359,7 +358,7 @@ import rateLimit from 'express-rate-limit';
 const analyticsLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 100, // 100 requests per minute
-  message: 'Too many analytics requests'
+  message: 'Too many analytics requests',
 });
 
 app.use('/api/analytics', analyticsLimiter);
@@ -393,12 +392,14 @@ const hashIP = (ip) => {
 ### Dashboard Shows No Data
 
 **Check:**
+
 1. Database migrations completed
 2. User has generated some events
 3. RLS policies allow access
 4. API authentication working
 
 **Solution:**
+
 ```bash
 # Seed test data
 node server/scripts/seedAnalytics.js
@@ -410,27 +411,33 @@ psql $DATABASE_URL -c "SELECT * FROM analytics_events WHERE user_id = 'your-user
 ### Real-time Updates Not Working
 
 **Check:**
+
 1. Browser supports EventSource
 2. CORS configured for SSE
 3. Server supports streaming responses
 
 **Solution:**
+
 ```javascript
 // Add CORS headers for SSE
-app.use(cors({
-  origin: process.env.CLIENT_URL,
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL,
+    credentials: true,
+  })
+);
 ```
 
 ### Export Fails
 
 **Check:**
+
 1. jsPDF library installed
 2. Sufficient data to export
 3. Browser allows downloads
 
 **Solution:**
+
 ```bash
 npm install jspdf jspdf-autotable
 ```
@@ -532,7 +539,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const checkSystemHealth = async () => {
   const { data } = await supabase.rpc('calculate_system_health');
-  
+
   if (data.status === 'critical') {
     // Send alert (email, Slack, etc.)
     console.error('CRITICAL: System health issues detected!');
@@ -551,12 +558,12 @@ Add health check endpoint:
 ```javascript
 app.get('/api/health', async (req, res) => {
   const health = await supabase.rpc('calculate_system_health');
-  
+
   res.json({
     status: health.data.status,
     score: health.data.health_score,
     issues: health.data.issues,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 ```
@@ -566,6 +573,7 @@ app.get('/api/health', async (req, res) => {
 **Ready to implement?** Follow this guide step by step, and you'll have a fully functional analytics system!
 
 **Need help?** Check:
+
 - [Analytics Documentation](./ANALYTICS.md)
 - [API Documentation](./ANALYTICS_API.md)
 - GitHub issues

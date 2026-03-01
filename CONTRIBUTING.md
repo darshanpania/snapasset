@@ -71,6 +71,7 @@ git checkout -b fix/bug-description
 - `chore/` - Maintenance tasks
 
 **Examples:**
+
 - `feature/add-video-support`
 - `fix/queue-memory-leak`
 - `docs/update-api-guide`
@@ -88,6 +89,7 @@ footer
 ```
 
 **Types:**
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation
@@ -97,6 +99,7 @@ footer
 - `chore`: Maintenance
 
 **Examples:**
+
 ```
 feat(jobs): add job priority support
 
@@ -156,7 +159,7 @@ try {
 } catch (error) {
   // Log the error
   logger.error('Operation failed:', error);
-  
+
   // Throw appropriate error
   throw new ApiError('Operation failed', 500, 'OPERATION_ERROR');
 }
@@ -188,10 +191,10 @@ describe('Feature Name', () => {
     it('should do something specific', async () => {
       // Arrange
       const input = 'test';
-      
+
       // Act
       const result = await functionUnderTest(input);
-      
+
       // Assert
       expect(result).toBe('expected');
     });
@@ -285,20 +288,24 @@ git push origin feature/your-feature-name
 
 ```markdown
 ## Description
+
 Brief description of changes
 
 ## Type of Change
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Breaking change
 - [ ] Documentation update
 
 ## Testing
+
 - [ ] Tests added/updated
 - [ ] All tests passing
 - [ ] Coverage maintained/improved
 
 ## Checklist
+
 - [ ] Code follows style guidelines
 - [ ] Self-reviewed code
 - [ ] Commented complex code
@@ -424,6 +431,7 @@ curl http://localhost:3001/api/queue/stats
 Clear description of the bug
 
 **Steps to Reproduce**
+
 1. Step 1
 2. Step 2
 3. See error
@@ -435,6 +443,7 @@ What should happen
 What actually happens
 
 **Environment**
+
 - OS: Ubuntu 22.04
 - Node: 18.17.0
 - Version: 1.0.0
@@ -480,6 +489,7 @@ Any other relevant information
 ## Recognition
 
 Contributors will be:
+
 - ✅ Listed in CONTRIBUTORS.md
 - ✅ Mentioned in release notes
 - ✅ Thanked in changelogs

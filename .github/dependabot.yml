@@ -1,54 +1,54 @@
 version: 2
 updates:
   # Enable version updates for npm (client)
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
     open-pull-requests-limit: 10
     reviewers:
-      - "darshanpania"
+      - 'darshanpania'
     labels:
-      - "dependencies"
-      - "automated"
+      - 'dependencies'
+      - 'automated'
     commit-message:
-      prefix: "chore"
-      include: "scope"
+      prefix: 'chore'
+      include: 'scope'
     versioning-strategy: increase
-    
+
   # Enable version updates for npm (server)
-  - package-ecosystem: "npm"
-    directory: "/server"
+  - package-ecosystem: 'npm'
+    directory: '/server'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
     open-pull-requests-limit: 10
     reviewers:
-      - "darshanpania"
+      - 'darshanpania'
     labels:
-      - "dependencies"
-      - "server"
-      - "automated"
+      - 'dependencies'
+      - 'server'
+      - 'automated'
     commit-message:
-      prefix: "chore"
-      include: "scope"
+      prefix: 'chore'
+      include: 'scope'
     versioning-strategy: increase
-  
+
   # Enable version updates for GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: 'weekly'
+      day: 'monday'
     open-pull-requests-limit: 5
     reviewers:
-      - "darshanpania"
+      - 'darshanpania'
     labels:
-      - "github-actions"
-      - "dependencies"
+      - 'github-actions'
+      - 'dependencies'
     commit-message:
-      prefix: "ci"
-      include: "scope"
+      prefix: 'ci'
+      include: 'scope'

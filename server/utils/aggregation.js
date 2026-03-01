@@ -79,7 +79,7 @@ export const calculateRollingAverage = (data, metric, window = 7) => {
     const start = Math.max(0, index - window + 1);
     const slice = data.slice(start, index + 1);
     const average = slice.reduce((sum, d) => sum + (d[metric] || 0), 0) / slice.length;
-    
+
     return {
       ...item,
       [`${metric}_avg`]: Math.round(average),

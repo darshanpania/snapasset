@@ -21,31 +21,37 @@ This document describes the testing setup and how to run tests.
 ## 🚀 Running Tests
 
 ### Run all tests (watch mode)
+
 ```bash
 npm test
 ```
 
 ### Run tests once
+
 ```bash
 npm run test:run
 ```
 
 ### Run with coverage
+
 ```bash
 npm run test:coverage
 ```
 
 ### Run with UI
+
 ```bash
 npm run test:ui
 ```
 
 ### Run specific test file
+
 ```bash
 npm test -- Login.test.jsx
 ```
 
 ### Run tests matching pattern
+
 ```bash
 npm test -- --grep="authentication"
 ```
@@ -66,6 +72,7 @@ Coverage reports generated in `coverage/` directory.
 ## 📝 Test Files
 
 ### Authentication Tests
+
 - `src/components/auth/Login.test.jsx` - Login component
 - `src/components/auth/Signup.test.jsx` - Signup component
 - `src/components/auth/UserProfile.test.jsx` - Profile component
@@ -74,17 +81,21 @@ Coverage reports generated in `coverage/` directory.
 - `src/contexts/AuthContext.test.jsx` - Auth context
 
 ### Component Tests (Examples)
+
 - `src/test/example-components/PromptInput.test.jsx`
 - `src/test/example-components/PlatformPresets.test.jsx`
 - `src/test/example-components/ResultsGrid.test.jsx`
 
 ### Integration Tests
+
 - `src/test/integration/auth-flow.test.jsx`
 
 ### Service Tests
+
 - `src/services/supabase.test.js`
 
 ### App Tests
+
 - `src/App.test.jsx`
 
 ---
@@ -92,31 +103,31 @@ Coverage reports generated in `coverage/` directory.
 ## 🧰 Test Structure
 
 ```javascript
-import { describe, it, expect, vi } from 'vitest'
-import { screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { renderWithProviders } from '../test/utils/test-utils'
-import MyComponent from './MyComponent'
+import { describe, it, expect, vi } from 'vitest';
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { renderWithProviders } from '../test/utils/test-utils';
+import MyComponent from './MyComponent';
 
 describe('MyComponent', () => {
   it('renders correctly', () => {
-    renderWithProviders(<MyComponent />)
-    expect(screen.getByText('Hello')).toBeInTheDocument()
-  })
+    renderWithProviders(<MyComponent />);
+    expect(screen.getByText('Hello')).toBeInTheDocument();
+  });
 
   it('handles user interaction', async () => {
-    const user = userEvent.setup()
-    const mockFn = vi.fn()
-    
-    renderWithProviders(<MyComponent onClick={mockFn} />)
-    
-    await user.click(screen.getByRole('button'))
-    
+    const user = userEvent.setup();
+    const mockFn = vi.fn();
+
+    renderWithProviders(<MyComponent onClick={mockFn} />);
+
+    await user.click(screen.getByRole('button'));
+
     await waitFor(() => {
-      expect(mockFn).toHaveBeenCalled()
-    })
-  })
-})
+      expect(mockFn).toHaveBeenCalled();
+    });
+  });
+});
 ```
 
 ---
@@ -126,21 +137,23 @@ describe('MyComponent', () => {
 ### Test Utils (`src/test/utils/test-utils.jsx`)
 
 **renderWithProviders:**
+
 ```javascript
-import { renderWithProviders } from './test/utils/test-utils'
+import { renderWithProviders } from './test/utils/test-utils';
 
 renderWithProviders(<MyComponent />, {
   route: '/custom-route',
   authValue: mockUser,
-})
+});
 ```
 
 **Mock Data:**
-```javascript
-import { mockUser, mockSession, createMockPreset } from './test/utils/test-utils'
 
-const user = mockUser
-const preset = createMockPreset({ name: 'Custom' })
+```javascript
+import { mockUser, mockSession, createMockPreset } from './test/utils/test-utils';
+
+const user = mockUser;
+const preset = createMockPreset({ name: 'Custom' });
 ```
 
 ---
@@ -150,6 +163,7 @@ const preset = createMockPreset({ name: 'Custom' })
 ### Supabase Mock (`src/test/mocks/supabase.js`)
 
 Mocks all Supabase methods:
+
 - `auth.signUp()`
 - `auth.signIn()`
 - `auth.signOut()`
@@ -159,6 +173,7 @@ Mocks all Supabase methods:
 ### Fetch Mock (`src/test/mocks/fetch.js`)
 
 Mocks API calls:
+
 - `/api/generate`
 - `/api/platforms`
 - `/api/images/upload`
@@ -166,6 +181,7 @@ Mocks API calls:
 ### Router Mock (`src/test/mocks/router.js`)
 
 Mocks React Router:
+
 - `useNavigate()`
 - `useLocation()`
 - `Link`
@@ -192,7 +208,7 @@ export default defineConfig({
       statements: 80,
     },
   },
-})
+});
 ```
 
 ---
@@ -200,25 +216,28 @@ export default defineConfig({
 ## 🐛 Debugging Tests
 
 ### Run single test in watch mode
+
 ```bash
 npm test -- Login.test.jsx
 ```
 
 ### Use console.log
+
 ```javascript
 it('debugs component', () => {
-  const { debug } = render(<MyComponent />)
-  debug() // Prints DOM to console
-})
+  const { debug } = render(<MyComponent />);
+  debug(); // Prints DOM to console
+});
 ```
 
 ### Use screen.logTestingPlaygroundURL
+
 ```javascript
 it('debugs with playground', () => {
-  render(<MyComponent />)
-  screen.logTestingPlaygroundURL()
+  render(<MyComponent />);
+  screen.logTestingPlaygroundURL();
   // Opens testing-playground.com with your DOM
-})
+});
 ```
 
 ---
@@ -226,39 +245,43 @@ it('debugs with playground', () => {
 ## ✅ Best Practices
 
 1. **Test user behavior, not implementation**
+
    ```javascript
    // Good
-   await user.click(screen.getByRole('button', { name: /submit/i }))
-   
+   await user.click(screen.getByRole('button', { name: /submit/i }));
+
    // Avoid
-   wrapper.find('.submit-button').simulate('click')
+   wrapper.find('.submit-button').simulate('click');
    ```
 
 2. **Use semantic queries**
+
    ```javascript
-   screen.getByRole('button')
-   screen.getByLabelText('Email')
-   screen.getByText('Welcome')
+   screen.getByRole('button');
+   screen.getByLabelText('Email');
+   screen.getByText('Welcome');
    ```
 
 3. **Wait for async updates**
+
    ```javascript
    await waitFor(() => {
-     expect(screen.getByText('Success')).toBeInTheDocument()
-   })
+     expect(screen.getByText('Success')).toBeInTheDocument();
+   });
    ```
 
 4. **Clean up after tests**
+
    ```javascript
    afterEach(() => {
-     cleanup()
-     vi.clearAllMocks()
-   })
+     cleanup();
+     vi.clearAllMocks();
+   });
    ```
 
 5. **Mock external dependencies**
    ```javascript
-   vi.mock('./services/api')
+   vi.mock('./services/api');
    ```
 
 ---
@@ -297,10 +320,12 @@ components/auth |   82.45 |    75.32 |   80.12 |   83.21 |
 ## 🤖 CI/CD Integration
 
 Tests run automatically on:
+
 - **Push** to main, develop, or feature branches
 - **Pull requests** to main or develop
 
 CI runs:
+
 1. Install dependencies
 2. Run linter
 3. Run all tests
@@ -315,31 +340,31 @@ CI runs:
 ### Component Test Template
 
 ```javascript
-import { describe, it, expect, vi } from 'vitest'
-import { screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { renderWithProviders } from '../test/utils/test-utils'
-import MyComponent from './MyComponent'
+import { describe, it, expect, vi } from 'vitest';
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { renderWithProviders } from '../test/utils/test-utils';
+import MyComponent from './MyComponent';
 
 describe('MyComponent', () => {
   it('renders without crashing', () => {
-    renderWithProviders(<MyComponent />)
-    expect(screen.getByText('Title')).toBeInTheDocument()
-  })
+    renderWithProviders(<MyComponent />);
+    expect(screen.getByText('Title')).toBeInTheDocument();
+  });
 
   it('handles user interaction', async () => {
-    const user = userEvent.setup()
-    const mockFn = vi.fn()
-    
-    renderWithProviders(<MyComponent onAction={mockFn} />)
-    
-    await user.click(screen.getByRole('button'))
-    
+    const user = userEvent.setup();
+    const mockFn = vi.fn();
+
+    renderWithProviders(<MyComponent onAction={mockFn} />);
+
+    await user.click(screen.getByRole('button'));
+
     await waitFor(() => {
-      expect(mockFn).toHaveBeenCalled()
-    })
-  })
-})
+      expect(mockFn).toHaveBeenCalled();
+    });
+  });
+});
 ```
 
 ---

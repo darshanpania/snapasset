@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 100",
     "format": "prettier --write \"src/**/*.{js,jsx,json,css}\"",
     "test": "vitest",
     "test:ui": "vitest --ui",

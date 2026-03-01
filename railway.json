@@ -3,13 +3,7 @@
   "build": {
     "builder": "NIXPACKS",
     "buildCommand": "npm install && npm run build && cd server && npm install",
-    "watchPatterns": [
-      "**/*.js",
-      "**/*.jsx",
-      "**/*.json",
-      "!node_modules/**",
-      "!dist/**"
-    ]
+    "watchPatterns": ["**/*.js", "**/*.jsx", "**/*.json", "!node_modules/**", "!dist/**"]
   },
   "deploy": {
     "startCommand": "cd server && npm start",

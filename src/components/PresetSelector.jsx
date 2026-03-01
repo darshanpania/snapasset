@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import './PresetSelector.css'
+import { useState } from 'react';
+import './PresetSelector.css';
 
 const PLATFORM_PRESETS = [
   {
@@ -9,7 +9,7 @@ const PLATFORM_PRESETS = [
     icon: '📷',
     width: 1080,
     height: 1080,
-    aspectRatio: '1:1'
+    aspectRatio: '1:1',
   },
   {
     id: 'instagram-story',
@@ -18,7 +18,7 @@ const PLATFORM_PRESETS = [
     icon: '📱',
     width: 1080,
     height: 1920,
-    aspectRatio: '9:16'
+    aspectRatio: '9:16',
   },
   {
     id: 'twitter-post',
@@ -27,7 +27,7 @@ const PLATFORM_PRESETS = [
     icon: '🐦',
     width: 1200,
     height: 675,
-    aspectRatio: '16:9'
+    aspectRatio: '16:9',
   },
   {
     id: 'twitter-header',
@@ -36,7 +36,7 @@ const PLATFORM_PRESETS = [
     icon: '🎨',
     width: 1500,
     height: 500,
-    aspectRatio: '3:1'
+    aspectRatio: '3:1',
   },
   {
     id: 'facebook-post',
@@ -45,7 +45,7 @@ const PLATFORM_PRESETS = [
     icon: '👥',
     width: 1200,
     height: 630,
-    aspectRatio: '1.91:1'
+    aspectRatio: '1.91:1',
   },
   {
     id: 'facebook-cover',
@@ -54,7 +54,7 @@ const PLATFORM_PRESETS = [
     icon: '🖼️',
     width: 820,
     height: 312,
-    aspectRatio: '2.63:1'
+    aspectRatio: '2.63:1',
   },
   {
     id: 'linkedin-post',
@@ -63,7 +63,7 @@ const PLATFORM_PRESETS = [
     icon: '💼',
     width: 1200,
     height: 627,
-    aspectRatio: '1.91:1'
+    aspectRatio: '1.91:1',
   },
   {
     id: 'youtube-thumbnail',
@@ -72,7 +72,7 @@ const PLATFORM_PRESETS = [
     icon: '📺',
     width: 1280,
     height: 720,
-    aspectRatio: '16:9'
+    aspectRatio: '16:9',
   },
   {
     id: 'pinterest-pin',
@@ -81,52 +81,45 @@ const PLATFORM_PRESETS = [
     icon: '📌',
     width: 1000,
     height: 1500,
-    aspectRatio: '2:3'
-  }
-]
+    aspectRatio: '2:3',
+  },
+];
 
 function PresetSelector({ selectedPresets, onChange, disabled }) {
-  const [filter, setFilter] = useState('all')
+  const [filter, setFilter] = useState('all');
 
-  const platforms = ['all', ...new Set(PLATFORM_PRESETS.map(p => p.platform))]
+  const platforms = ['all', ...new Set(PLATFORM_PRESETS.map((p) => p.platform))];
 
-  const filteredPresets = filter === 'all'
-    ? PLATFORM_PRESETS
-    : PLATFORM_PRESETS.filter(p => p.platform === filter)
+  const filteredPresets =
+    filter === 'all' ? PLATFORM_PRESETS : PLATFORM_PRESETS.filter((p) => p.platform === filter);
 
   const togglePreset = (presetId) => {
     if (selectedPresets.includes(presetId)) {
-      onChange(selectedPresets.filter(id => id !== presetId))
+      onChange(selectedPresets.filter((id) => id !== presetId));
     } else {
-      onChange([...selectedPresets, presetId])
+      onChange([...selectedPresets, presetId]);
     }
-  }
+  };
 
   const selectAll = () => {
-    onChange(filteredPresets.map(p => p.id))
-  }
+    onChange(filteredPresets.map((p) => p.id));
+  };
 
   const clearAll = () => {
-    onChange([])
-  }
+    onChange([]);
+  };
 
   return (
     <div className="preset-selector-container">
       <div className="preset-header">
         <div className="header-left">
-          <h3 className="preset-title">
-            📐 Select Platform Presets
-          </h3>
+          <h3 className="preset-title">📐 Select Platform Presets</h3>
           <p className="preset-subtitle">
             {selectedPresets.length} {selectedPresets.length === 1 ? 'preset' : 'presets'} selected
           </p>
         </div>
         <div className="header-actions">
-          <button
-            className="action-btn"
-            onClick={selectAll}
-            disabled={disabled}
-          >
+          <button className="action-btn" onClick={selectAll} disabled={disabled}>
             Select All {filter !== 'all' ? filter : ''}
           </button>
           <button
@@ -140,7 +133,7 @@ function PresetSelector({ selectedPresets, onChange, disabled }) {
       </div>
 
       <div className="platform-filters">
-        {platforms.map(platform => (
+        {platforms.map((platform) => (
           <button
             key={platform}
             className={`filter-btn ${filter === platform ? 'active' : ''}`}
@@ -153,8 +146,8 @@ function PresetSelector({ selectedPresets, onChange, disabled }) {
       </div>
 
       <div className="presets-grid">
-        {filteredPresets.map(preset => {
-          const isSelected = selectedPresets.includes(preset.id)
+        {filteredPresets.map((preset) => {
+          const isSelected = selectedPresets.includes(preset.id);
           return (
             <div
               key={preset.id}
@@ -169,15 +162,13 @@ function PresetSelector({ selectedPresets, onChange, disabled }) {
                 </p>
                 <span className="preset-ratio">{preset.aspectRatio}</span>
               </div>
-              {isSelected && (
-                <div className="selected-badge">✓</div>
-              )}
+              {isSelected && <div className="selected-badge">✓</div>}
             </div>
-          )
+          );
         })}
       </div>
     </div>
-  )
+  );
 }
 
-export default PresetSelector
+export default PresetSelector;

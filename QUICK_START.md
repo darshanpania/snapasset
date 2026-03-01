@@ -3,6 +3,7 @@
 ## 🚀 Get Up and Running in 5 Minutes
 
 ### Prerequisites
+
 - Node.js 18+ installed
 - OpenAI API account ([Get one here](https://platform.openai.com/))
 - 10 minutes of time
@@ -37,6 +38,7 @@ cd ..
 ## Step 3: Configure Environment Variables
 
 ### Frontend `.env`
+
 Create a file named `.env` in the root directory:
 
 ```env
@@ -46,6 +48,7 @@ VITE_API_URL=http://localhost:3001
 ```
 
 ### Backend `server/.env`
+
 Create a file named `.env` in the `server` directory:
 
 ```env
@@ -66,12 +69,14 @@ ALLOWED_ORIGINS=http://localhost:5173
 Open **two terminal windows**:
 
 ### Terminal 1 - Start Backend
+
 ```bash
 cd server
 npm run dev
 ```
 
 You should see:
+
 ```
 🚀 SnapAsset API Server running on port 3001
 📝 Environment: development
@@ -79,11 +84,13 @@ You should see:
 ```
 
 ### Terminal 2 - Start Frontend
+
 ```bash
 npm run dev
 ```
 
 You should see:
+
 ```
 VITE ready in XXX ms
 ➜ Local: http://localhost:5173/
@@ -96,6 +103,7 @@ VITE ready in XXX ms
 1. **Open your browser** to http://localhost:5173
 
 2. **Enter a prompt**, for example:
+
    ```
    A serene mountain landscape at sunset with vibrant orange and purple colors
    ```
@@ -135,11 +143,13 @@ Before you start, verify:
 ## 🧪 Quick Test Commands
 
 Test backend health:
+
 ```bash
 curl http://localhost:3001/health
 ```
 
 Expected response:
+
 ```json
 {
   "status": "ok",
@@ -149,6 +159,7 @@ Expected response:
 ```
 
 Test platforms endpoint:
+
 ```bash
 curl http://localhost:3001/api/platforms
 ```
@@ -192,25 +203,30 @@ curl http://localhost:3001/api/platforms
 ## 🐛 Troubleshooting
 
 ### "OpenAI API key not configured"
+
 - Check `server/.env` has `OPENAI_API_KEY=sk-...`
 - Restart backend server after adding key
 
 ### "Rate limit exceeded"
+
 - OpenAI free tier has limits
 - Add credits to your OpenAI account
 - Wait a few minutes and try again
 
 ### Frontend can't connect to backend
+
 - Check backend is running on port 3001
 - Verify CORS settings in `server/.env`
 - Check `VITE_API_URL` in frontend `.env`
 
 ### Images not displaying
+
 - Check browser console for errors
 - Verify API response in Network tab
 - Try generating fewer platforms (1-2 first)
 
 ### Server crashes
+
 - Check OpenAI API key is valid
 - Verify you have account credits
 - Check server logs for specific errors
@@ -233,17 +249,20 @@ Once you have it working:
 ## 🎨 Pro Tips
 
 ### Better Prompts
+
 - Be specific about style and mood
 - Include color preferences
 - Mention composition details
 - Specify lighting conditions
 
 ### Platform Selection
+
 - Start with 1-2 platforms for faster testing
 - Instagram Post (1:1) is most versatile
 - Twitter Header (3:1) is most unique
 
 ### Performance
+
 - First generation is slowest (~20-30s)
 - Subsequent ones may be faster
 - More presets = longer processing time

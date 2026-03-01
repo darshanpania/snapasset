@@ -23,6 +23,7 @@ Guide for deploying SnapAsset API to production.
 ### Steps
 
 1. **Create New Project**
+
    ```bash
    railway init
    ```
@@ -33,8 +34,9 @@ Guide for deploying SnapAsset API to production.
    - Note the connection details
 
 3. **Configure Environment Variables**
-   
+
    In Railway dashboard, add:
+
    ```
    NODE_ENV=production
    SUPABASE_URL=https://your-project.supabase.co
@@ -47,24 +49,24 @@ Guide for deploying SnapAsset API to production.
    ```
 
 4. **Configure Build**
-   
+
    Railway automatically detects Node.js and uses:
    - Build command: `npm install`
    - Start command: `npm start`
 
 5. **Add Worker Service**
-   
+
    Create a new service for the worker:
    - Same repository
    - Start command: `npm run worker`
    - Same environment variables
 
 6. **Deploy**
-   
+
    ```bash
    git push origin main
    ```
-   
+
    Railway automatically deploys on push.
 
 ### Custom Domain
@@ -77,10 +79,12 @@ Guide for deploying SnapAsset API to production.
 ### Scaling
 
 **API Server:**
+
 - Horizontal: Add more replicas in Railway
 - Vertical: Increase memory/CPU
 
 **Worker:**
+
 - Scale to 2-5 instances based on load
 - Monitor queue depth
 
@@ -110,12 +114,12 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"
-  
+      - '6379:6379'
+
   api:
     image: snapasset-api:latest
     ports:
-      - "3001:3001"
+      - '3001:3001'
     environment:
       - NODE_ENV=production
       - REDIS_HOST=redis
@@ -123,7 +127,7 @@ services:
       - .env
     depends_on:
       - redis
-  
+
   worker:
     image: snapasset-api:latest
     command: node workers/imageWorker.js
@@ -162,23 +166,23 @@ docker-compose down
 ### On Ubuntu/Debian Server
 
 1. **Install Dependencies**
-   
+
    ```bash
    # Node.js 18+
    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
    sudo apt-get install -y nodejs
-   
+
    # Redis
    sudo apt-get install -y redis-server
    sudo systemctl start redis
    sudo systemctl enable redis
-   
+
    # PM2 for process management
    sudo npm install -g pm2
    ```
 
 2. **Clone Repository**
-   
+
    ```bash
    git clone https://github.com/darshanpania/snapasset.git
    cd snapasset/server
@@ -186,7 +190,7 @@ docker-compose down
    ```
 
 3. **Configure Environment**
-   
+
    ```bash
    cp .env.example .env
    nano .env
@@ -194,26 +198,26 @@ docker-compose down
    ```
 
 4. **Start with PM2**
-   
+
    ```bash
    # Start API server
    pm2 start index.js --name snapasset-api
-   
+
    # Start worker (2 instances)
    pm2 start workers/imageWorker.js --name snapasset-worker -i 2
-   
+
    # Save PM2 configuration
    pm2 save
    pm2 startup
    ```
 
 5. **Configure Nginx**
-   
+
    ```nginx
    server {
      listen 80;
      server_name api.snapasset.com;
-     
+
      location / {
        proxy_pass http://localhost:3001;
        proxy_http_version 1.1;
@@ -224,7 +228,7 @@ docker-compose down
        proxy_set_header X-Real-IP $remote_addr;
        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
      }
-     
+
      # SSE specific config
      location /api/sse {
        proxy_pass http://localhost:3001;
@@ -238,7 +242,7 @@ docker-compose down
    ```
 
 6. **SSL with Let's Encrypt**
-   
+
    ```bash
    sudo apt-get install certbot python3-certbot-nginx
    sudo certbot --nginx -d api.snapasset.com
@@ -339,12 +343,14 @@ curl https://api.snapasset.com/api/queue/stats
 ### Logging
 
 **PM2 Logs:**
+
 ```bash
 pm2 logs snapasset-api
 pm2 logs snapasset-worker
 ```
 
 **Log Rotation:**
+
 ```bash
 pm2 install pm2-logrotate
 pm2 set pm2-logrotate:max_size 10M
@@ -354,6 +360,7 @@ pm2 set pm2-logrotate:retain 7
 ### Monitoring Tools
 
 **Recommended:**
+
 - **Railway Metrics** - Built-in monitoring
 - **Sentry** - Error tracking
 - **LogDNA/Datadog** - Log aggregation
@@ -372,13 +379,13 @@ const register = new prometheus.Registry();
 const jobCounter = new prometheus.Counter({
   name: 'jobs_created_total',
   help: 'Total number of jobs created',
-  registers: [register]
+  registers: [register],
 });
 
 const jobDuration = new prometheus.Histogram({
   name: 'job_duration_seconds',
   help: 'Job processing duration',
-  registers: [register]
+  registers: [register],
 });
 
 // Expose metrics
@@ -391,6 +398,7 @@ app.get('/metrics', async (req, res) => {
 ### Auto-Scaling
 
 **Railway:**
+
 - Auto-scales based on CPU/memory
 - Configure in railway.json:
   ```json
@@ -403,6 +411,7 @@ app.get('/metrics', async (req, res) => {
   ```
 
 **Docker/Kubernetes:**
+
 ```yaml
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
@@ -416,12 +425,12 @@ spec:
   minReplicas: 2
   maxReplicas: 10
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
 ```
 
 ## Troubleshooting
@@ -545,5 +554,6 @@ pm2 restart all
 ## Support
 
 For deployment issues:
+
 - GitHub Issues: https://github.com/darshanpania/snapasset/issues
 - Email: support@snapasset.com

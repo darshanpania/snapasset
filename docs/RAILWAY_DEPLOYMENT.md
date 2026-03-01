@@ -111,6 +111,7 @@ OPENAI_API_KEY=sk-...
 ### How to Add Variables to Railway
 
 **Via Dashboard:**
+
 1. Open your Railway project
 2. Click on your service
 3. Go to "Variables" tab
@@ -118,6 +119,7 @@ OPENAI_API_KEY=sk-...
 5. Add each variable
 
 **Via CLI:**
+
 ```bash
 railway variables set VARIABLE_NAME=value
 ```
@@ -155,12 +157,14 @@ The repository includes these configuration files:
 ### 3. Deploy to Railway
 
 **Method 1: GitHub Integration (Recommended)**
+
 - Railway will auto-deploy on every push to `main` branch
 - Go to Railway dashboard
 - Connect GitHub repository
 - Select branch to deploy
 
 **Method 2: Manual Deploy**
+
 ```bash
 railway up
 ```
@@ -191,6 +195,7 @@ curl https://your-app.railway.app/api
 ```
 
 Expected response:
+
 ```json
 {
   "status": "ok",
@@ -217,6 +222,7 @@ Expected response:
 Add these DNS records to your domain provider:
 
 **For apex domain (snapasset.com):**
+
 ```
 Type: CNAME
 Name: @
@@ -224,6 +230,7 @@ Value: your-app.railway.app
 ```
 
 **For subdomain (app.snapasset.com):**
+
 ```
 Type: CNAME
 Name: app
@@ -270,11 +277,13 @@ SnapAsset includes multiple health check endpoints:
 ### View Logs
 
 **Via Dashboard:**
+
 - Go to Railway project
 - Click on your service
 - View "Logs" tab
 
 **Via CLI:**
+
 ```bash
 # Real-time logs
 railway logs
@@ -289,17 +298,20 @@ railway logs | grep ERROR
 ### Monitoring Services (Optional)
 
 **1. Sentry (Error Tracking)**
+
 ```bash
 # Add to Railway variables
 SENTRY_DSN=https://your-sentry-dsn@sentry.io/project
 ```
 
 **2. LogRocket (Session Replay)**
+
 ```bash
 LOGROCKET_APP_ID=your-app/project
 ```
 
 **3. Railway Metrics**
+
 - CPU usage
 - Memory usage
 - Network traffic
@@ -316,6 +328,7 @@ LOGROCKET_APP_ID=your-app/project
 **Problem**: `npm install` or `npm run build` fails
 
 **Solutions**:
+
 ```bash
 # Check Node.js version (should be 18+)
 # In railway.json or nixpacks.toml
@@ -332,6 +345,7 @@ npm install
 **Problem**: Server exits immediately or crashes
 
 **Check**:
+
 ```bash
 # View logs
 railway logs
@@ -343,6 +357,7 @@ railway logs
 ```
 
 **Solutions**:
+
 - Verify all required env variables are set
 - Check Supabase credentials
 - Ensure PORT is correctly configured
@@ -352,6 +367,7 @@ railway logs
 **Problem**: Frontend shows 404 or blank page
 
 **Solutions**:
+
 - Verify `dist` directory exists after build
 - Check `server/index.js` static file middleware
 - Verify build command in `railway.json`
@@ -361,6 +377,7 @@ railway logs
 **Problem**: Frontend can't connect to API
 
 **Solution**:
+
 ```bash
 # Add your Railway domain to ALLOWED_ORIGINS
 ALLOWED_ORIGINS=https://your-app.railway.app,https://your-domain.com
@@ -371,6 +388,7 @@ ALLOWED_ORIGINS=https://your-app.railway.app,https://your-domain.com
 **Problem**: `Supabase not configured` error
 
 **Check**:
+
 1. Verify `SUPABASE_URL` format: `https://xxx.supabase.co`
 2. Verify `SUPABASE_SERVICE_KEY` is the **service_role** key
 3. Check Supabase project is active
@@ -406,6 +424,7 @@ npm run build && cd server && npm start
 ### 1. Enable Caching
 
 Static assets are cached automatically:
+
 - JS/CSS: 1 year cache
 - HTML: No cache (SPA)
 - Images: 1 year cache
@@ -457,6 +476,7 @@ curl -w "@curl-format.txt" -o /dev/null -s https://your-app.railway.app/health
 ### 6. Scale Resources
 
 Railway auto-scales, but you can adjust:
+
 - **Memory**: Settings → Resources
 - **Replicas**: Settings → Scaling
 - **Region**: Settings → Region (choose closest to users)
@@ -488,11 +508,13 @@ git push origin main
 If a deployment fails:
 
 **Via Dashboard:**
+
 1. Go to Deployments tab
 2. Find previous working deployment
 3. Click "Redeploy"
 
 **Via CLI:**
+
 ```bash
 railway rollback
 ```
@@ -511,18 +533,21 @@ Create preview deployments for pull requests:
 ## 📚 Additional Resources
 
 ### Documentation
+
 - [Railway Documentation](https://docs.railway.app)
 - [Supabase Documentation](https://supabase.com/docs)
 - [Vite Documentation](https://vitejs.dev)
 - [Express.js Documentation](https://expressjs.com)
 
 ### Configuration Files
+
 - `railway.json` - Railway project config
 - `nixpacks.toml` - Build configuration
 - `.env.railway.example` - Environment template
 - `scripts/deploy.sh` - Deployment validation script
 
 ### Support
+
 - [Railway Community](https://railway.app/discord)
 - [Supabase Community](https://github.com/supabase/supabase/discussions)
 - [SnapAsset Issues](https://github.com/darshanpania/snapasset/issues)
@@ -554,11 +579,13 @@ Before deploying to production:
 Your SnapAsset application should now be deployed on Railway!
 
 **Your Application URLs:**
+
 - Production: `https://your-app.railway.app`
 - Health Check: `https://your-app.railway.app/health`
 - API Info: `https://your-app.railway.app/api`
 
 **Next Steps:**
+
 1. Test all functionality
 2. Set up monitoring
 3. Configure custom domain

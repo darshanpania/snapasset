@@ -47,11 +47,7 @@ router.get('/timeline', async (req, res) => {
     const { period = '30d', granularity = 'day' } = req.query;
     const analyticsService = new AnalyticsService(req.app.locals.providers.db);
 
-    const timeline = await analyticsService.getUsageTimeline(
-      req.user.id,
-      period,
-      granularity
-    );
+    const timeline = await analyticsService.getUsageTimeline(req.user.id, period, granularity);
 
     res.json({
       success: true,
@@ -99,10 +95,7 @@ router.get('/engagement', async (req, res) => {
     const { weeks = 12 } = req.query;
     const analyticsService = new AnalyticsService(req.app.locals.providers.db);
 
-    const engagement = await analyticsService.getUserEngagement(
-      req.user.id,
-      parseInt(weeks)
-    );
+    const engagement = await analyticsService.getUserEngagement(req.user.id, parseInt(weeks));
 
     res.json({
       success: true,

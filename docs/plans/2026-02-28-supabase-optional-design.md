@@ -30,52 +30,52 @@ Repository methods grouped by domain. Services call these instead of Supabase qu
 
 ### DbAdapter.projects
 
-| Method | Signature | Returns |
-|--------|-----------|---------|
-| create | (data) | project |
-| findById | (id) | project with images, collaborators |
-| findByUser | (userId, filters, pagination) | { data, count } |
-| update | (id, data) | project |
-| delete | (id, soft?) | void |
-| addImages | (projectId, imageIds) | void |
-| getImages | (projectId, pagination) | { data, count } |
-| removeImages | (projectId, imageIds) | void |
-| addCollaborator | (projectId, data) | void |
-| getCollaborators | (projectId) | collaborators[] |
-| removeCollaborator | (projectId, userId) | void |
-| createVersion | (projectId, note) | version |
-| getVersions | (projectId) | versions[] |
-| restoreVersion | (projectId, versionId) | void |
+| Method             | Signature                     | Returns                            |
+| ------------------ | ----------------------------- | ---------------------------------- |
+| create             | (data)                        | project                            |
+| findById           | (id)                          | project with images, collaborators |
+| findByUser         | (userId, filters, pagination) | { data, count }                    |
+| update             | (id, data)                    | project                            |
+| delete             | (id, soft?)                   | void                               |
+| addImages          | (projectId, imageIds)         | void                               |
+| getImages          | (projectId, pagination)       | { data, count }                    |
+| removeImages       | (projectId, imageIds)         | void                               |
+| addCollaborator    | (projectId, data)             | void                               |
+| getCollaborators   | (projectId)                   | collaborators[]                    |
+| removeCollaborator | (projectId, userId)           | void                               |
+| createVersion      | (projectId, note)             | version                            |
+| getVersions        | (projectId)                   | versions[]                         |
+| restoreVersion     | (projectId, versionId)        | void                               |
 
 ### DbAdapter.analytics
 
-| Method | Signature | Returns |
-|--------|-----------|---------|
-| trackEvent | (event) | void |
-| getDashboard | (userId, period) | dashboardData |
-| getUsageTimeline | (userId, period) | timelineData |
-| getPlatformBreakdown | (userId, period) | platformData |
-| trackCost | (data) | void |
-| getCostAnalytics | (userId, period) | costData |
-| trackPerformance | (metric) | void |
-| getPerformanceMetrics | (type, period) | metrics[] |
-| getAdminDashboard | (period) | adminData |
-| getUserEngagement | (userId, period) | engagementData |
+| Method                | Signature        | Returns        |
+| --------------------- | ---------------- | -------------- |
+| trackEvent            | (event)          | void           |
+| getDashboard          | (userId, period) | dashboardData  |
+| getUsageTimeline      | (userId, period) | timelineData   |
+| getPlatformBreakdown  | (userId, period) | platformData   |
+| trackCost             | (data)           | void           |
+| getCostAnalytics      | (userId, period) | costData       |
+| trackPerformance      | (metric)         | void           |
+| getPerformanceMetrics | (type, period)   | metrics[]      |
+| getAdminDashboard     | (period)         | adminData      |
+| getUserEngagement     | (userId, period) | engagementData |
 
 ### DbAdapter.images
 
-| Method | Signature | Returns |
-|--------|-----------|---------|
-| saveGeneration | (data) | generation |
-| saveGeneratedImage | (data) | image |
+| Method             | Signature | Returns    |
+| ------------------ | --------- | ---------- |
+| saveGeneration     | (data)    | generation |
+| saveGeneratedImage | (data)    | image      |
 
 ### DbAdapter.users (local-only, used by LocalAuthAdapter)
 
-| Method | Signature | Returns |
-|--------|-----------|---------|
-| create | (email, passwordHash, metadata) | user |
-| findByEmail | (email) | user |
-| findById | (id) | user |
+| Method      | Signature                       | Returns |
+| ----------- | ------------------------------- | ------- |
+| create      | (email, passwordHash, metadata) | user    |
+| findByEmail | (email)                         | user    |
+| findById    | (id)                            | user    |
 
 ---
 
@@ -111,11 +111,11 @@ Not mounted in Supabase mode.
 
 ### Interface
 
-| Method | Signature | Returns |
-|--------|-----------|---------|
-| upload | (bucket, path, buffer, options) | { url } |
-| getPublicUrl | (bucket, path) | url string |
-| delete | (bucket, path) | void |
+| Method       | Signature                       | Returns    |
+| ------------ | ------------------------------- | ---------- |
+| upload       | (bucket, path, buffer, options) | { url }    |
+| getPublicUrl | (bucket, path)                  | url string |
+| delete       | (bucket, path)                  | void       |
 
 ### Supabase Implementation
 

@@ -1,37 +1,37 @@
-import { useState } from 'react'
-import { useAuth } from '../../contexts/AuthContext'
-import { Link } from 'react-router-dom'
-import './Auth.css'
+import { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { Link } from 'react-router-dom';
+import './Auth.css';
 
 const ForgotPassword = () => {
-  const [email, setEmail] = useState('')
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  
-  const { resetPassword } = useAuth()
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { resetPassword } = useAuth();
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setSuccess('')
+    e.preventDefault();
+    setError('');
+    setSuccess('');
 
     if (!email) {
-      setError('Email is required')
-      return
+      setError('Email is required');
+      return;
     }
 
-    setIsLoading(true)
-    const { error: resetError } = await resetPassword(email)
-    setIsLoading(false)
+    setIsLoading(true);
+    const { error: resetError } = await resetPassword(email);
+    setIsLoading(false);
 
     if (resetError) {
-      setError(resetError.message)
+      setError(resetError.message);
     } else {
-      setSuccess('Check your email for a password reset link!')
-      setEmail('')
+      setSuccess('Check your email for a password reset link!');
+      setEmail('');
     }
-  }
+  };
 
   return (
     <div className="auth-container">
@@ -69,11 +69,7 @@ const ForgotPassword = () => {
             />
           </div>
 
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={isLoading}
-          >
+          <button type="submit" className="btn btn-primary" disabled={isLoading}>
             {isLoading ? (
               <>
                 <span className="spinner"></span>
@@ -95,7 +91,7 @@ const ForgotPassword = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ForgotPassword
+export default ForgotPassword;

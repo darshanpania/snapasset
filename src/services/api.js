@@ -11,7 +11,7 @@ class ApiClient {
 
   async request(endpoint, options = {}) {
     const token = localStorage.getItem('snapasset_token');
-    
+
     const headers = {
       'Content-Type': 'application/json',
       ...options.headers,
@@ -76,7 +76,7 @@ export const projectApi = {
 
   updateProject: (id, data) => apiClient.put(`/api/projects/${id}`, data),
 
-  deleteProject: (id, permanent = false) => 
+  deleteProject: (id, permanent = false) =>
     apiClient.delete(`/api/projects/${id}${permanent ? '?permanent=true' : ''}`),
 
   // Project Stats
@@ -90,10 +90,10 @@ export const projectApi = {
     return apiClient.get(`/api/projects/${id}/images${query ? `?${query}` : ''}`);
   },
 
-  addImagesToProject: (id, imageIds) => 
+  addImagesToProject: (id, imageIds) =>
     apiClient.post(`/api/projects/${id}/images`, { image_ids: imageIds }),
 
-  removeImagesFromProject: (id, imageIds) => 
+  removeImagesFromProject: (id, imageIds) =>
     apiClient.post(`/api/projects/${id}/images/remove`, { image_ids: imageIds }),
 
   // Collaborators
@@ -101,7 +101,7 @@ export const projectApi = {
 
   addCollaborator: (id, data) => apiClient.post(`/api/projects/${id}/collaborators`, data),
 
-  removeCollaborator: (id, userId) => 
+  removeCollaborator: (id, userId) =>
     apiClient.delete(`/api/projects/${id}/collaborators/${userId}`),
 
   // Versions
@@ -109,21 +109,21 @@ export const projectApi = {
 
   createVersion: (id, notes) => apiClient.post(`/api/projects/${id}/versions`, { notes }),
 
-  restoreVersion: (id, versionId) => 
+  restoreVersion: (id, versionId) =>
     apiClient.post(`/api/projects/${id}/versions/${versionId}/restore`),
 
   // Import/Export
-  exportProject: (id, format = 'json') => 
+  exportProject: (id, format = 'json') =>
     apiClient.get(`/api/projects/${id}/export?format=${format}`),
 
   importProject: (data) => apiClient.post('/api/projects/import', data),
 
   // Bulk Operations
-  bulkOperation: (operation, projectIds, data = {}) => 
+  bulkOperation: (operation, projectIds, data = {}) =>
     apiClient.post('/api/projects/bulk', { operation, project_ids: projectIds, data }),
 
   // Analytics
-  getAnalytics: (id, period = '30d') => 
+  getAnalytics: (id, period = '30d') =>
     apiClient.get(`/api/projects/${id}/analytics?period=${period}`),
 
   // Templates

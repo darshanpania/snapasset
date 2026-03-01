@@ -14,9 +14,21 @@ import { SupabaseDbAdapter } from './SupabaseDbAdapter.js';
 function createChainableMock(resolvedValue = { data: null, error: null, count: 0 }) {
   const chain = {};
   const methods = [
-    'from', 'select', 'insert', 'update', 'upsert', 'delete',
-    'eq', 'gte', 'in', 'or', 'contains',
-    'order', 'limit', 'range', 'single',
+    'from',
+    'select',
+    'insert',
+    'update',
+    'upsert',
+    'delete',
+    'eq',
+    'gte',
+    'in',
+    'or',
+    'contains',
+    'order',
+    'limit',
+    'range',
+    'single',
   ];
 
   for (const method of methods) {
@@ -87,9 +99,7 @@ describe('SupabaseDbAdapter', () => {
       expect(mock.from).toHaveBeenCalledWith('projects');
       expect(mock.eq).toHaveBeenCalledWith('owner_id', 'user-1');
       expect(mock.eq).toHaveBeenCalledWith('status', 'active');
-      expect(mock.or).toHaveBeenCalledWith(
-        'name.ilike.%logo%,description.ilike.%logo%'
-      );
+      expect(mock.or).toHaveBeenCalledWith('name.ilike.%logo%,description.ilike.%logo%');
       expect(mock.range).toHaveBeenCalledWith(0, 9);
       expect(result).toEqual({ data: projects, count: 2 });
     });
@@ -101,9 +111,7 @@ describe('SupabaseDbAdapter', () => {
       await adapter.projects.delete('p1');
 
       expect(mock.from).toHaveBeenCalledWith('projects');
-      expect(mock.update).toHaveBeenCalledWith(
-        expect.objectContaining({ status: 'deleted' })
-      );
+      expect(mock.update).toHaveBeenCalledWith(expect.objectContaining({ status: 'deleted' }));
       expect(mock.eq).toHaveBeenCalledWith('id', 'p1');
     });
 
@@ -212,9 +220,7 @@ describe('SupabaseDbAdapter', () => {
       const mock = createChainableMock({ data: null, error: dbError });
       const adapter = new SupabaseDbAdapter(mock);
 
-      await expect(
-        adapter.analytics.trackEvent({ event_type: 'test' })
-      ).rejects.toEqual(dbError);
+      await expect(adapter.analytics.trackEvent({ event_type: 'test' })).rejects.toEqual(dbError);
     });
 
     it('getUsageTimeline() queries daily_usage_aggregates with date filter', async () => {
@@ -252,17 +258,21 @@ describe('SupabaseDbAdapter', () => {
     });
 
     it('trackCost() upserts into cost_tracking', async () => {
-      const costData = { user_id: 'u1', date: '2025-01-01', service_provider: 'openai', total_cost_usd: 0.04 };
+      const costData = {
+        user_id: 'u1',
+        date: '2025-01-01',
+        service_provider: 'openai',
+        total_cost_usd: 0.04,
+      };
       const mock = createChainableMock({ data: [costData], error: null });
       const adapter = new SupabaseDbAdapter(mock);
 
       const result = await adapter.analytics.trackCost(costData);
 
       expect(mock.from).toHaveBeenCalledWith('cost_tracking');
-      expect(mock.upsert).toHaveBeenCalledWith(
-        [costData],
-        { onConflict: 'user_id,date,service_provider' }
-      );
+      expect(mock.upsert).toHaveBeenCalledWith([costData], {
+        onConflict: 'user_id,date,service_provider',
+      });
       expect(result).toEqual(costData);
     });
 
@@ -323,9 +333,9 @@ describe('SupabaseDbAdapter', () => {
       const mock = createChainableMock({ data: null, error: dbError });
       const adapter = new SupabaseDbAdapter(mock);
 
-      await expect(
-        adapter.images.saveGeneratedImage({ generation_id: 'bad' })
-      ).rejects.toEqual(dbError);
+      await expect(adapter.images.saveGeneratedImage({ generation_id: 'bad' })).rejects.toEqual(
+        dbError
+      );
     });
   });
 

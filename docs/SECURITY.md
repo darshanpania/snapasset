@@ -7,13 +7,14 @@ Security best practices for SnapAsset API.
 ### JWT Tokens
 
 **Validation:**
+
 ```javascript
 import jwt from 'jsonwebtoken';
 
 async function validateToken(req, res, next) {
   try {
     const token = req.headers.authorization?.split(' ')[1];
-    
+
     if (!token) {
       return res.status(401).json({
         error: 'Unauthorized',
@@ -21,10 +22,13 @@ async function validateToken(req, res, next) {
         code: 'UNAUTHORIZED',
       });
     }
-    
+
     // Verify with Supabase
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
+
     if (error || !user) {
       return res.status(401).json({
         error: 'Unauthorized',
@@ -32,7 +36,7 @@ async function validateToken(req, res, next) {
         code: 'UNAUTHORIZED',
       });
     }
-    
+
     req.user = user;
     next();
   } catch (error) {
@@ -45,6 +49,7 @@ async function validateToken(req, res, next) {
 ```
 
 **Best Practices:**
+
 - ✅ Always verify tokens server-side
 - ✅ Check token expiration
 - ✅ Use short-lived access tokens (1 hour)
@@ -55,21 +60,18 @@ async function validateToken(req, res, next) {
 
 ```javascript
 // For service-to-service auth
-const validApiKeys = new Set([
-  process.env.API_KEY_1,
-  process.env.API_KEY_2,
-]);
+const validApiKeys = new Set([process.env.API_KEY_1, process.env.API_KEY_2]);
 
 function validateApiKey(req, res, next) {
   const apiKey = req.headers['x-api-key'];
-  
+
   if (!apiKey || !validApiKeys.has(apiKey)) {
     return res.status(401).json({
       error: 'Invalid API key',
       code: 'UNAUTHORIZED',
     });
   }
-  
+
   next();
 }
 ```
@@ -86,16 +88,16 @@ function validateJobInput(data) {
   if (!validator.isUUID(data.userId, 4)) {
     throw new Error('Invalid user ID format');
   }
-  
+
   // Sanitize prompt
   const prompt = validator.trim(data.prompt);
   const sanitized = validator.escape(prompt);
-  
+
   // Length validation
   if (sanitized.length < 10 || sanitized.length > 1000) {
     throw new Error('Prompt must be 10-1000 characters');
   }
-  
+
   return { ...data, prompt: sanitized };
 }
 ```
@@ -105,10 +107,7 @@ function validateJobInput(data) {
 ```javascript
 // Never use string concatenation in SQL
 // Use parameterized queries
-const { data } = await supabase
-  .from('generations')
-  .select('*')
-  .eq('user_id', userId); // Safe
+const { data } = await supabase.from('generations').select('*').eq('user_id', userId); // Safe
 
 // NOT: WHERE user_id = '${userId}' // Unsafe!
 ```
@@ -173,21 +172,23 @@ function encrypt(text) {
 ```javascript
 import helmet from 'helmet';
 
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", 'data:', 'https://storage.supabase.co'],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", 'data:', 'https://storage.supabase.co'],
+      },
     },
-  },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true,
-  },
-}));
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+  })
+);
 ```
 
 ## CORS
@@ -195,23 +196,25 @@ app.use(helmet({
 ### Secure Configuration
 
 ```javascript
-app.use(cors({
-  origin: (origin, callback) => {
-    const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',');
-    
-    // Allow requests with no origin (mobile apps, Postman)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',');
+
+      // Allow requests with no origin (mobile apps, Postman)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
 ```
 
 ## Secrets Management
@@ -219,12 +222,14 @@ app.use(cors({
 ### Environment Variables
 
 **Never commit:**
+
 - ❌ API keys
 - ❌ Database passwords
 - ❌ JWT secrets
 - ❌ Service credentials
 
 **Use:**
+
 - ✅ .env files (gitignored)
 - ✅ Railway/Vercel env vars
 - ✅ AWS Secrets Manager
@@ -248,7 +253,7 @@ app.use(cors({
 // Ensure users can only access their own jobs
 router.get('/api/jobs/:jobId', validateAuth, async (req, res) => {
   const job = await imageGenerationQueue.getJob(req.params.jobId);
-  
+
   // Verify ownership
   if (job.data.userId !== req.user.id) {
     return res.status(403).json({
@@ -257,7 +262,7 @@ router.get('/api/jobs/:jobId', validateAuth, async (req, res) => {
       code: 'FORBIDDEN',
     });
   }
-  
+
   res.json(job);
 });
 ```
@@ -269,13 +274,13 @@ router.get('/api/jobs/:jobId', validateAuth, async (req, res) => {
 function sanitizePrompt(prompt) {
   // Remove URLs
   prompt = prompt.replace(/https?:\/\/[^\s]+/g, '');
-  
+
   // Remove email addresses
   prompt = prompt.replace(/[\w.-]+@[\w.-]+\.\w+/g, '');
-  
+
   // Limit length
   prompt = prompt.substring(0, 1000);
-  
+
   return prompt.trim();
 }
 ```
@@ -316,7 +321,7 @@ const redisClient = new Redis({
 // Log all job creations
 router.post('/api/jobs', async (req, res) => {
   const job = await createJob(req.body);
-  
+
   // Audit log
   logger.info('Job created', {
     jobId: job.id,
@@ -325,7 +330,7 @@ router.post('/api/jobs', async (req, res) => {
     userAgent: req.headers['user-agent'],
     timestamp: new Date().toISOString(),
   });
-  
+
   res.json(job);
 });
 ```
@@ -333,6 +338,7 @@ router.post('/api/jobs', async (req, res) => {
 ## Security Checklist
 
 ### Development
+
 - [ ] Use .env for secrets
 - [ ] Never commit credentials
 - [ ] Validate all inputs
@@ -343,6 +349,7 @@ router.post('/api/jobs', async (req, res) => {
 - [ ] Implement authentication
 
 ### Production
+
 - [ ] Use HTTPS only
 - [ ] Strong Redis password
 - [ ] Rotate API keys regularly

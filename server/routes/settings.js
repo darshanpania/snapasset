@@ -34,7 +34,9 @@ router.put('/api-key', async (req, res) => {
       return res.status(400).json({ error: 'apiKey is required' });
     }
     if (!apiKey.startsWith('sk-') || apiKey.length < 20) {
-      return res.status(400).json({ error: 'Invalid OpenAI API key format. Keys start with sk- and are at least 20 characters.' });
+      return res.status(400).json({
+        error: 'Invalid OpenAI API key format. Keys start with sk- and are at least 20 characters.',
+      });
     }
     const db = req.app.locals.providers?.db;
     if (!db?.users?.setApiKey) {

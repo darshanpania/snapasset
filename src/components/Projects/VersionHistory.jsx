@@ -38,7 +38,11 @@ export const VersionHistory = ({ projectId }) => {
   };
 
   const restoreVersion = async (versionId) => {
-    if (!confirm('Are you sure you want to restore this version? This will overwrite the current project state.')) {
+    if (
+      !confirm(
+        'Are you sure you want to restore this version? This will overwrite the current project state.'
+      )
+    ) {
       return;
     }
 
@@ -90,10 +94,7 @@ export const VersionHistory = ({ projectId }) => {
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => restoreVersion(version.id)}
-                className="btn-restore"
-              >
+              <button onClick={() => restoreVersion(version.id)} className="btn-restore">
                 Restore
               </button>
             </div>

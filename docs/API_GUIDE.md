@@ -186,23 +186,21 @@ GET /api/jobs/:jobId
 ### Real-time Updates (SSE)
 
 ```javascript
-const eventSource = new EventSource(
-  `http://localhost:3001/api/sse/jobs/${jobId}`
-);
+const eventSource = new EventSource(`http://localhost:3001/api/sse/jobs/${jobId}`);
 
 eventSource.onmessage = (event) => {
   const data = JSON.parse(event.data);
-  
+
   switch (data.type) {
     case 'connected':
       console.log('Connected to job updates');
       break;
-      
+
     case 'progress':
       console.log(`Progress: ${data.progress}%`);
       updateProgressBar(data.progress);
       break;
-      
+
     case 'done':
       console.log('Job completed!', data.result);
       displayImages(data.result.images);
@@ -224,6 +222,7 @@ GET /api/jobs?status=active&limit=10
 ```
 
 **Query Parameters:**
+
 - `status` - Filter by status (waiting, active, completed, failed)
 - `limit` - Number of jobs to return (default: 20)
 
@@ -313,27 +312,27 @@ All errors follow a consistent format:
 
 ### HTTP Status Codes
 
-| Status | Meaning |
-|--------|----------|
-| 200 | Success |
-| 201 | Created |
-| 400 | Bad Request |
-| 401 | Unauthorized |
-| 403 | Forbidden |
-| 404 | Not Found |
-| 429 | Too Many Requests |
-| 500 | Internal Server Error |
+| Status | Meaning               |
+| ------ | --------------------- |
+| 200    | Success               |
+| 201    | Created               |
+| 400    | Bad Request           |
+| 401    | Unauthorized          |
+| 403    | Forbidden             |
+| 404    | Not Found             |
+| 429    | Too Many Requests     |
+| 500    | Internal Server Error |
 
 ### Error Codes
 
-| Code | Description | Action |
-|------|-------------|--------|
-| `INVALID_REQUEST` | Missing or invalid data | Check request body |
-| `UNAUTHORIZED` | Invalid token | Refresh authentication |
-| `RATE_LIMIT_EXCEEDED` | Too many requests | Wait and retry |
-| `JOB_LIMIT_EXCEEDED` | Too many jobs | Wait for jobs to complete |
-| `JOB_NOT_FOUND` | Job doesn't exist | Check job ID |
-| `INTERNAL_ERROR` | Server error | Retry or contact support |
+| Code                  | Description             | Action                    |
+| --------------------- | ----------------------- | ------------------------- |
+| `INVALID_REQUEST`     | Missing or invalid data | Check request body        |
+| `UNAUTHORIZED`        | Invalid token           | Refresh authentication    |
+| `RATE_LIMIT_EXCEEDED` | Too many requests       | Wait and retry            |
+| `JOB_LIMIT_EXCEEDED`  | Too many jobs           | Wait for jobs to complete |
+| `JOB_NOT_FOUND`       | Job doesn't exist       | Check job ID              |
+| `INTERNAL_ERROR`      | Server error            | Retry or contact support  |
 
 ### Handling Errors
 
@@ -343,30 +342,30 @@ try {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(jobData)
+    body: JSON.stringify(jobData),
   });
-  
+
   if (!response.ok) {
     const error = await response.json();
-    
+
     switch (error.code) {
       case 'RATE_LIMIT_EXCEEDED':
         // Wait and retry
         await sleep(error.retryAfter * 1000);
         return createJob(jobData);
-        
+
       case 'UNAUTHORIZED':
         // Refresh token
         await refreshAuth();
         return createJob(jobData);
-        
+
       default:
         throw new Error(error.message);
     }
   }
-  
+
   return await response.json();
 } catch (error) {
   console.error('Failed to create job:', error);
@@ -398,20 +397,20 @@ const interval = setInterval(async () => {
 class ApiClient {
   async request(url, options) {
     let retries = 3;
-    
+
     while (retries > 0) {
       const response = await fetch(url, options);
-      
+
       if (response.status === 429) {
         const retryAfter = response.headers.get('Retry-After');
         await sleep(retryAfter * 1000);
         retries--;
         continue;
       }
-      
+
       return response;
     }
-    
+
     throw new Error('Max retries exceeded');
   }
 }
@@ -424,20 +423,17 @@ function validateJobData(data) {
   if (!data.userId) {
     throw new Error('userId is required');
   }
-  
+
   if (!data.prompt || data.prompt.length < 10) {
     throw new Error('prompt must be at least 10 characters');
   }
-  
+
   if (!data.platforms || data.platforms.length === 0) {
     throw new Error('At least one platform is required');
   }
-  
-  const validPlatforms = [
-    'instagram-post', 'instagram-story',
-    'twitter-post', 'facebook-post'
-  ];
-  
+
+  const validPlatforms = ['instagram-post', 'instagram-story', 'twitter-post', 'facebook-post'];
+
   for (const platform of data.platforms) {
     if (!validPlatforms.includes(platform)) {
       throw new Error(`Invalid platform: ${platform}`);
@@ -457,8 +453,8 @@ await fetch('/api/queue/clean', {
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     grace: 86400000, // 24 hours in ms
-    status: 'completed'
-  })
+    status: 'completed',
+  }),
 });
 ```
 
@@ -466,13 +462,13 @@ await fetch('/api/queue/clean', {
 
 ```javascript
 setInterval(async () => {
-  const stats = await fetch('/api/queue/stats').then(r => r.json());
-  
+  const stats = await fetch('/api/queue/stats').then((r) => r.json());
+
   // Alert if too many failed jobs
   if (stats.failed > 10) {
     console.warn('High number of failed jobs:', stats.failed);
   }
-  
+
   // Alert if queue is backed up
   if (stats.waiting > 100) {
     console.warn('Queue is backed up:', stats.waiting);
@@ -489,7 +485,7 @@ async function createJobWithRetry(data, maxRetries = 3) {
       return await createJob(data);
     } catch (error) {
       if (i === maxRetries - 1) throw error;
-      
+
       // Exponential backoff: 1s, 2s, 4s
       const delay = Math.pow(2, i) * 1000;
       await sleep(delay);
@@ -504,9 +500,7 @@ async function createJobWithRetry(data, maxRetries = 3) {
 function createJobWithTimeout(data, timeout = 60000) {
   return Promise.race([
     createJob(data),
-    new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Timeout')), timeout)
-    )
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout)),
   ]);
 }
 ```
@@ -521,42 +515,40 @@ class SnapAssetClient {
     this.apiUrl = apiUrl;
     this.token = token;
   }
-  
+
   async createJob(data) {
     const response = await fetch(`${this.apiUrl}/api/jobs`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`
+        Authorization: `Bearer ${this.token}`,
       },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
-    
+
     if (!response.ok) {
       throw new Error(await response.text());
     }
-    
+
     return response.json();
   }
-  
+
   async getJob(jobId) {
     const response = await fetch(`${this.apiUrl}/api/jobs/${jobId}`, {
       headers: {
-        'Authorization': `Bearer ${this.token}`
-      }
+        Authorization: `Bearer ${this.token}`,
+      },
     });
-    
+
     return response.json();
   }
-  
+
   streamJob(jobId, onUpdate, onComplete, onError) {
-    const eventSource = new EventSource(
-      `${this.apiUrl}/api/sse/jobs/${jobId}`
-    );
-    
+    const eventSource = new EventSource(`${this.apiUrl}/api/sse/jobs/${jobId}`);
+
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      
+
       if (data.type === 'progress') {
         onUpdate(data);
       } else if (data.type === 'done') {
@@ -564,12 +556,12 @@ class SnapAssetClient {
         eventSource.close();
       }
     };
-    
+
     eventSource.onerror = (error) => {
       onError(error);
       eventSource.close();
     };
-    
+
     return eventSource;
   }
 }
@@ -580,7 +572,7 @@ const client = new SnapAssetClient('http://localhost:3001', 'your-token');
 const { jobId } = await client.createJob({
   userId: 'user-123',
   prompt: 'A beautiful sunset',
-  platforms: ['instagram-post']
+  platforms: ['instagram-post'],
 });
 
 client.streamJob(
