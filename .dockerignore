@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log
+.env
+.env.*
+!.env.example
+dist/
+.git
+.gitignore
+server/
+docs/
+.claude/

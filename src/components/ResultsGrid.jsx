@@ -1,110 +1,117 @@
 import { useState } from 'react'
+import JSZip from 'jszip'
+import { useToast } from '../contexts/ToastContext'
 import './ResultsGrid.css'
 
 function ResultsGrid({ results, prompt }) {
-  const [selectedImage, setSelectedImage] = useState(null)
+  const [preview, setPreview] = useState(null)
+  const [zipping, setZipping] = useState(false)
+  const toast = useToast()
 
-  const handleDownload = (image) => {
-    const link = document.createElement('a')
-    link.href = image.url
-    link.download = `${image.preset.name.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.png`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+  const src = (img) => img.image || img.url
+  const name = (img) => img.platformName || img.preset?.name || img.platform
+  const w = (img) => img.width || img.preset?.width
+  const h = (img) => img.height || img.preset?.height
+
+  const download = (img) => {
+    const a = document.createElement('a')
+    a.href = src(img)
+    a.download = `${name(img).replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.png`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    toast.success(`Downloaded ${name(img)}`)
   }
 
-  const handleDownloadAll = () => {
-    results.forEach((image, index) => {
-      setTimeout(() => {
-        handleDownload(image)
-      }, index * 500) // Stagger downloads by 500ms
-    })
-  }
+  const downloadAllZip = async () => {
+    if (results.length === 0) return
+    setZipping(true)
+    try {
+      const zip = new JSZip()
+      const folder = zip.folder('snapasset-images')
 
-  const handleImageClick = (image) => {
-    setSelectedImage(image)
-  }
+      for (let idx = 0; idx < results.length; idx++) {
+        const img = results[idx]
+        const imgSrc = src(img)
+        const fileName = `${idx + 1}-${name(img).replace(/\s+/g, '-').toLowerCase()}.png`
 
-  const closeModal = () => {
-    setSelectedImage(null)
+        if (imgSrc.startsWith('data:')) {
+          const base64 = imgSrc.split(',')[1]
+          folder.file(fileName, base64, { base64: true })
+        } else {
+          const response = await fetch(imgSrc)
+          if (!response.ok) continue
+          const blob = await response.blob()
+          folder.file(fileName, blob)
+        }
+      }
+
+      const blob = await zip.generateAsync({ type: 'blob' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `snapasset-${Date.now()}.zip`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      toast.success(`Downloaded ${results.length} images as ZIP`)
+    } catch (err) {
+      toast.error('ZIP download failed: ' + err.message)
+    } finally {
+      setZipping(false)
+    }
   }
 
   return (
-    <div className="results-container">
-      <div className="results-header">
+    <div className="rg">
+      <div className="rg-head">
         <div>
-          <h2 className="results-title">✨ Generated Images</h2>
-          <p className="results-prompt">"{prompt}"</p>
+          <h2 className="rg-title">Generated Images</h2>
+          <p className="rg-prompt">"{prompt}"</p>
         </div>
-        <button
-          className="download-all-btn"
-          onClick={handleDownloadAll}
-        >
-          ⬇️ Download All ({results.length})
+        <button className="rg-dl-all" onClick={downloadAllZip} disabled={zipping}>
+          {zipping ? (
+            <><span className="spinner-sm" /> Zipping...</>
+          ) : (
+            <>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1v9m0 0L5 7m3 3l3-3M2 12v1a2 2 0 002 2h8a2 2 0 002-2v-1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Download All as ZIP ({results.length})
+            </>
+          )}
         </button>
       </div>
 
-      <div className="results-grid">
-        {results.map((image, index) => (
-          <div key={index} className="result-card">
-            <div className="image-container" onClick={() => handleImageClick(image)}>
-              <img
-                src={image.url}
-                alt={`${image.preset.name} - ${prompt}`}
-                className="result-image"
-                loading="lazy"
-              />
-              <div className="image-overlay">
-                <button className="preview-btn">👁️ Preview</button>
-              </div>
+      <div className="rg-grid">
+        {results.map((img, i) => (
+          <div key={i} className="rg-card">
+            <div className="rg-img-wrap" onClick={() => setPreview(img)}>
+              <img src={src(img)} alt={name(img)} className="rg-img" loading="lazy" />
+              <div className="rg-hover">Click to preview</div>
             </div>
-            
-            <div className="result-info">
-              <div className="info-header">
-                <span className="platform-icon">{image.preset.icon}</span>
-                <h4 className="result-name">{image.preset.name}</h4>
+            <div className="rg-meta">
+              <div className="rg-meta-left">
+                <span className="rg-name">{name(img)}</span>
+                <span className="rg-dims">{w(img)} x {h(img)}</span>
               </div>
-              
-              <div className="result-details">
-                <span className="detail-item">
-                  📐 {image.preset.width} × {image.preset.height}
-                </span>
-                <span className="detail-item">
-                  📊 {image.preset.aspectRatio}
-                </span>
-              </div>
-
-              <button
-                className="download-btn"
-                onClick={() => handleDownload(image)}
-              >
-                ⬇️ Download
+              <button className="rg-dl" onClick={() => download(img)} title="Download">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v9m0 0L5 7m3 3l3-3M2 12v1a2 2 0 002 2h8a2 2 0 002-2v-1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Modal for image preview */}
-      {selectedImage && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={closeModal}>
-              ✕
-            </button>
-            <img
-              src={selectedImage.url}
-              alt={selectedImage.preset.name}
-              className="modal-image"
-            />
-            <div className="modal-info">
-              <h3>{selectedImage.preset.name}</h3>
-              <p>{selectedImage.preset.width} × {selectedImage.preset.height} ({selectedImage.preset.aspectRatio})</p>
-              <button
-                className="modal-download-btn"
-                onClick={() => handleDownload(selectedImage)}
-              >
-                ⬇️ Download Image
+      {preview && (
+        <div className="rg-modal" onClick={() => setPreview(null)}>
+          <div className="rg-modal-body" onClick={e => e.stopPropagation()}>
+            <button className="rg-modal-close" onClick={() => setPreview(null)}>x</button>
+            <img src={src(preview)} alt={name(preview)} className="rg-modal-img" />
+            <div className="rg-modal-info">
+              <span>{name(preview)} &middot; {w(preview)} x {h(preview)}</span>
+              <button className="rg-dl" onClick={() => download(preview)}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v9m0 0L5 7m3 3l3-3M2 12v1a2 2 0 002 2h8a2 2 0 002-2v-1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                Download
               </button>
             </div>
           </div>

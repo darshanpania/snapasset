@@ -21,7 +21,7 @@ router.use(authMiddleware);
 router.get('/dashboard', async (req, res) => {
   try {
     const { period = '30d' } = req.query;
-    const analyticsService = new AnalyticsService(req.app.locals.supabase);
+    const analyticsService = new AnalyticsService(req.app.locals.providers.db);
 
     const dashboard = await analyticsService.getUserDashboard(req.user.id, period);
 
@@ -45,7 +45,7 @@ router.get('/dashboard', async (req, res) => {
 router.get('/timeline', async (req, res) => {
   try {
     const { period = '30d', granularity = 'day' } = req.query;
-    const analyticsService = new AnalyticsService(req.app.locals.supabase);
+    const analyticsService = new AnalyticsService(req.app.locals.providers.db);
 
     const timeline = await analyticsService.getUsageTimeline(
       req.user.id,
@@ -73,7 +73,7 @@ router.get('/timeline', async (req, res) => {
 router.get('/platforms', async (req, res) => {
   try {
     const { period = '30d' } = req.query;
-    const analyticsService = new AnalyticsService(req.app.locals.supabase);
+    const analyticsService = new AnalyticsService(req.app.locals.providers.db);
 
     const platforms = await analyticsService.getPlatformBreakdown(req.user.id, period);
 
@@ -97,7 +97,7 @@ router.get('/platforms', async (req, res) => {
 router.get('/engagement', async (req, res) => {
   try {
     const { weeks = 12 } = req.query;
-    const analyticsService = new AnalyticsService(req.app.locals.supabase);
+    const analyticsService = new AnalyticsService(req.app.locals.providers.db);
 
     const engagement = await analyticsService.getUserEngagement(
       req.user.id,
@@ -124,7 +124,7 @@ router.get('/engagement', async (req, res) => {
 router.get('/costs', async (req, res) => {
   try {
     const { period = '30d' } = req.query;
-    const analyticsService = new AnalyticsService(req.app.locals.supabase);
+    const analyticsService = new AnalyticsService(req.app.locals.providers.db);
 
     const costs = await analyticsService.getCostAnalytics(req.user.id, period);
 
@@ -148,7 +148,7 @@ router.get('/costs', async (req, res) => {
 router.get('/performance', async (req, res) => {
   try {
     const { type, hours = 24 } = req.query;
-    const analyticsService = new AnalyticsService(req.app.locals.supabase);
+    const analyticsService = new AnalyticsService(req.app.locals.providers.db);
 
     const metrics = await analyticsService.getPerformanceMetrics(type, parseInt(hours));
 
@@ -178,7 +178,7 @@ router.post('/track', async (req, res) => {
       user_agent: req.get('user-agent'),
     };
 
-    const analyticsService = new AnalyticsService(req.app.locals.supabase);
+    const analyticsService = new AnalyticsService(req.app.locals.providers.db);
     const event = await analyticsService.trackEvent(eventData);
 
     res.status(201).json({
@@ -201,7 +201,7 @@ router.post('/track', async (req, res) => {
 router.get('/export', async (req, res) => {
   try {
     const { format = 'json', period = '30d' } = req.query;
-    const analyticsService = new AnalyticsService(req.app.locals.supabase);
+    const analyticsService = new AnalyticsService(req.app.locals.providers.db);
 
     const exportData = await analyticsService.exportAnalytics(req.user.id, format, period);
 
@@ -233,7 +233,7 @@ router.get('/realtime', async (req, res) => {
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
 
-  const analyticsService = new AnalyticsService(req.app.locals.supabase);
+  const analyticsService = new AnalyticsService(req.app.locals.providers.db);
 
   // Send initial data
   const sendUpdate = async () => {
@@ -266,7 +266,7 @@ router.get('/realtime', async (req, res) => {
 router.get('/admin/dashboard', isAdmin, async (req, res) => {
   try {
     const { period = '30d' } = req.query;
-    const analyticsService = new AnalyticsService(req.app.locals.supabase);
+    const analyticsService = new AnalyticsService(req.app.locals.providers.db);
 
     const adminDashboard = await analyticsService.getAdminDashboard(period);
 

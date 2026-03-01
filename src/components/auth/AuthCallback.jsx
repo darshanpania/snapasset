@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../../services/supabase'
+import { supabase, isLocalMode } from '../../services/supabase'
 
 const AuthCallback = () => {
   const navigate = useNavigate()
@@ -9,16 +9,18 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Check if there's a session
+        if (isLocalMode) {
+          navigate('/', { replace: true })
+          return
+        }
+
         const { data: { session }, error } = await supabase.auth.getSession()
-        
+
         if (error) throw error
-        
+
         if (session) {
-          // Successfully authenticated
           navigate('/', { replace: true })
         } else {
-          // No session found
           setError('Authentication failed. Please try again.')
           setTimeout(() => navigate('/auth/login'), 3000)
         }

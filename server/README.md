@@ -34,9 +34,9 @@ Backend API for SnapAsset - AI-powered image generation and optimization.
 ### Prerequisites
 
 - Node.js 18+
-- Redis (for job queue)
-- Supabase account
-- OpenAI API key
+- Redis (for job queue, optional - falls back to in-memory)
+- OpenAI API key (for image generation)
+- Supabase account **OR** nothing (local SQLite mode works out of the box)
 
 ### Installation
 
@@ -53,20 +53,28 @@ nano .env
 
 ### Configuration
 
-Edit `.env` file:
+The server supports two database modes that are auto-detected:
 
+**Local mode** (default - no external services needed):
 ```env
 PORT=3001
 NODE_ENV=development
-
-SUPABASE_URL=your-supabase-url
-SUPABASE_SERVICE_KEY=your-service-key
-
+JWT_SECRET=change-me-to-a-random-string-at-least-32-characters
 OPENAI_API_KEY=your-openai-key
+```
 
+**Supabase mode** (cloud PostgreSQL + storage):
+```env
+PORT=3001
+NODE_ENV=development
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_KEY=your-service-key
+OPENAI_API_KEY=your-openai-key
 REDIS_HOST=localhost
 REDIS_PORT=6379
 ```
+
+When `SUPABASE_URL` is set, the server uses Supabase for database, auth, and storage. Otherwise it automatically falls back to SQLite + local filesystem + JWT auth.
 
 ### Running the Server
 
@@ -80,6 +88,8 @@ npm start
 # Start worker process
 npm run worker
 ```
+
+In local mode, the server creates a `data/` directory containing `snapasset.db` (SQLite) and `storage/` (uploaded files). Auth endpoints are available at `/api/auth` (register, login, me).
 
 ### Docker Setup
 
@@ -342,17 +352,22 @@ docker run -p 3001:3001 --env-file .env snapasset-api
 
 ### Environment Variables
 
-Required:
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_KEY`
-- `OPENAI_API_KEY`
-- `REDIS_HOST`
+**Always required:**
+- `OPENAI_API_KEY` - For image generation
 
-Optional:
+**Local mode (default):**
+- `JWT_SECRET` - Secret for signing JWT tokens (min 32 chars)
+- `LOCAL_DATA_DIR` - Data directory (default: `./data`)
+
+**Supabase mode:**
+- `SUPABASE_URL` - Supabase project URL (triggers Supabase mode)
+- `SUPABASE_SERVICE_KEY` - Supabase service role key
+
+**Optional:**
 - `PORT` (default: 3001)
 - `NODE_ENV` (default: development)
-- `REDIS_PORT` (default: 6379)
-- `REDIS_PASSWORD`
+- `DB_PROVIDER` - Force `local` or `supabase` (auto-detected if omitted)
+- `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` - For job queue
 
 ## Troubleshooting
 

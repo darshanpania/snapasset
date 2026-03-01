@@ -1,13 +1,14 @@
 /**
  * Project Service
  * Business logic for project management
+ * Uses db adapter (SqliteDbAdapter or SupabaseDbAdapter) for data access
  */
 
-import { Project, ProjectImage, ProjectCollaborator, ProjectVersion } from '../models/Project.js';
+import { Project, ProjectCollaborator, ProjectVersion } from '../models/Project.js';
 
 export class ProjectService {
-  constructor(supabaseClient) {
-    this.supabase = supabaseClient;
+  constructor(dbAdapter) {
+    this.db = dbAdapter;
   }
 
   async createProject(projectData) {
@@ -18,72 +19,35 @@ export class ProjectService {
       throw new Error(validation.errors.join(', '));
     }
 
-    const { data, error } = await this.supabase.from('projects').insert([project.toJSON()]).select();
-
-    if (error) throw error;
-
-    return data[0];
+    return await this.db.projects.create(project.toJSON());
   }
 
   async getUserProjects(userId, filters = {}) {
-    let query = this.supabase
-      .from('projects')
-      .select('*, project_images(count)', { count: 'exact' })
-      .or(`owner_id.eq.${userId},collaborators.user_id.eq.${userId}`);
-
-    if (filters.status) {
-      query = query.eq('status', filters.status);
-    }
-
-    if (filters.visibility) {
-      query = query.eq('visibility', filters.visibility);
-    }
-
-    if (filters.tags && filters.tags.length > 0) {
-      query = query.contains('tags', filters.tags);
-    }
-
-    if (filters.search) {
-      query = query.or(
-        `name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`
-      );
-    }
-
     const page = filters.page || 1;
     const limit = filters.limit || 20;
-    const from = (page - 1) * limit;
-    const to = from + limit - 1;
 
-    query = query.range(from, to).order('updated_at', { ascending: false });
-
-    const { data, error, count } = await query;
-
-    if (error) throw error;
+    const result = await this.db.projects.findByUser(userId, filters, { page, limit });
 
     return {
-      data,
+      data: result.data,
       pagination: {
         page,
         limit,
-        total: count,
-        totalPages: Math.ceil(count / limit),
+        total: result.count,
+        totalPages: Math.ceil(result.count / limit),
       },
     };
   }
 
   async getProjectById(projectId, userId) {
-    const { data, error } = await this.supabase
-      .from('projects')
-      .select('*, project_images(*), collaborators(*)')
-      .eq('id', projectId)
-      .single();
+    const data = await this.db.projects.findById(projectId);
 
-    if (error) throw error;
+    if (!data) throw new Error('Project not found');
 
     // Check if user has access
     if (
       data.owner_id !== userId &&
-      !data.collaborators.some((c) => c.user_id === userId)
+      !data.collaborators?.some((c) => c.user_id === userId)
     ) {
       throw new Error('Access denied');
     }
@@ -92,25 +56,16 @@ export class ProjectService {
   }
 
   async updateProject(projectId, userId, updates) {
-    // Check permissions
     const project = await this.getProjectById(projectId, userId);
 
     if (!this.canEdit(project, userId)) {
       throw new Error('Permission denied');
     }
 
-    const { data, error } = await this.supabase
-      .from('projects')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', projectId)
-      .select();
-
-    if (error) throw error;
-
-    return data[0];
+    return await this.db.projects.update(projectId, {
+      ...updates,
+      updated_at: new Date().toISOString(),
+    });
   }
 
   async deleteProject(projectId, userId, permanent = false) {
@@ -120,45 +75,20 @@ export class ProjectService {
       throw new Error('Only project owner can delete');
     }
 
-    if (permanent) {
-      const { error } = await this.supabase.from('projects').delete().eq('id', projectId);
-      if (error) throw error;
-    } else {
-      const { error } = await this.supabase
-        .from('projects')
-        .update({
-          status: 'deleted',
-          deleted_at: new Date().toISOString(),
-        })
-        .eq('id', projectId);
-      if (error) throw error;
-    }
-
+    await this.db.projects.delete(projectId, !permanent);
     return true;
   }
 
   async getProjectStats(projectId, userId) {
     const project = await this.getProjectById(projectId, userId);
-
-    const { count: imageCount } = await this.supabase
-      .from('project_images')
-      .select('*', { count: 'exact', head: true })
-      .eq('project_id', projectId);
-
-    const { count: collaboratorCount } = await this.supabase
-      .from('project_collaborators')
-      .select('*', { count: 'exact', head: true })
-      .eq('project_id', projectId);
-
-    const { count: versionCount } = await this.supabase
-      .from('project_versions')
-      .select('*', { count: 'exact', head: true })
-      .eq('project_id', projectId);
+    const images = await this.db.projects.getImages(projectId, { page: 1, limit: 1 });
+    const collaborators = await this.db.projects.getCollaborators(projectId);
+    const versions = await this.db.projects.getVersions(projectId);
 
     return {
-      images: imageCount || 0,
-      collaborators: collaboratorCount || 0,
-      versions: versionCount || 0,
+      images: images.count || 0,
+      collaborators: collaborators.length || 0,
+      versions: versions.length || 0,
       created_at: project.created_at,
       updated_at: project.updated_at,
     };
@@ -171,20 +101,8 @@ export class ProjectService {
       throw new Error('Permission denied');
     }
 
-    const projectImages = imageIds.map((imageId, index) => ({
-      project_id: projectId,
-      image_id: imageId,
-      order: index,
-    }));
-
-    const { data, error } = await this.supabase
-      .from('project_images')
-      .insert(projectImages)
-      .select();
-
-    if (error) throw error;
-
-    return data;
+    await this.db.projects.addImages(projectId, imageIds);
+    return await this.db.projects.getImages(projectId, { page: 1, limit: imageIds.length + 10 });
   }
 
   async removeImagesFromProject(projectId, userId, imageIds) {
@@ -194,14 +112,7 @@ export class ProjectService {
       throw new Error('Permission denied');
     }
 
-    const { error } = await this.supabase
-      .from('project_images')
-      .delete()
-      .eq('project_id', projectId)
-      .in('image_id', imageIds);
-
-    if (error) throw error;
-
+    await this.db.projects.removeImages(projectId, imageIds);
     return true;
   }
 
@@ -210,25 +121,16 @@ export class ProjectService {
 
     const page = options.page || 1;
     const limit = options.limit || 50;
-    const from = (page - 1) * limit;
-    const to = from + limit - 1;
 
-    const { data, error, count } = await this.supabase
-      .from('project_images')
-      .select('*, images(*)', { count: 'exact' })
-      .eq('project_id', projectId)
-      .order('order', { ascending: true })
-      .range(from, to);
-
-    if (error) throw error;
+    const result = await this.db.projects.getImages(projectId, { page, limit });
 
     return {
-      data,
+      data: result.data,
       pagination: {
         page,
         limit,
-        total: count,
-        totalPages: Math.ceil(count / limit),
+        total: result.count,
+        totalPages: Math.ceil(result.count / limit),
       },
     };
   }
@@ -240,33 +142,17 @@ export class ProjectService {
       throw new Error('Only project owner can add collaborators');
     }
 
-    const collaborator = new ProjectCollaborator({
+    await this.db.projects.addCollaborator(projectId, {
       ...collaboratorData,
-      project_id: projectId,
       invited_by: userId,
     });
 
-    const { data, error } = await this.supabase
-      .from('project_collaborators')
-      .insert([collaborator.toJSON()])
-      .select();
-
-    if (error) throw error;
-
-    return data[0];
+    return await this.db.projects.getCollaborators(projectId);
   }
 
   async getCollaborators(projectId, userId) {
     await this.getProjectById(projectId, userId); // Check access
-
-    const { data, error } = await this.supabase
-      .from('project_collaborators')
-      .select('*, users(id, email, name)')
-      .eq('project_id', projectId);
-
-    if (error) throw error;
-
-    return data;
+    return await this.db.projects.getCollaborators(projectId);
   }
 
   async removeCollaborator(projectId, userId, collaboratorUserId) {
@@ -276,14 +162,7 @@ export class ProjectService {
       throw new Error('Only project owner can remove collaborators');
     }
 
-    const { error } = await this.supabase
-      .from('project_collaborators')
-      .delete()
-      .eq('project_id', projectId)
-      .eq('user_id', collaboratorUserId);
-
-    if (error) throw error;
-
+    await this.db.projects.removeCollaborator(projectId, collaboratorUserId);
     return true;
   }
 
@@ -294,55 +173,12 @@ export class ProjectService {
       throw new Error('Permission denied');
     }
 
-    // Get current project state
-    const { data: images } = await this.supabase
-      .from('project_images')
-      .select('*')
-      .eq('project_id', projectId);
-
-    // Get latest version number
-    const { data: versions } = await this.supabase
-      .from('project_versions')
-      .select('version_number')
-      .eq('project_id', projectId)
-      .order('version_number', { ascending: false })
-      .limit(1);
-
-    const versionNumber = versions && versions.length > 0 ? versions[0].version_number + 1 : 1;
-
-    const version = new ProjectVersion({
-      project_id: projectId,
-      version_number: versionNumber,
-      snapshot: {
-        project,
-        images,
-      },
-      created_by: userId,
-      notes,
-    });
-
-    const { data, error } = await this.supabase
-      .from('project_versions')
-      .insert([version.toJSON()])
-      .select();
-
-    if (error) throw error;
-
-    return data[0];
+    return await this.db.projects.createVersion(projectId, userId, notes);
   }
 
   async getVersionHistory(projectId, userId) {
     await this.getProjectById(projectId, userId); // Check access
-
-    const { data, error } = await this.supabase
-      .from('project_versions')
-      .select('*')
-      .eq('project_id', projectId)
-      .order('version_number', { ascending: false });
-
-    if (error) throw error;
-
-    return data;
+    return await this.db.projects.getVersions(projectId);
   }
 
   async restoreVersion(projectId, userId, versionId) {
@@ -352,31 +188,7 @@ export class ProjectService {
       throw new Error('Permission denied');
     }
 
-    const { data: version, error: versionError } = await this.supabase
-      .from('project_versions')
-      .select('*')
-      .eq('id', versionId)
-      .single();
-
-    if (versionError) throw versionError;
-
-    // Restore project data
-    const { data: updatedProject, error: updateError } = await this.supabase
-      .from('projects')
-      .update(version.snapshot.project)
-      .eq('id', projectId)
-      .select();
-
-    if (updateError) throw updateError;
-
-    // Restore images
-    await this.supabase.from('project_images').delete().eq('project_id', projectId);
-
-    if (version.snapshot.images && version.snapshot.images.length > 0) {
-      await this.supabase.from('project_images').insert(version.snapshot.images);
-    }
-
-    return updatedProject[0];
+    return await this.db.projects.restoreVersion(projectId, versionId);
   }
 
   async exportProject(projectId, userId, format = 'json') {
@@ -399,12 +211,11 @@ export class ProjectService {
     const projectData = {
       ...importData.project,
       owner_id: userId,
-      id: undefined, // Generate new ID
+      id: undefined,
     };
 
     const project = await this.createProject(projectData);
 
-    // Import images if available
     if (importData.images && importData.images.length > 0) {
       const imageIds = importData.images.map((img) => img.image_id);
       await this.addImagesToProject(project.id, userId, imageIds);
@@ -414,10 +225,7 @@ export class ProjectService {
   }
 
   async bulkOperation(userId, operation, projectIds, data = {}) {
-    const results = {
-      success: [],
-      failed: [],
-    };
+    const results = { success: [], failed: [] };
 
     for (const projectId of projectIds) {
       try {
@@ -445,45 +253,22 @@ export class ProjectService {
   }
 
   async getAnalytics(projectId, userId, period = '30d') {
-    await this.getProjectById(projectId, userId); // Check access
-
-    // Calculate date range
-    const days = parseInt(period);
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-
-    // Get image creation timeline
-    const { data: imageTimeline } = await this.supabase
-      .from('project_images')
-      .select('created_at')
-      .eq('project_id', projectId)
-      .gte('created_at', startDate.toISOString());
-
-    // Get collaborator activity
-    const { data: collaboratorActivity } = await this.supabase
-      .from('project_collaborators')
-      .select('*')
-      .eq('project_id', projectId);
-
-    // Get version history count
-    const { count: versionCount } = await this.supabase
-      .from('project_versions')
-      .select('*', { count: 'exact', head: true })
-      .eq('project_id', projectId)
-      .gte('created_at', startDate.toISOString());
+    const project = await this.getProjectById(projectId, userId);
+    const images = await this.db.projects.getImages(projectId, { page: 1, limit: 1000 });
+    const collaborators = await this.db.projects.getCollaborators(projectId);
+    const versions = await this.db.projects.getVersions(projectId);
 
     return {
       period,
-      images_added: imageTimeline ? imageTimeline.length : 0,
-      collaborators: collaboratorActivity ? collaboratorActivity.length : 0,
-      versions_created: versionCount || 0,
-      timeline: imageTimeline || [],
+      images_added: images.count || 0,
+      collaborators: collaborators.length || 0,
+      versions_created: versions.length || 0,
+      timeline: [],
     };
   }
 
   canEdit(project, userId) {
     if (project.owner_id === userId) return true;
-
     const collaborator = project.collaborators?.find((c) => c.user_id === userId);
     return collaborator && ['owner', 'editor'].includes(collaborator.role);
   }
@@ -491,7 +276,6 @@ export class ProjectService {
   canView(project, userId) {
     if (project.visibility === 'public') return true;
     if (project.owner_id === userId) return true;
-
     return project.collaborators?.some((c) => c.user_id === userId);
   }
 }

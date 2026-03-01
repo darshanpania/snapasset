@@ -1,11 +1,11 @@
-version: '3.8'
+# Server-only compose (API + Redis + Worker). For full stack with frontend, use ../docker-compose.yml
 
 services:
   redis:
     image: redis:7-alpine
     container_name: snapasset-redis
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
@@ -19,11 +19,19 @@ services:
     build: .
     container_name: snapasset-api
     ports:
-      - "3001:3001"
+      - "${API_PORT:-3001}:3001"
+      - "${OAUTH_PORT:-1455}:1455"
     environment:
       - NODE_ENV=production
+      - PORT=3001
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
+      - ENCRYPTION_SECRET=${ENCRYPTION_SECRET:?ENCRYPTION_SECRET must be set}
+      - DB_PROVIDER=${DB_PROVIDER:-local}
+      - LOCAL_DATA_DIR=/usr/src/app/data
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
     env_file:
       - .env
     depends_on:
@@ -32,23 +40,31 @@ services:
     restart: unless-stopped
     volumes:
       - ./logs:/usr/src/app/logs
+      - app_data:/usr/src/app/data
 
   worker:
     build: .
-    container_name: snapasset-worker
     command: node workers/imageWorker.js
     environment:
       - NODE_ENV=production
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
+      - ENCRYPTION_SECRET=${ENCRYPTION_SECRET:?ENCRYPTION_SECRET must be set}
+      - DB_PROVIDER=${DB_PROVIDER:-local}
+      - LOCAL_DATA_DIR=/usr/src/app/data
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     env_file:
       - .env
     depends_on:
       redis:
         condition: service_healthy
     restart: unless-stopped
+    volumes:
+      - app_data:/usr/src/app/data
     deploy:
-      replicas: 2  # Run 2 worker instances
+      replicas: 2
 
 volumes:
   redis_data:
+  app_data:

@@ -1,27 +1,23 @@
 import OpenAI from 'openai';
 import sharp from 'sharp';
 import axios from 'axios';
-import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import logger from '../utils/logger.js';
 
 dotenv.config();
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const defaultOpenai = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
 
-let supabase = null;
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
-if (supabaseUrl && supabaseKey && /^https?:\/\//i.test(supabaseUrl)) {
-  supabase = createClient(supabaseUrl, supabaseKey);
-} else {
-  logger.warn('Supabase not configured in imageService — storage/DB features disabled');
+function getOpenAIClient(apiKey) {
+  if (apiKey) return new OpenAI({ apiKey });
+  if (defaultOpenai) return defaultOpenai;
+  throw new Error('No OpenAI API key available. Set OPENAI_API_KEY or provide a user key.');
 }
 
 // Platform presets with exact dimensions
-const PLATFORM_PRESETS = {
+export const PLATFORM_PRESETS = {
   'instagram-post': { width: 1080, height: 1080, name: 'Instagram Post' },
   'instagram-story': { width: 1080, height: 1920, name: 'Instagram Story' },
   'twitter-post': { width: 1200, height: 675, name: 'Twitter Post' },
@@ -33,26 +29,52 @@ const PLATFORM_PRESETS = {
   'pinterest-pin': { width: 1000, height: 1500, name: 'Pinterest Pin' },
 };
 
-/**
- * Generate image using DALL-E 3
- */
-export async function generateWithDallE(prompt, options = {}) {
-  try {
-    const response = await openai.images.generate({
-      model: 'dall-e-3',
-      prompt: prompt,
-      n: 1,
-      size: options.size || '1024x1024',
-      quality: options.quality || 'standard',
-      style: options.style || 'vivid',
-    });
+// Supported image generation models
+export const IMAGE_MODELS = {
+  'gpt-image-1': { name: 'GPT Image 1', sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'], qualities: ['low', 'medium', 'high', 'auto'], outputFormats: ['png', 'webp', 'jpeg'] },
+  'dall-e-3': { name: 'DALL-E 3', sizes: ['1024x1024', '1024x1792', '1792x1024'], qualities: ['standard', 'hd'], styles: ['vivid', 'natural'] },
+  'dall-e-2': { name: 'DALL-E 2', sizes: ['256x256', '512x512', '1024x1024'], qualities: ['standard'] },
+};
 
-    return {
-      url: response.data[0].url,
-      revisedPrompt: response.data[0].revised_prompt,
+const DEFAULT_MODEL = 'gpt-image-1';
+
+/**
+ * Generate image using OpenAI image generation API
+ */
+export async function generateWithDallE(prompt, options = {}, apiKey = null) {
+  try {
+    const client = getOpenAIClient(apiKey);
+    const model = options.model || DEFAULT_MODEL;
+    const modelConfig = IMAGE_MODELS[model] || IMAGE_MODELS[DEFAULT_MODEL];
+
+    const params = {
+      model,
+      prompt,
+      n: 1,
     };
+
+    if (model === 'gpt-image-1') {
+      params.size = options.size || 'auto';
+      params.quality = options.quality || 'auto';
+    } else {
+      params.size = options.size || '1024x1024';
+      params.quality = options.quality || 'standard';
+      if (model === 'dall-e-3' && options.style) {
+        params.style = options.style;
+      }
+    }
+
+    const response = await client.images.generate(params);
+
+    const result = { revisedPrompt: response.data[0].revised_prompt };
+    if (response.data[0].url) {
+      result.url = response.data[0].url;
+    } else if (response.data[0].b64_json) {
+      result.b64Buffer = Buffer.from(response.data[0].b64_json, 'base64');
+    }
+    return result;
   } catch (error) {
-    logger.error('DALL-E generation error:', error);
+    logger.error('Image generation error:', error);
     throw new Error(`Image generation failed: ${error.message}`);
   }
 }
@@ -102,30 +124,22 @@ export async function resizeImage(imageBuffer, platform) {
 }
 
 /**
- * Upload image to Supabase Storage
+ * Upload image to storage via provider adapter
  */
-export async function uploadToStorage(imageBuffer, path, contentType = 'image/png') {
-  if (!supabase) {
-    throw new Error('Supabase not configured — cannot upload to storage');
+export async function uploadToStorage(storageAdapter, imageBuffer, storagePath, contentType = 'image/png') {
+  if (!storageAdapter) {
+    throw new Error('Storage not configured — cannot upload');
   }
   try {
-    const { data, error } = await supabase.storage
-      .from('generated-images')
-      .upload(path, imageBuffer, {
-        contentType,
-        cacheControl: '3600',
-        upsert: true,
-      });
-
-    if (error) throw error;
-
-    const { data: urlData } = supabase.storage
-      .from('generated-images')
-      .getPublicUrl(path);
-
+    const result = await storageAdapter.upload('generated-images', storagePath, imageBuffer, {
+      contentType,
+      cacheControl: '3600',
+      upsert: true,
+    });
+    const url = storageAdapter.getPublicUrl('generated-images', storagePath);
     return {
-      path: data.path,
-      url: urlData.publicUrl,
+      path: result.path || storagePath,
+      url: typeof url === 'string' ? url : url.publicUrl || url,
     };
   } catch (error) {
     throw new Error(`Upload to storage failed: ${error.message}`);
@@ -133,56 +147,42 @@ export async function uploadToStorage(imageBuffer, path, contentType = 'image/pn
 }
 
 /**
- * Save generation metadata to database
+ * Save generation metadata to database via provider adapter
  */
-export async function saveGeneration(userId, generationData) {
-  if (!supabase) {
-    throw new Error('Supabase not configured — cannot save generation');
+export async function saveGeneration(dbAdapter, userId, generationData) {
+  if (!dbAdapter?.images) {
+    throw new Error('Database not configured — cannot save generation');
   }
   try {
-    const { data, error } = await supabase
-      .from('generations')
-      .insert({
-        user_id: userId,
-        prompt: generationData.prompt,
-        image_type: generationData.imageType || 'photo',
-        status: 'completed',
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    return await dbAdapter.images.saveGeneration({
+      user_id: userId,
+      prompt: generationData.prompt,
+      image_type: generationData.imageType || 'photo',
+      status: 'completed',
+    });
   } catch (error) {
     throw new Error(`Failed to save generation: ${error.message}`);
   }
 }
 
 /**
- * Save generated image metadata
+ * Save generated image metadata via provider adapter
  */
-export async function saveGeneratedImage(generationId, imageData) {
-  if (!supabase) {
-    throw new Error('Supabase not configured — cannot save image metadata');
+export async function saveGeneratedImage(dbAdapter, generationId, imageData) {
+  if (!dbAdapter?.images) {
+    throw new Error('Database not configured — cannot save image metadata');
   }
   try {
-    const { data, error } = await supabase
-      .from('generated_images')
-      .insert({
-        generation_id: generationId,
-        platform_id: imageData.platformId,
-        platform_name: imageData.platformName,
-        width: imageData.width,
-        height: imageData.height,
-        file_size: imageData.fileSize,
-        storage_path: imageData.storagePath,
-        url: imageData.url,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    return await dbAdapter.images.saveGeneratedImage({
+      generation_id: generationId,
+      platform_id: imageData.platformId,
+      platform_name: imageData.platformName,
+      width: imageData.width,
+      height: imageData.height,
+      file_size: imageData.fileSize,
+      storage_path: imageData.storagePath,
+      url: imageData.url,
+    });
   } catch (error) {
     throw new Error(`Failed to save image metadata: ${error.message}`);
   }
@@ -201,16 +201,16 @@ export function getPlatformPresets() {
 /**
  * Generate images from a prompt for multiple platform presets
  */
-export async function generateImagesFromPrompt(prompt, presetIds) {
-  if (!process.env.OPENAI_API_KEY) {
+export async function generateImagesFromPrompt(prompt, presetIds, apiKey = null, options = {}) {
+  if (!apiKey && !process.env.OPENAI_API_KEY) {
     throw new Error('OpenAI API key not configured');
   }
 
-  // Generate the base image with DALL-E
-  const generated = await generateWithDallE(prompt);
+  // Generate the base image
+  const generated = await generateWithDallE(prompt, options, apiKey);
 
-  // Download the generated image
-  const imageBuffer = await downloadImage(generated.url);
+  // Get image buffer (either from URL download or direct base64)
+  const imageBuffer = generated.b64Buffer || await downloadImage(generated.url);
 
   // Resize for each requested platform
   const results = await Promise.all(

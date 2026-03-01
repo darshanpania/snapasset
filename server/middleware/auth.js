@@ -1,11 +1,12 @@
 /**
  * Authentication Middleware
- * Verifies JWT tokens and attaches user to request
+ * Verifies JWT tokens using the active provider (Supabase or Local)
  */
 
 export const authMiddleware = async (req, res, next) => {
   try {
-    if (!req.app.locals.supabase) {
+    const providers = req.app.locals.providers;
+    if (!providers?.auth) {
       return res.status(503).json({
         success: false,
         error: 'Authentication service unavailable',
@@ -13,31 +14,22 @@ export const authMiddleware = async (req, res, next) => {
     }
 
     const authHeader = req.headers.authorization;
+    // Support token via query param for SSE (EventSource can't send headers)
+    const token = (authHeader?.startsWith('Bearer ') && authHeader.substring(7))
+      || req.query?.token;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
       return res.status(401).json({
         success: false,
         error: 'No token provided',
       });
     }
-
-    const token = authHeader.substring(7);
-
-    // Verify token with Supabase
-    const { data: { user }, error } = await req.app.locals.supabase.auth.getUser(token);
-
-    if (error || !user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid token',
-      });
-    }
+    const user = await providers.auth.verifyToken(token);
 
     // Attach user to request
     req.user = user;
     next();
   } catch (error) {
-    console.error('Auth middleware error:', error);
     res.status(401).json({
       success: false,
       error: 'Authentication failed',
