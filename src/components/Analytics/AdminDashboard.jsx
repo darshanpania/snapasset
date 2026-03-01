@@ -50,11 +50,7 @@ export const AdminDashboard = () => {
 
       {/* System Overview */}
       <div className="metrics-grid">
-        <StatCard
-          title="Total Users"
-          value={overview.totalUsers}
-          icon="👥"
-        />
+        <StatCard title="Total Users" value={overview.totalUsers} icon="👥" />
         <StatCard
           title="Active Users"
           value={overview.activeUsers}
@@ -140,10 +136,10 @@ export const AdminDashboard = () => {
           )}
           {!systemMetrics.some((m) => m.error_rate > 0.05) &&
             !systemMetrics.some((m) => m.average_response_time_ms > 1000) && (
-            <div className="alert alert-success">
-              <strong>All Systems Operational:</strong> No issues detected ✅
-            </div>
-          )}
+              <div className="alert alert-success">
+                <strong>All Systems Operational:</strong> No issues detected ✅
+              </div>
+            )}
         </div>
       </div>
     </div>

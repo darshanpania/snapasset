@@ -37,11 +37,7 @@ export const ExportMenu = ({ period, data }) => {
 
   return (
     <div className="export-menu">
-      <button
-        className="export-btn"
-        onClick={() => setShowMenu(!showMenu)}
-        disabled={exporting}
-      >
+      <button className="export-btn" onClick={() => setShowMenu(!showMenu)} disabled={exporting}>
         {exporting ? 'Exporting...' : '📥 Export'}
       </button>
 

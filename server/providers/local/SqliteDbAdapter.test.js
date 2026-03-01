@@ -12,15 +12,24 @@ describe('SqliteDbAdapter - projects', () => {
     db.pragma('foreign_keys = ON');
     initializeSchema(db);
     adapter = new SqliteDbAdapter(db);
-    db.prepare('INSERT INTO users (id, email, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?)').run(userId, 'test@test.com', 'hash', new Date().toISOString(), new Date().toISOString());
+    db.prepare(
+      'INSERT INTO users (id, email, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?)'
+    ).run(userId, 'test@test.com', 'hash', new Date().toISOString(), new Date().toISOString());
   });
 
-  afterEach(() => { db.close(); });
+  afterEach(() => {
+    db.close();
+  });
 
   it('creates and retrieves a project', async () => {
     const project = await adapter.projects.create({
-      name: 'Test Project', owner_id: userId, description: 'desc',
-      tags: ['a'], categories: ['b'], visibility: 'private', status: 'active',
+      name: 'Test Project',
+      owner_id: userId,
+      description: 'desc',
+      tags: ['a'],
+      categories: ['b'],
+      visibility: 'private',
+      status: 'active',
     });
 
     expect(project.id).toBeDefined();
@@ -45,7 +54,11 @@ describe('SqliteDbAdapter - projects', () => {
     await adapter.projects.create({ name: 'Active', owner_id: userId, status: 'active' });
     await adapter.projects.create({ name: 'Archived', owner_id: userId, status: 'archived' });
 
-    const result = await adapter.projects.findByUser(userId, { status: 'active' }, { page: 1, limit: 10 });
+    const result = await adapter.projects.findByUser(
+      userId,
+      { status: 'active' },
+      { page: 1, limit: 10 }
+    );
     expect(result.data.length).toBe(1);
     expect(result.data[0].name).toBe('Active');
   });
@@ -86,9 +99,16 @@ describe('SqliteDbAdapter - projects', () => {
   it('manages collaborators', async () => {
     const p = await adapter.projects.create({ name: 'P', owner_id: userId });
     const user2 = 'user-2';
-    db.prepare('INSERT INTO users (id, email, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?)').run(user2, 'u2@test.com', 'hash', new Date().toISOString(), new Date().toISOString());
+    db.prepare(
+      'INSERT INTO users (id, email, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?)'
+    ).run(user2, 'u2@test.com', 'hash', new Date().toISOString(), new Date().toISOString());
 
-    await adapter.projects.addCollaborator(p.id, { user_id: user2, role: 'editor', permissions: ['read', 'write'], invited_by: userId });
+    await adapter.projects.addCollaborator(p.id, {
+      user_id: user2,
+      role: 'editor',
+      permissions: ['read', 'write'],
+      invited_by: userId,
+    });
     const collabs = await adapter.projects.getCollaborators(p.id);
     expect(collabs.length).toBe(1);
     expect(collabs[0].role).toBe('editor');
@@ -117,29 +137,58 @@ describe('SqliteDbAdapter - analytics', () => {
     db.pragma('foreign_keys = ON');
     initializeSchema(db);
     adapter = new SqliteDbAdapter(db);
-    db.prepare('INSERT INTO users (id, email, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?)').run(userId, 'test@test.com', 'hash', new Date().toISOString(), new Date().toISOString());
+    db.prepare(
+      'INSERT INTO users (id, email, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?)'
+    ).run(userId, 'test@test.com', 'hash', new Date().toISOString(), new Date().toISOString());
   });
 
-  afterEach(() => { db.close(); });
+  afterEach(() => {
+    db.close();
+  });
 
   it('tracks an event', async () => {
-    await adapter.analytics.trackEvent({ user_id: userId, event_type: 'image_generated', event_category: 'generation' });
+    await adapter.analytics.trackEvent({
+      user_id: userId,
+      event_type: 'image_generated',
+      event_category: 'generation',
+    });
     const events = db.prepare('SELECT * FROM analytics_events WHERE user_id = ?').all(userId);
     expect(events.length).toBe(1);
     expect(events[0].event_type).toBe('image_generated');
   });
 
   it('tracks cost with upsert logic', async () => {
-    await adapter.analytics.trackCost({ user_id: userId, date: '2026-02-28', service_provider: 'openai', cost: 0.04, tokens: 100, images: 1 });
-    await adapter.analytics.trackCost({ user_id: userId, date: '2026-02-28', service_provider: 'openai', cost: 0.02, tokens: 50, images: 1 });
+    await adapter.analytics.trackCost({
+      user_id: userId,
+      date: '2026-02-28',
+      service_provider: 'openai',
+      cost: 0.04,
+      tokens: 100,
+      images: 1,
+    });
+    await adapter.analytics.trackCost({
+      user_id: userId,
+      date: '2026-02-28',
+      service_provider: 'openai',
+      cost: 0.02,
+      tokens: 50,
+      images: 1,
+    });
 
-    const row = db.prepare('SELECT * FROM cost_tracking WHERE user_id = ? AND date = ?').get(userId, '2026-02-28');
+    const row = db
+      .prepare('SELECT * FROM cost_tracking WHERE user_id = ? AND date = ?')
+      .get(userId, '2026-02-28');
     expect(row.api_calls).toBe(2);
     expect(row.total_cost_usd).toBeCloseTo(0.06);
   });
 
   it('tracks performance metrics', async () => {
-    await adapter.analytics.trackPerformance({ metric_type: 'api_response', metric_name: 'GET /api', value: 42, unit: 'ms' });
+    await adapter.analytics.trackPerformance({
+      metric_type: 'api_response',
+      metric_name: 'GET /api',
+      value: 42,
+      unit: 'ms',
+    });
     const rows = db.prepare('SELECT * FROM performance_metrics').all();
     expect(rows.length).toBe(1);
     expect(rows[0].value).toBe(42);
@@ -157,9 +206,21 @@ describe('SqliteDbAdapter - analytics', () => {
   });
 
   it('gets platform breakdown', async () => {
-    await adapter.analytics.trackEvent({ user_id: userId, event_type: 'image_generated', platform: 'instagram' });
-    await adapter.analytics.trackEvent({ user_id: userId, event_type: 'image_generated', platform: 'instagram' });
-    await adapter.analytics.trackEvent({ user_id: userId, event_type: 'image_generated', platform: 'twitter' });
+    await adapter.analytics.trackEvent({
+      user_id: userId,
+      event_type: 'image_generated',
+      platform: 'instagram',
+    });
+    await adapter.analytics.trackEvent({
+      user_id: userId,
+      event_type: 'image_generated',
+      platform: 'instagram',
+    });
+    await adapter.analytics.trackEvent({
+      user_id: userId,
+      event_type: 'image_generated',
+      platform: 'twitter',
+    });
 
     const breakdown = await adapter.analytics.getPlatformBreakdown(userId, '30d');
     expect(breakdown[0].platform).toBe('instagram');
@@ -182,13 +243,21 @@ describe('SqliteDbAdapter - images', () => {
     db.pragma('foreign_keys = ON');
     initializeSchema(db);
     adapter = new SqliteDbAdapter(db);
-    db.prepare('INSERT INTO users (id, email, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?)').run(userId, 'test@test.com', 'hash', new Date().toISOString(), new Date().toISOString());
+    db.prepare(
+      'INSERT INTO users (id, email, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?)'
+    ).run(userId, 'test@test.com', 'hash', new Date().toISOString(), new Date().toISOString());
   });
 
-  afterEach(() => { db.close(); });
+  afterEach(() => {
+    db.close();
+  });
 
   it('saves a generation', async () => {
-    const gen = await adapter.images.saveGeneration({ user_id: userId, prompt: 'sunset', image_type: 'photo' });
+    const gen = await adapter.images.saveGeneration({
+      user_id: userId,
+      prompt: 'sunset',
+      image_type: 'photo',
+    });
     expect(gen.id).toBeDefined();
     expect(gen.prompt).toBe('sunset');
     expect(gen.status).toBe('completed');
@@ -197,8 +266,14 @@ describe('SqliteDbAdapter - images', () => {
   it('saves a generated image', async () => {
     const gen = await adapter.images.saveGeneration({ user_id: userId, prompt: 'sunset' });
     const img = await adapter.images.saveGeneratedImage({
-      generation_id: gen.id, platform_id: 'instagram-post', platform_name: 'Instagram Post',
-      width: 1080, height: 1080, file_size: 50000, storage_path: 'path', url: 'http://url',
+      generation_id: gen.id,
+      platform_id: 'instagram-post',
+      platform_name: 'Instagram Post',
+      width: 1080,
+      height: 1080,
+      file_size: 50000,
+      storage_path: 'path',
+      url: 'http://url',
     });
     expect(img.id).toBeDefined();
     expect(img.platform_id).toBe('instagram-post');
@@ -216,7 +291,9 @@ describe('SqliteDbAdapter - users', () => {
     adapter = new SqliteDbAdapter(db);
   });
 
-  afterEach(() => { db.close(); });
+  afterEach(() => {
+    db.close();
+  });
 
   it('creates and finds a user by email', async () => {
     await adapter.users.create('a@b.com', 'hash123', { name: 'Alice' });

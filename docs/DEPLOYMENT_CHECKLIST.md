@@ -24,12 +24,14 @@ Complete pre-deployment and post-deployment checklist for Railway.
 ### 3. Environment Variables Ready
 
 **Required:**
+
 - [ ] `SUPABASE_URL` - From Supabase Settings → API
 - [ ] `SUPABASE_SERVICE_KEY` - Service role key from Supabase
 - [ ] `SUPABASE_ANON_KEY` - Anon public key from Supabase
 - [ ] `ALLOWED_ORIGINS` - Your Railway domain
 
 **Optional:**
+
 - [ ] `OPENAI_API_KEY` - For AI image generation
 - [ ] `SENTRY_DSN` - For error tracking
 - [ ] `LOGROCKET_APP_ID` - For session replay
@@ -94,18 +96,21 @@ Complete pre-deployment and post-deployment checklist for Railway.
 ### 5. Verify Deployment
 
 **Health Checks:**
+
 - [ ] Access `https://your-app.railway.app/health`
 - [ ] Response: `{"status":"ok",...}`
 - [ ] Access `https://your-app.railway.app/health/detailed`
 - [ ] All checks show "ok"
 
 **Frontend:**
+
 - [ ] Access `https://your-app.railway.app/`
 - [ ] Page loads without errors
 - [ ] No console errors
 - [ ] Supabase connects
 
 **API:**
+
 - [ ] Access `https://your-app.railway.app/api`
 - [ ] Returns API info
 - [ ] Try a test endpoint
@@ -134,11 +139,13 @@ Complete pre-deployment and post-deployment checklist for Railway.
 ### 3. Monitoring Setup
 
 **Basic (Included):**
+
 - [ ] View logs in Railway dashboard
 - [ ] Monitor health checks
 - [ ] Check resource usage (CPU, memory)
 
 **Advanced (Optional):**
+
 - [ ] Set up Sentry for error tracking
 - [ ] Configure LogRocket for session replay
 - [ ] Add uptime monitoring (UptimeRobot, Pingdom)
@@ -147,6 +154,7 @@ Complete pre-deployment and post-deployment checklist for Railway.
 ### 4. Testing
 
 **Functionality Tests:**
+
 - [ ] User signup works
 - [ ] User login works
 - [ ] OAuth providers work (Google, GitHub, Discord)
@@ -156,6 +164,7 @@ Complete pre-deployment and post-deployment checklist for Railway.
 - [ ] Profile editing works
 
 **Performance Tests:**
+
 - [ ] Health check: <100ms ✓
 - [ ] API endpoints: <200ms ✓
 - [ ] Page load: <2s ✓
@@ -163,6 +172,7 @@ Complete pre-deployment and post-deployment checklist for Railway.
 - [ ] No excessive CPU usage
 
 **Security Tests:**
+
 - [ ] HTTPS enforced
 - [ ] CORS working correctly
 - [ ] Authentication required for protected routes
@@ -326,7 +336,7 @@ Complete pre-deployment and post-deployment checklist for Railway.
 ✅ **Database connects** successfully  
 ✅ **Authentication works** (all providers)  
 ✅ **SSL certificate** active  
-✅ **Custom domain** working (if configured)  
+✅ **Custom domain** working (if configured)
 
 ### Performance Success
 
@@ -335,7 +345,7 @@ Complete pre-deployment and post-deployment checklist for Railway.
 ✅ **Page load:** <2s  
 ✅ **Memory usage:** <200MB  
 ✅ **CPU usage:** <50%  
-✅ **Uptime:** >99%  
+✅ **Uptime:** >99%
 
 ### Quality Success
 
@@ -343,7 +353,7 @@ Complete pre-deployment and post-deployment checklist for Railway.
 ✅ **No console warnings**  
 ✅ **All features** working  
 ✅ **Tests passing** (CI/CD)  
-✅ **Documentation** up to date  
+✅ **Documentation** up to date
 
 ---
 
@@ -354,11 +364,13 @@ Once all items are checked:
 ✅ **Your SnapAsset application is live!**
 
 **URLs:**
+
 - Application: `https://your-app.railway.app`
 - Health: `https://your-app.railway.app/health`
 - API: `https://your-app.railway.app/api`
 
 **Next Steps:**
+
 1. Share with users
 2. Monitor performance
 3. Gather feedback

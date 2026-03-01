@@ -2,7 +2,7 @@
 @import 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap';
 
 /* --- Theme Variables --- */
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   --bg-base: #08080c;
   --bg-surface: #111118;
   --bg-surface-alt: #0d0d12;
@@ -51,17 +51,22 @@
   --color-teal: #2dd4bf;
   --color-violet: #a78bfa;
 
-  --modal-overlay: rgba(0,0,0,0.92);
+  --modal-overlay: rgba(0, 0, 0, 0.92);
   --btn-hover-bg: #1a1a24;
-  --spinner-track: rgba(255,255,255,0.2);
+  --spinner-track: rgba(255, 255, 255, 0.2);
   --spinner-color: #fff;
 
   --gradient-hero: linear-gradient(135deg, #818cf8 0%, #f472b6 50%, #fb923c 100%);
   --gradient-btn: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  --gradient-glow: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.2) 0%, rgba(236, 72, 153, 0.1) 40%, transparent 70%);
+  --gradient-glow: radial-gradient(
+    ellipse at center,
+    rgba(99, 102, 241, 0.2) 0%,
+    rgba(236, 72, 153, 0.1) 40%,
+    transparent 70%
+  );
 }
 
-:root[data-theme="light"] {
+:root[data-theme='light'] {
   --bg-base: #fafafe;
   --bg-surface: #ffffff;
   --bg-surface-alt: #f5f5fa;
@@ -110,14 +115,19 @@
   --manual-badge: #6366f1;
   --manual-badge-bg: rgba(99, 102, 241, 0.1);
 
-  --modal-overlay: rgba(0,0,0,0.5);
+  --modal-overlay: rgba(0, 0, 0, 0.5);
   --btn-hover-bg: #f0f0f8;
   --spinner-track: rgba(99, 102, 241, 0.25);
   --spinner-color: #6366f1;
 
   --gradient-hero: linear-gradient(135deg, #6366f1 0%, #ec4899 50%, #f97316 100%);
   --gradient-btn: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  --gradient-glow: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.15) 0%, rgba(236, 72, 153, 0.08) 40%, transparent 70%);
+  --gradient-glow: radial-gradient(
+    ellipse at center,
+    rgba(99, 102, 241, 0.15) 0%,
+    rgba(236, 72, 153, 0.08) 40%,
+    transparent 70%
+  );
 }
 
 /* --- Reset & Base --- */
@@ -128,13 +138,20 @@
 }
 
 body {
-  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: var(--bg-base);
   color: var(--text-primary);
   min-height: 100vh;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .loading {

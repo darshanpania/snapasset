@@ -15,6 +15,7 @@
 ### Task 1: Install Dependencies & Setup
 
 **Files:**
+
 - Modify: `server/package.json`
 - Modify: `.gitignore`
 
@@ -26,6 +27,7 @@ Expected: Packages added to package.json
 **Step 2: Add data directory to .gitignore**
 
 Add to `.gitignore`:
+
 ```
 # Local database and storage
 server/data/
@@ -43,6 +45,7 @@ git commit -m "chore: add better-sqlite3, bcrypt, jsonwebtoken dependencies"
 ### Task 2: SQLite Schema
 
 **Files:**
+
 - Create: `server/providers/local/schema.js`
 
 **Step 1: Write the failing test**
@@ -68,9 +71,10 @@ describe('SQLite Schema', () => {
   it('creates all required tables', () => {
     initializeSchema(db);
 
-    const tables = db.prepare(
-      "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
-    ).all().map(t => t.name);
+    const tables = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+      .all()
+      .map((t) => t.name);
 
     expect(tables).toContain('users');
     expect(tables).toContain('projects');
@@ -97,9 +101,12 @@ describe('SQLite Schema', () => {
   it('can insert and retrieve a user', () => {
     initializeSchema(db);
 
-    db.prepare(
-      'INSERT INTO users (id, email, password_hash, metadata) VALUES (?, ?, ?, ?)'
-    ).run('test-id', 'test@example.com', 'hash', '{}');
+    db.prepare('INSERT INTO users (id, email, password_hash, metadata) VALUES (?, ?, ?, ?)').run(
+      'test-id',
+      'test@example.com',
+      'hash',
+      '{}'
+    );
 
     const user = db.prepare('SELECT * FROM users WHERE email = ?').get('test@example.com');
     expect(user.id).toBe('test-id');
@@ -368,6 +375,7 @@ git commit -m "feat: add SQLite schema for local database provider"
 ### Task 3: Local Auth Adapter
 
 **Files:**
+
 - Create: `server/providers/local/LocalAuthAdapter.js`
 - Test: `server/providers/local/LocalAuthAdapter.test.js`
 
@@ -394,7 +402,9 @@ describe('LocalAuthAdapter', () => {
 
   describe('register', () => {
     it('creates a user and returns user object without password', async () => {
-      const user = await auth.register('test@example.com', 'password123', { full_name: 'Test User' });
+      const user = await auth.register('test@example.com', 'password123', {
+        full_name: 'Test User',
+      });
 
       expect(user.id).toBeDefined();
       expect(user.email).toBe('test@example.com');
@@ -469,9 +479,9 @@ export class LocalAuthAdapter {
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
     try {
-      this.db.prepare(
-        'INSERT INTO users (id, email, password_hash, metadata) VALUES (?, ?, ?, ?)'
-      ).run(id, email, passwordHash, JSON.stringify(metadata));
+      this.db
+        .prepare('INSERT INTO users (id, email, password_hash, metadata) VALUES (?, ?, ?, ?)')
+        .run(id, email, passwordHash, JSON.stringify(metadata));
     } catch (err) {
       if (err.message.includes('UNIQUE constraint')) {
         throw new Error('User already exists');
@@ -489,11 +499,9 @@ export class LocalAuthAdapter {
     const valid = await bcrypt.compare(password, row.password_hash);
     if (!valid) throw new Error('Invalid credentials');
 
-    const token = jwt.sign(
-      { sub: row.id, email: row.email },
-      this.jwtSecret,
-      { expiresIn: TOKEN_EXPIRY }
-    );
+    const token = jwt.sign({ sub: row.id, email: row.email }, this.jwtSecret, {
+      expiresIn: TOKEN_EXPIRY,
+    });
 
     const user = {
       id: row.id,
@@ -537,6 +545,7 @@ git commit -m "feat: add local auth adapter with bcrypt + JWT"
 ### Task 4: Local Storage Adapter
 
 **Files:**
+
 - Create: `server/providers/local/LocalStorageAdapter.js`
 - Test: `server/providers/local/LocalStorageAdapter.test.js`
 
@@ -566,7 +575,9 @@ describe('LocalStorageAdapter', () => {
     const result = await storage.upload('generated-images', 'user1/gen1/test.png', buffer);
 
     expect(result.url).toBe('/storage/generated-images/user1/gen1/test.png');
-    expect(fs.existsSync(path.join(tmpDir, 'generated-images', 'user1', 'gen1', 'test.png'))).toBe(true);
+    expect(fs.existsSync(path.join(tmpDir, 'generated-images', 'user1', 'gen1', 'test.png'))).toBe(
+      true
+    );
   });
 
   it('getPublicUrl returns correct path', () => {
@@ -579,7 +590,9 @@ describe('LocalStorageAdapter', () => {
     await storage.upload('generated-images', 'user1/gen1/test.png', buffer);
 
     await storage.delete('generated-images', 'user1/gen1/test.png');
-    expect(fs.existsSync(path.join(tmpDir, 'generated-images', 'user1', 'gen1', 'test.png'))).toBe(false);
+    expect(fs.existsSync(path.join(tmpDir, 'generated-images', 'user1', 'gen1', 'test.png'))).toBe(
+      false
+    );
   });
 });
 ```
@@ -643,6 +656,7 @@ git commit -m "feat: add local filesystem storage adapter"
 ### Task 5: Supabase Auth Adapter
 
 **Files:**
+
 - Create: `server/providers/supabase/SupabaseAuthAdapter.js`
 - Test: `server/providers/supabase/SupabaseAuthAdapter.test.js`
 
@@ -695,7 +709,10 @@ export class SupabaseAuthAdapter {
   }
 
   async verifyToken(token) {
-    const { data: { user }, error } = await this.supabase.auth.getUser(token);
+    const {
+      data: { user },
+      error,
+    } = await this.supabase.auth.getUser(token);
     if (error || !user) throw new Error('Invalid token');
     return user;
   }
@@ -719,6 +736,7 @@ git commit -m "feat: add Supabase auth adapter wrapper"
 ### Task 6: Supabase Storage Adapter
 
 **Files:**
+
 - Create: `server/providers/supabase/SupabaseStorageAdapter.js`
 - Test: `server/providers/supabase/SupabaseStorageAdapter.test.js`
 
@@ -770,13 +788,11 @@ export class SupabaseStorageAdapter {
   }
 
   async upload(bucket, filePath, buffer, options = {}) {
-    const { data, error } = await this.supabase.storage
-      .from(bucket)
-      .upload(filePath, buffer, {
-        contentType: options.contentType || 'image/png',
-        cacheControl: options.cacheControl || '3600',
-        upsert: true,
-      });
+    const { data, error } = await this.supabase.storage.from(bucket).upload(filePath, buffer, {
+      contentType: options.contentType || 'image/png',
+      cacheControl: options.cacheControl || '3600',
+      upsert: true,
+    });
 
     if (error) throw error;
 
@@ -814,6 +830,7 @@ git commit -m "feat: add Supabase storage adapter wrapper"
 ### Task 7: SQLite DB Adapter - Projects Domain
 
 **Files:**
+
 - Create: `server/providers/local/SqliteDbAdapter.js`
 - Test: `server/providers/local/SqliteDbAdapter.test.js`
 
@@ -838,15 +855,26 @@ describe('SqliteDbAdapter - projects', () => {
     initializeSchema(db);
     adapter = new SqliteDbAdapter(db);
     // Seed a test user
-    db.prepare('INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)').run(userId, 'test@test.com', 'hash');
+    db.prepare('INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)').run(
+      userId,
+      'test@test.com',
+      'hash'
+    );
   });
 
-  afterEach(() => { db.close(); });
+  afterEach(() => {
+    db.close();
+  });
 
   it('creates and retrieves a project', async () => {
     const project = await adapter.projects.create({
-      name: 'Test Project', owner_id: userId, description: 'desc',
-      tags: ['a'], categories: ['b'], visibility: 'private', status: 'active',
+      name: 'Test Project',
+      owner_id: userId,
+      description: 'desc',
+      tags: ['a'],
+      categories: ['b'],
+      visibility: 'private',
+      status: 'active',
     });
 
     expect(project.id).toBeDefined();
@@ -903,9 +931,18 @@ describe('SqliteDbAdapter - projects', () => {
   it('manages collaborators', async () => {
     const p = await adapter.projects.create({ name: 'P', owner_id: userId });
     const user2 = 'user-2';
-    db.prepare('INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)').run(user2, 'u2@test.com', 'hash');
+    db.prepare('INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)').run(
+      user2,
+      'u2@test.com',
+      'hash'
+    );
 
-    await adapter.projects.addCollaborator(p.id, { user_id: user2, role: 'editor', permissions: ['read', 'write'], invited_by: userId });
+    await adapter.projects.addCollaborator(p.id, {
+      user_id: user2,
+      role: 'editor',
+      permissions: ['read', 'write'],
+      invited_by: userId,
+    });
     const collabs = await adapter.projects.getCollaborators(p.id);
     expect(collabs.length).toBe(1);
     expect(collabs[0].role).toBe('editor');
@@ -949,20 +986,34 @@ export class SqliteDbAdapter {
 }
 
 class ProjectsRepository {
-  constructor(db) { this.db = db; }
+  constructor(db) {
+    this.db = db;
+  }
 
   async create(data) {
     const id = uuidv4();
     const now = new Date().toISOString();
-    this.db.prepare(`
+    this.db
+      .prepare(
+        `
       INSERT INTO projects (id, name, description, owner_id, template_id, status, visibility, settings, tags, categories, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      id, data.name, data.description || '', data.owner_id, data.template_id || null,
-      data.status || 'active', data.visibility || 'private',
-      JSON.stringify(data.settings || {}), JSON.stringify(data.tags || []),
-      JSON.stringify(data.categories || []), now, now
-    );
+    `
+      )
+      .run(
+        id,
+        data.name,
+        data.description || '',
+        data.owner_id,
+        data.template_id || null,
+        data.status || 'active',
+        data.visibility || 'private',
+        JSON.stringify(data.settings || {}),
+        JSON.stringify(data.tags || []),
+        JSON.stringify(data.categories || []),
+        now,
+        now
+      );
     return this._getById(id);
   }
 
@@ -970,11 +1021,19 @@ class ProjectsRepository {
     const row = this._getById(id);
     if (!row) return undefined;
 
-    row.project_images = this.db.prepare('SELECT * FROM project_images WHERE project_id = ? ORDER BY "order"').all(id).map(r => this._parseJson(r, ['tags', 'metadata']));
-    row.collaborators = this.db.prepare(`
+    row.project_images = this.db
+      .prepare('SELECT * FROM project_images WHERE project_id = ? ORDER BY "order"')
+      .all(id)
+      .map((r) => this._parseJson(r, ['tags', 'metadata']));
+    row.collaborators = this.db
+      .prepare(
+        `
       SELECT pc.*, u.email as user_email FROM project_collaborators pc
       LEFT JOIN users u ON pc.user_id = u.id WHERE pc.project_id = ?
-    `).all(id).map(r => this._parseJson(r, ['permissions']));
+    `
+      )
+      .all(id)
+      .map((r) => this._parseJson(r, ['permissions']));
     return row;
   }
 
@@ -983,20 +1042,31 @@ class ProjectsRepository {
     const limit = pagination.limit || 20;
     const offset = (page - 1) * limit;
 
-    let where = 'WHERE (owner_id = ? OR id IN (SELECT project_id FROM project_collaborators WHERE user_id = ?))';
+    let where =
+      'WHERE (owner_id = ? OR id IN (SELECT project_id FROM project_collaborators WHERE user_id = ?))';
     const params = [userId, userId];
 
-    if (filters.status) { where += ' AND status = ?'; params.push(filters.status); }
-    if (filters.visibility) { where += ' AND visibility = ?'; params.push(filters.visibility); }
+    if (filters.status) {
+      where += ' AND status = ?';
+      params.push(filters.status);
+    }
+    if (filters.visibility) {
+      where += ' AND visibility = ?';
+      params.push(filters.visibility);
+    }
     if (filters.search) {
       where += ' AND (name LIKE ? OR description LIKE ?)';
       params.push(`%${filters.search}%`, `%${filters.search}%`);
     }
 
-    const countRow = this.db.prepare(`SELECT COUNT(*) as count FROM projects ${where}`).get(...params);
-    const rows = this.db.prepare(`SELECT * FROM projects ${where} ORDER BY updated_at DESC LIMIT ? OFFSET ?`).all(...params, limit, offset);
+    const countRow = this.db
+      .prepare(`SELECT COUNT(*) as count FROM projects ${where}`)
+      .get(...params);
+    const rows = this.db
+      .prepare(`SELECT * FROM projects ${where} ORDER BY updated_at DESC LIMIT ? OFFSET ?`)
+      .all(...params, limit, offset);
 
-    return { data: rows.map(r => this._parseJsonFields(r)), count: countRow.count };
+    return { data: rows.map((r) => this._parseJsonFields(r)), count: countRow.count };
   }
 
   async update(id, data) {
@@ -1004,12 +1074,15 @@ class ProjectsRepository {
     const params = [];
     for (const [key, value] of Object.entries(data)) {
       if (['tags', 'categories', 'settings'].includes(key)) {
-        sets.push(`${key} = ?`); params.push(JSON.stringify(value));
+        sets.push(`${key} = ?`);
+        params.push(JSON.stringify(value));
       } else {
-        sets.push(`${key} = ?`); params.push(value);
+        sets.push(`${key} = ?`);
+        params.push(value);
       }
     }
-    sets.push('updated_at = ?'); params.push(new Date().toISOString());
+    sets.push('updated_at = ?');
+    params.push(new Date().toISOString());
     params.push(id);
 
     this.db.prepare(`UPDATE projects SET ${sets.join(', ')} WHERE id = ?`).run(...params);
@@ -1018,14 +1091,18 @@ class ProjectsRepository {
 
   async delete(id, soft = true) {
     if (soft) {
-      this.db.prepare('UPDATE projects SET status = ?, deleted_at = ? WHERE id = ?').run('deleted', new Date().toISOString(), id);
+      this.db
+        .prepare('UPDATE projects SET status = ?, deleted_at = ? WHERE id = ?')
+        .run('deleted', new Date().toISOString(), id);
     } else {
       this.db.prepare('DELETE FROM projects WHERE id = ?').run(id);
     }
   }
 
   async addImages(projectId, imageIds) {
-    const insert = this.db.prepare('INSERT OR IGNORE INTO project_images (id, project_id, image_id, "order") VALUES (?, ?, ?, ?)');
+    const insert = this.db.prepare(
+      'INSERT OR IGNORE INTO project_images (id, project_id, image_id, "order") VALUES (?, ?, ?, ?)'
+    );
     const txn = this.db.transaction((ids) => {
       ids.forEach((imageId, index) => insert.run(uuidv4(), projectId, imageId, index));
     });
@@ -1037,55 +1114,98 @@ class ProjectsRepository {
     const limit = pagination.limit || 50;
     const offset = (page - 1) * limit;
 
-    const countRow = this.db.prepare('SELECT COUNT(*) as count FROM project_images WHERE project_id = ?').get(projectId);
-    const rows = this.db.prepare('SELECT * FROM project_images WHERE project_id = ? ORDER BY "order" LIMIT ? OFFSET ?').all(projectId, limit, offset);
+    const countRow = this.db
+      .prepare('SELECT COUNT(*) as count FROM project_images WHERE project_id = ?')
+      .get(projectId);
+    const rows = this.db
+      .prepare(
+        'SELECT * FROM project_images WHERE project_id = ? ORDER BY "order" LIMIT ? OFFSET ?'
+      )
+      .all(projectId, limit, offset);
 
-    return { data: rows.map(r => this._parseJson(r, ['tags', 'metadata'])), count: countRow.count };
+    return {
+      data: rows.map((r) => this._parseJson(r, ['tags', 'metadata'])),
+      count: countRow.count,
+    };
   }
 
   async removeImages(projectId, imageIds) {
     const placeholders = imageIds.map(() => '?').join(',');
-    this.db.prepare(`DELETE FROM project_images WHERE project_id = ? AND image_id IN (${placeholders})`).run(projectId, ...imageIds);
+    this.db
+      .prepare(`DELETE FROM project_images WHERE project_id = ? AND image_id IN (${placeholders})`)
+      .run(projectId, ...imageIds);
   }
 
   async addCollaborator(projectId, data) {
     const id = uuidv4();
-    this.db.prepare(`
+    this.db
+      .prepare(
+        `
       INSERT INTO project_collaborators (id, project_id, user_id, role, permissions, invited_by)
       VALUES (?, ?, ?, ?, ?, ?)
-    `).run(id, projectId, data.user_id, data.role || 'viewer', JSON.stringify(data.permissions || []), data.invited_by);
+    `
+      )
+      .run(
+        id,
+        projectId,
+        data.user_id,
+        data.role || 'viewer',
+        JSON.stringify(data.permissions || []),
+        data.invited_by
+      );
   }
 
   async getCollaborators(projectId) {
-    return this.db.prepare(`
+    return this.db
+      .prepare(
+        `
       SELECT pc.*, u.email as user_email FROM project_collaborators pc
       LEFT JOIN users u ON pc.user_id = u.id WHERE pc.project_id = ?
-    `).all(projectId).map(r => this._parseJson(r, ['permissions']));
+    `
+      )
+      .all(projectId)
+      .map((r) => this._parseJson(r, ['permissions']));
   }
 
   async removeCollaborator(projectId, userId) {
-    this.db.prepare('DELETE FROM project_collaborators WHERE project_id = ? AND user_id = ?').run(projectId, userId);
+    this.db
+      .prepare('DELETE FROM project_collaborators WHERE project_id = ? AND user_id = ?')
+      .run(projectId, userId);
   }
 
   async createVersion(projectId, createdBy, notes = '') {
     const id = uuidv4();
     const project = this._getById(projectId);
-    const images = this.db.prepare('SELECT * FROM project_images WHERE project_id = ?').all(projectId);
+    const images = this.db
+      .prepare('SELECT * FROM project_images WHERE project_id = ?')
+      .all(projectId);
 
-    const lastVersion = this.db.prepare('SELECT MAX(version_number) as max_v FROM project_versions WHERE project_id = ?').get(projectId);
+    const lastVersion = this.db
+      .prepare('SELECT MAX(version_number) as max_v FROM project_versions WHERE project_id = ?')
+      .get(projectId);
     const versionNumber = (lastVersion?.max_v || 0) + 1;
 
-    this.db.prepare(`
+    this.db
+      .prepare(
+        `
       INSERT INTO project_versions (id, project_id, version_number, snapshot, created_by, notes)
       VALUES (?, ?, ?, ?, ?, ?)
-    `).run(id, projectId, versionNumber, JSON.stringify({ project, images }), createdBy, notes);
+    `
+      )
+      .run(id, projectId, versionNumber, JSON.stringify({ project, images }), createdBy, notes);
 
     return this.db.prepare('SELECT * FROM project_versions WHERE id = ?').get(id);
   }
 
   async getVersions(projectId) {
-    return this.db.prepare('SELECT * FROM project_versions WHERE project_id = ? ORDER BY version_number DESC').all(projectId)
-      .map(r => ({ ...r, snapshot: JSON.parse(r.snapshot || '{}'), changes: JSON.parse(r.changes || '[]') }));
+    return this.db
+      .prepare('SELECT * FROM project_versions WHERE project_id = ? ORDER BY version_number DESC')
+      .all(projectId)
+      .map((r) => ({
+        ...r,
+        snapshot: JSON.parse(r.snapshot || '{}'),
+        changes: JSON.parse(r.changes || '[]'),
+      }));
   }
 
   async restoreVersion(projectId, versionId) {
@@ -1100,9 +1220,18 @@ class ProjectsRepository {
 
     this.db.prepare('DELETE FROM project_images WHERE project_id = ?').run(projectId);
     if (snapshot.images?.length > 0) {
-      const insert = this.db.prepare('INSERT INTO project_images (id, project_id, image_id, "order", tags, metadata) VALUES (?, ?, ?, ?, ?, ?)');
+      const insert = this.db.prepare(
+        'INSERT INTO project_images (id, project_id, image_id, "order", tags, metadata) VALUES (?, ?, ?, ?, ?, ?)'
+      );
       for (const img of snapshot.images) {
-        insert.run(img.id || uuidv4(), projectId, img.image_id, img.order || 0, img.tags || '[]', img.metadata || '{}');
+        insert.run(
+          img.id || uuidv4(),
+          projectId,
+          img.image_id,
+          img.order || 0,
+          img.tags || '[]',
+          img.metadata || '{}'
+        );
       }
     }
     return this._getById(projectId);
@@ -1114,12 +1243,19 @@ class ProjectsRepository {
   }
 
   _parseJsonFields(row) {
-    return { ...row, tags: JSON.parse(row.tags || '[]'), categories: JSON.parse(row.categories || '[]'), settings: JSON.parse(row.settings || '{}') };
+    return {
+      ...row,
+      tags: JSON.parse(row.tags || '[]'),
+      categories: JSON.parse(row.categories || '[]'),
+      settings: JSON.parse(row.settings || '{}'),
+    };
   }
 
   _parseJson(row, fields) {
     const result = { ...row };
-    for (const f of fields) { if (result[f]) result[f] = JSON.parse(result[f]); }
+    for (const f of fields) {
+      if (result[f]) result[f] = JSON.parse(result[f]);
+    }
     return result;
   }
 }
@@ -1129,21 +1265,29 @@ class ProjectsRepository {
 
 ```javascript
 class AnalyticsRepository {
-  constructor(db) { this.db = db; }
+  constructor(db) {
+    this.db = db;
+  }
   // Implemented in Task 8
 }
 
 class ImagesRepository {
-  constructor(db) { this.db = db; }
+  constructor(db) {
+    this.db = db;
+  }
   // Implemented in Task 9
 }
 
 class UsersRepository {
-  constructor(db) { this.db = db; }
+  constructor(db) {
+    this.db = db;
+  }
 
   async create(email, passwordHash, metadata = {}) {
     const id = uuidv4();
-    this.db.prepare('INSERT INTO users (id, email, password_hash, metadata) VALUES (?, ?, ?, ?)').run(id, email, passwordHash, JSON.stringify(metadata));
+    this.db
+      .prepare('INSERT INTO users (id, email, password_hash, metadata) VALUES (?, ?, ?, ?)')
+      .run(id, email, passwordHash, JSON.stringify(metadata));
     return { id, email, metadata };
   }
 
@@ -1174,6 +1318,7 @@ git commit -m "feat: add SQLite DB adapter with projects domain"
 ### Task 8: SQLite DB Adapter - Analytics Domain
 
 **Files:**
+
 - Modify: `server/providers/local/SqliteDbAdapter.js` (fill in AnalyticsRepository)
 - Add tests to: `server/providers/local/SqliteDbAdapter.test.js`
 
@@ -1190,28 +1335,59 @@ describe('SqliteDbAdapter - analytics', () => {
     db = new Database(':memory:');
     initializeSchema(db);
     adapter = new SqliteDbAdapter(db);
-    db.prepare('INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)').run(userId, 'test@test.com', 'hash');
+    db.prepare('INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)').run(
+      userId,
+      'test@test.com',
+      'hash'
+    );
   });
 
-  afterEach(() => { db.close(); });
+  afterEach(() => {
+    db.close();
+  });
 
   it('tracks an event', async () => {
-    await adapter.analytics.trackEvent({ user_id: userId, event_type: 'image_generated', event_category: 'generation' });
+    await adapter.analytics.trackEvent({
+      user_id: userId,
+      event_type: 'image_generated',
+      event_category: 'generation',
+    });
     const events = db.prepare('SELECT * FROM analytics_events WHERE user_id = ?').all(userId);
     expect(events.length).toBe(1);
   });
 
   it('tracks cost with upsert logic', async () => {
-    await adapter.analytics.trackCost({ user_id: userId, date: '2026-02-28', service_provider: 'openai', cost: 0.04, tokens: 100, images: 1 });
-    await adapter.analytics.trackCost({ user_id: userId, date: '2026-02-28', service_provider: 'openai', cost: 0.02, tokens: 50, images: 1 });
+    await adapter.analytics.trackCost({
+      user_id: userId,
+      date: '2026-02-28',
+      service_provider: 'openai',
+      cost: 0.04,
+      tokens: 100,
+      images: 1,
+    });
+    await adapter.analytics.trackCost({
+      user_id: userId,
+      date: '2026-02-28',
+      service_provider: 'openai',
+      cost: 0.02,
+      tokens: 50,
+      images: 1,
+    });
 
-    const row = db.prepare('SELECT * FROM cost_tracking WHERE user_id = ? AND date = ?').get(userId, '2026-02-28');
+    const row = db
+      .prepare('SELECT * FROM cost_tracking WHERE user_id = ? AND date = ?')
+      .get(userId, '2026-02-28');
     expect(row.api_calls).toBe(2);
     expect(row.total_cost_usd).toBeCloseTo(0.06);
   });
 
   it('tracks performance metrics', async () => {
-    await adapter.analytics.trackPerformance({ metric_type: 'api_response', metric_name: 'GET /api', value: 42, unit: 'ms' });
+    await adapter.analytics.trackPerformance({
+      metric_type: 'api_response',
+      metric_name: 'GET /api',
+      value: 42,
+      unit: 'ms',
+    });
     const rows = db.prepare('SELECT * FROM performance_metrics').all();
     expect(rows.length).toBe(1);
   });
@@ -1242,6 +1418,7 @@ git commit -m "feat: add analytics domain to SQLite DB adapter"
 ### Task 9: SQLite DB Adapter - Images Domain
 
 **Files:**
+
 - Modify: `server/providers/local/SqliteDbAdapter.js` (fill in ImagesRepository)
 - Add tests to: `server/providers/local/SqliteDbAdapter.test.js`
 
@@ -1256,13 +1433,23 @@ describe('SqliteDbAdapter - images', () => {
     db = new Database(':memory:');
     initializeSchema(db);
     adapter = new SqliteDbAdapter(db);
-    db.prepare('INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)').run(userId, 'test@test.com', 'hash');
+    db.prepare('INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)').run(
+      userId,
+      'test@test.com',
+      'hash'
+    );
   });
 
-  afterEach(() => { db.close(); });
+  afterEach(() => {
+    db.close();
+  });
 
   it('saves a generation', async () => {
-    const gen = await adapter.images.saveGeneration({ user_id: userId, prompt: 'sunset', image_type: 'photo' });
+    const gen = await adapter.images.saveGeneration({
+      user_id: userId,
+      prompt: 'sunset',
+      image_type: 'photo',
+    });
     expect(gen.id).toBeDefined();
     expect(gen.prompt).toBe('sunset');
   });
@@ -1270,8 +1457,14 @@ describe('SqliteDbAdapter - images', () => {
   it('saves a generated image', async () => {
     const gen = await adapter.images.saveGeneration({ user_id: userId, prompt: 'sunset' });
     const img = await adapter.images.saveGeneratedImage({
-      generation_id: gen.id, platform_id: 'instagram-post', platform_name: 'Instagram Post',
-      width: 1080, height: 1080, file_size: 50000, storage_path: 'path', url: 'http://url',
+      generation_id: gen.id,
+      platform_id: 'instagram-post',
+      platform_name: 'Instagram Post',
+      width: 1080,
+      height: 1080,
+      file_size: 50000,
+      storage_path: 'path',
+      url: 'http://url',
     });
     expect(img.id).toBeDefined();
     expect(img.platform_id).toBe('instagram-post');
@@ -1283,22 +1476,40 @@ describe('SqliteDbAdapter - images', () => {
 
 ```javascript
 class ImagesRepository {
-  constructor(db) { this.db = db; }
+  constructor(db) {
+    this.db = db;
+  }
 
   async saveGeneration(data) {
     const id = uuidv4();
-    this.db.prepare(
-      'INSERT INTO generations (id, user_id, prompt, image_type, status) VALUES (?, ?, ?, ?, ?)'
-    ).run(id, data.user_id, data.prompt, data.image_type || 'photo', 'completed');
+    this.db
+      .prepare(
+        'INSERT INTO generations (id, user_id, prompt, image_type, status) VALUES (?, ?, ?, ?, ?)'
+      )
+      .run(id, data.user_id, data.prompt, data.image_type || 'photo', 'completed');
     return this.db.prepare('SELECT * FROM generations WHERE id = ?').get(id);
   }
 
   async saveGeneratedImage(data) {
     const id = uuidv4();
-    this.db.prepare(`
+    this.db
+      .prepare(
+        `
       INSERT INTO generated_images (id, generation_id, platform_id, platform_name, width, height, file_size, storage_path, url)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, data.generation_id, data.platform_id, data.platform_name, data.width, data.height, data.file_size, data.storage_path, data.url);
+    `
+      )
+      .run(
+        id,
+        data.generation_id,
+        data.platform_id,
+        data.platform_name,
+        data.width,
+        data.height,
+        data.file_size,
+        data.storage_path,
+        data.url
+      );
     return this.db.prepare('SELECT * FROM generated_images WHERE id = ?').get(id);
   }
 }
@@ -1316,6 +1527,7 @@ git commit -m "feat: add images domain to SQLite DB adapter"
 ### Task 10: Supabase DB Adapter
 
 **Files:**
+
 - Create: `server/providers/supabase/SupabaseDbAdapter.js`
 - Test: `server/providers/supabase/SupabaseDbAdapter.test.js`
 
@@ -1324,6 +1536,7 @@ This adapter wraps the existing Supabase query chains inside the same interface.
 **Approach:** Extract the data access code (the `.from().select().eq()` chains) from the existing services into this adapter. The services will then call adapter methods instead.
 
 **Key pattern** -- for each existing service method:
+
 1. Find the Supabase query chain
 2. Move it into the corresponding adapter method
 3. The adapter returns the same shaped data the service expects
@@ -1331,6 +1544,7 @@ This adapter wraps the existing Supabase query chains inside the same interface.
 Mock-based tests verify the adapter calls the correct Supabase methods.
 
 **Commit:**
+
 ```bash
 git commit -m "feat: add Supabase DB adapter wrapping existing query patterns"
 ```
@@ -1340,6 +1554,7 @@ git commit -m "feat: add Supabase DB adapter wrapping existing query patterns"
 ### Task 11: Provider Factory
 
 **Files:**
+
 - Create: `server/providers/index.js`
 - Test: `server/providers/index.test.js`
 
@@ -1351,7 +1566,10 @@ import { createProviders } from './index.js';
 
 describe('createProviders', () => {
   it('returns local providers when DB_PROVIDER=local', () => {
-    const providers = createProviders({ dbProvider: 'local', jwtSecret: 'test-secret-at-least-32-chars-long-here' });
+    const providers = createProviders({
+      dbProvider: 'local',
+      jwtSecret: 'test-secret-at-least-32-chars-long-here',
+    });
     expect(providers.db).toBeDefined();
     expect(providers.storage).toBeDefined();
     expect(providers.auth).toBeDefined();
@@ -1366,7 +1584,10 @@ describe('createProviders', () => {
 
   it('auto-detects supabase when SUPABASE_URL is present', () => {
     const mockSupabase = { auth: {}, storage: { from: vi.fn() }, from: vi.fn() };
-    const providers = createProviders({ supabaseUrl: 'https://x.supabase.co', supabaseClient: mockSupabase });
+    const providers = createProviders({
+      supabaseUrl: 'https://x.supabase.co',
+      supabaseClient: mockSupabase,
+    });
     expect(providers.type).toBe('supabase');
   });
 
@@ -1445,6 +1666,7 @@ git commit -m "feat: add provider factory with auto-detection"
 ### Task 12: Auth Routes (Local Mode)
 
 **Files:**
+
 - Create: `server/routes/auth.js`
 - Test: `server/routes/auth.test.js`
 
@@ -1463,28 +1685,39 @@ describe('Auth routes (local)', () => {
   beforeEach(() => {
     app = express();
     app.use(express.json());
-    const providers = createProviders({ dbProvider: 'local', jwtSecret: 'test-secret-key-at-least-32-chars-long' });
+    const providers = createProviders({
+      dbProvider: 'local',
+      jwtSecret: 'test-secret-key-at-least-32-chars-long',
+    });
     app.locals.providers = providers;
     app.use('/api/auth', authRouter);
   });
 
   it('POST /register creates a user', async () => {
-    const res = await request(app).post('/api/auth/register').send({ email: 'a@b.com', password: 'pass123' });
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ email: 'a@b.com', password: 'pass123' });
     expect(res.status).toBe(201);
     expect(res.body.user.email).toBe('a@b.com');
   });
 
   it('POST /login returns token', async () => {
     await request(app).post('/api/auth/register').send({ email: 'a@b.com', password: 'pass123' });
-    const res = await request(app).post('/api/auth/login').send({ email: 'a@b.com', password: 'pass123' });
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'a@b.com', password: 'pass123' });
     expect(res.status).toBe(200);
     expect(res.body.token).toBeDefined();
   });
 
   it('GET /me returns user from token', async () => {
     await request(app).post('/api/auth/register').send({ email: 'a@b.com', password: 'pass123' });
-    const login = await request(app).post('/api/auth/login').send({ email: 'a@b.com', password: 'pass123' });
-    const res = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${login.body.token}`);
+    const login = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'a@b.com', password: 'pass123' });
+    const res = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${login.body.token}`);
     expect(res.status).toBe(200);
     expect(res.body.user.email).toBe('a@b.com');
   });
@@ -1548,9 +1781,11 @@ git commit -m "feat: add local auth routes (register/login/me)"
 ### Task 13: Rewire server/index.js
 
 **Files:**
+
 - Modify: `server/index.js`
 
 **Changes:**
+
 1. Replace Supabase client initialization with `createProviders()`
 2. Attach `providers` to `app.locals` (instead of `app.locals.supabase`)
 3. Conditionally mount `/api/auth` routes in local mode
@@ -1574,6 +1809,7 @@ git commit -m "feat: rewire server startup to use provider factory"
 ### Task 14: Rewire Auth Middleware
 
 **Files:**
+
 - Modify: `server/middleware/auth.js`
 
 **Change:** Replace `req.app.locals.supabase.auth.getUser(token)` with `req.app.locals.providers.auth.verifyToken(token)`.
@@ -1612,6 +1848,7 @@ git commit -m "refactor: rewire auth middleware to use provider abstraction"
 ### Task 15: Rewire Services to Use Adapters
 
 **Files:**
+
 - Modify: `server/services/ProjectService.js`
 - Modify: `server/services/AnalyticsService.js`
 - Modify: `server/services/imageService.js`
@@ -1633,6 +1870,7 @@ git commit -m "refactor: rewire services to use provider adapters"
 ### Task 16: Rewire Routes and Middleware
 
 **Files:**
+
 - Modify: `server/routes/projects.js` - Change `req.app.locals.supabase` to `req.app.locals.providers.db`
 - Modify: `server/routes/analytics.js` - Same
 - Modify: `server/routes/images.js` - Use `req.app.locals.providers.storage`
@@ -1640,6 +1878,7 @@ git commit -m "refactor: rewire services to use provider adapters"
 - Modify: `server/workers/imageWorker.js` - Receive providers for db/storage operations
 
 **Pattern for routes/projects.js:**
+
 ```javascript
 router.use((req, res, next) => {
   req.projectService = new ProjectService(req.app.locals.providers.db);
@@ -1648,11 +1887,13 @@ router.use((req, res, next) => {
 ```
 
 **Pattern for routes/analytics.js:**
+
 ```javascript
 const analyticsService = new AnalyticsService(req.app.locals.providers.db);
 ```
 
 **Commit:**
+
 ```bash
 git commit -m "refactor: rewire routes and middleware to use providers"
 ```
@@ -1662,11 +1903,13 @@ git commit -m "refactor: rewire routes and middleware to use providers"
 ### Task 17: Update .env.example and Documentation
 
 **Files:**
+
 - Modify: `server/.env.example` - Add DB_PROVIDER, JWT_SECRET, LOCAL_STORAGE_PATH docs
 - Modify: `docs/plans/2026-02-28-supabase-optional-design.md` - Mark as implemented
 - Add quick-start section to README about running in local mode
 
 **Commit:**
+
 ```bash
 git commit -m "docs: add local mode configuration and setup instructions"
 ```
@@ -1676,11 +1919,13 @@ git commit -m "docs: add local mode configuration and setup instructions"
 ### Task 18: End-to-End Verification
 
 **Step 1:** Start server in local mode (no Supabase env vars, just JWT_SECRET):
+
 ```bash
 cd server && JWT_SECRET=my-secret-key-at-least-32-chars-long PORT=3002 node index.js
 ```
 
 **Step 2:** Register a user, login, create a project, verify it all works:
+
 ```bash
 # Register
 curl -X POST http://localhost:3002/api/auth/register -H 'Content-Type: application/json' -d '{"email":"test@test.com","password":"test123"}'
@@ -1695,9 +1940,11 @@ curl -X POST http://localhost:3002/api/projects -H 'Content-Type: application/js
 **Step 3:** Verify health endpoint shows provider type
 
 **Step 4:** Run full test suite:
+
 ```bash
 cd server && npx vitest run
 ```
+
 Expected: All tests pass
 
 **Step 5: Final commit**

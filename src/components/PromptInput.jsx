@@ -1,36 +1,36 @@
-import { useState } from 'react'
-import './PromptInput.css'
+import { useState } from 'react';
+import './PromptInput.css';
 
 function PromptInput({ value, onChange, onGenerate, isGenerating }) {
-  const [charCount, setCharCount] = useState(value.length)
-  const maxChars = 1000
+  const [charCount, setCharCount] = useState(value.length);
+  const maxChars = 1000;
 
   const handleChange = (e) => {
-    const newValue = e.target.value
+    const newValue = e.target.value;
     if (newValue.length <= maxChars) {
-      onChange(newValue)
-      setCharCount(newValue.length)
+      onChange(newValue);
+      setCharCount(newValue.length);
     }
-  }
+  };
 
   const handleKeyDown = (e) => {
     // Submit on Ctrl/Cmd + Enter
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !isGenerating) {
-      onGenerate()
+      onGenerate();
     }
-  }
+  };
 
   const examplePrompts = [
     'A serene mountain landscape at sunset with vibrant colors',
     'Modern minimalist logo with geometric shapes',
     'Abstract digital art with flowing colors and patterns',
-    'Professional product photography on white background'
-  ]
+    'Professional product photography on white background',
+  ];
 
   const handleExampleClick = (example) => {
-    onChange(example)
-    setCharCount(example.length)
-  }
+    onChange(example);
+    setCharCount(example.length);
+  };
 
   return (
     <div className="prompt-input-container">
@@ -40,7 +40,7 @@ function PromptInput({ value, onChange, onGenerate, isGenerating }) {
           {charCount} / {maxChars}
         </span>
       </label>
-      
+
       <textarea
         id="prompt"
         className="prompt-textarea"
@@ -77,7 +77,7 @@ function PromptInput({ value, onChange, onGenerate, isGenerating }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default PromptInput
+export default PromptInput;

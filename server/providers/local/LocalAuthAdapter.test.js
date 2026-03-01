@@ -74,15 +74,11 @@ describe('LocalAuthAdapter', () => {
     });
 
     it('rejects invalid password', async () => {
-      await expect(adapter.login('bob@example.com', 'wrongPassword')).rejects.toThrow(
-        /invalid/i
-      );
+      await expect(adapter.login('bob@example.com', 'wrongPassword')).rejects.toThrow(/invalid/i);
     });
 
     it('rejects unknown email', async () => {
-      await expect(adapter.login('unknown@example.com', 'anyPassword')).rejects.toThrow(
-        /invalid/i
-      );
+      await expect(adapter.login('unknown@example.com', 'anyPassword')).rejects.toThrow(/invalid/i);
     });
   });
 

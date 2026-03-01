@@ -44,7 +44,7 @@ export const ProjectDashboard = () => {
     <div className="project-dashboard">
       <div className="dashboard-header">
         <h1>Project Dashboard</h1>
-        <button className="btn-primary" onClick={() => window.location.href = '/projects/new'}>
+        <button className="btn-primary" onClick={() => (window.location.href = '/projects/new')}>
           + New Project
         </button>
       </div>
@@ -80,10 +80,7 @@ export const ProjectDashboard = () => {
           />
         </div>
         <div className="filter-buttons">
-          <button
-            className={filter === 'all' ? 'active' : ''}
-            onClick={() => setFilter('all')}
-          >
+          <button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>
             All
           </button>
           <button
@@ -121,7 +118,10 @@ export const ProjectDashboard = () => {
 
 const ProjectCard = ({ project, onUpdate }) => {
   return (
-    <div className="project-card" onClick={() => window.location.href = `/projects/${project.id}`}>
+    <div
+      className="project-card"
+      onClick={() => (window.location.href = `/projects/${project.id}`)}
+    >
       <div className="project-card-header">
         <h3>{project.name}</h3>
         <span className={`status-badge ${project.status}`}>{project.status}</span>
@@ -133,7 +133,9 @@ const ProjectCard = ({ project, onUpdate }) => {
       </div>
       <div className="project-tags">
         {project.tags?.slice(0, 3).map((tag, i) => (
-          <span key={i} className="tag">{tag}</span>
+          <span key={i} className="tag">
+            {tag}
+          </span>
         ))}
       </div>
       <div className="project-footer">

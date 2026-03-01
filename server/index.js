@@ -60,18 +60,25 @@ app.locals.providers = providers;
 app.locals.supabase = supabaseClient;
 
 // Security middleware
-app.use(helmet({
-  contentSecurityPolicy: false, // Disable for Swagger UI
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // Disable for Swagger UI
+  })
+);
 
 // Compression
 app.use(compression());
 
 // CORS configuration
-app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173', 'http://localhost:3000'],
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || [
+      'http://localhost:5173',
+      'http://localhost:3000',
+    ],
+    credentials: true,
+  })
+);
 
 // Logging
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
@@ -240,15 +247,19 @@ app.get('/api-docs/postman', (req, res) => {
           ],
           body: {
             mode: 'raw',
-            raw: JSON.stringify({
-              userId: '550e8400-e29b-41d4-a716-446655440000',
-              prompt: 'A beautiful sunset over mountains',
-              platforms: ['instagram-post', 'twitter-post'],
-              options: {
-                quality: 'hd',
-                style: 'vivid',
+            raw: JSON.stringify(
+              {
+                userId: '550e8400-e29b-41d4-a716-446655440000',
+                prompt: 'A beautiful sunset over mountains',
+                platforms: ['instagram-post', 'twitter-post'],
+                options: {
+                  quality: 'hd',
+                  style: 'vivid',
+                },
               },
-            }, null, 2),
+              null,
+              2
+            ),
           },
           url: {
             raw: '{{baseUrl}}/api/jobs',

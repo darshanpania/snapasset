@@ -15,8 +15,8 @@ export const authMiddleware = async (req, res, next) => {
 
     const authHeader = req.headers.authorization;
     // Support token via query param for SSE (EventSource can't send headers)
-    const token = (authHeader?.startsWith('Bearer ') && authHeader.substring(7))
-      || req.query?.token;
+    const token =
+      (authHeader?.startsWith('Bearer ') && authHeader.substring(7)) || req.query?.token;
 
     if (!token) {
       return res.status(401).json({

@@ -33,7 +33,9 @@ describe('Auth routes (local)', () => {
   });
 
   it('POST /register creates a user', async () => {
-    const res = await request(app).post('/api/auth/register').send({ email: 'a@b.com', password: 'pass123' });
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ email: 'a@b.com', password: 'pass123' });
     expect(res.status).toBe(201);
     expect(res.body.user.email).toBe('a@b.com');
     expect(res.body.user.password_hash).toBeUndefined();
@@ -46,13 +48,17 @@ describe('Auth routes (local)', () => {
 
   it('POST /register rejects duplicate email', async () => {
     await request(app).post('/api/auth/register').send({ email: 'a@b.com', password: 'pass123' });
-    const res = await request(app).post('/api/auth/register').send({ email: 'a@b.com', password: 'pass456' });
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ email: 'a@b.com', password: 'pass456' });
     expect(res.status).toBe(400);
   });
 
   it('POST /login returns token', async () => {
     await request(app).post('/api/auth/register').send({ email: 'a@b.com', password: 'pass123' });
-    const res = await request(app).post('/api/auth/login').send({ email: 'a@b.com', password: 'pass123' });
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'a@b.com', password: 'pass123' });
     expect(res.status).toBe(200);
     expect(res.body.token).toBeDefined();
     expect(res.body.user.email).toBe('a@b.com');
@@ -60,14 +66,20 @@ describe('Auth routes (local)', () => {
 
   it('POST /login rejects invalid credentials', async () => {
     await request(app).post('/api/auth/register').send({ email: 'a@b.com', password: 'pass123' });
-    const res = await request(app).post('/api/auth/login').send({ email: 'a@b.com', password: 'wrong' });
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'a@b.com', password: 'wrong' });
     expect(res.status).toBe(401);
   });
 
   it('GET /me returns user from token', async () => {
     await request(app).post('/api/auth/register').send({ email: 'a@b.com', password: 'pass123' });
-    const login = await request(app).post('/api/auth/login').send({ email: 'a@b.com', password: 'pass123' });
-    const res = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${login.body.token}`);
+    const login = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'a@b.com', password: 'pass123' });
+    const res = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${login.body.token}`);
     expect(res.status).toBe(200);
     expect(res.body.user.email).toBe('a@b.com');
   });

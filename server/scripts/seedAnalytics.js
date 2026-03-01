@@ -8,10 +8,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
 const platforms = ['instagram', 'facebook', 'twitter', 'linkedin', 'youtube'];
 const eventTypes = [
@@ -86,14 +83,16 @@ const seedAnalytics = async () => {
       if (error) {
         console.error(`Error inserting batch ${i / batchSize + 1}:`, error);
       } else {
-        console.log(`Inserted batch ${i / batchSize + 1} of ${Math.ceil(events.length / batchSize)}`);
+        console.log(
+          `Inserted batch ${i / batchSize + 1} of ${Math.ceil(events.length / batchSize)}`
+        );
       }
     }
 
     // Trigger aggregation
     console.log('Triggering daily aggregation...');
     const { error: aggError } = await supabase.rpc('aggregate_daily_usage');
-    
+
     if (aggError) {
       console.error('Aggregation error:', aggError);
     } else {

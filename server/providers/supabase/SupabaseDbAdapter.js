@@ -16,10 +16,7 @@ class SupabaseProjectsRepository {
   }
 
   async create(data) {
-    const { data: result, error } = await this.supabase
-      .from('projects')
-      .insert([data])
-      .select();
+    const { data: result, error } = await this.supabase.from('projects').insert([data]).select();
     if (error) throw error;
     return result[0];
   }
@@ -53,9 +50,7 @@ class SupabaseProjectsRepository {
     }
     if (filters.search) {
       const sanitized = filters.search.replace(/[%_.*,()]/g, '');
-      query = query.or(
-        `name.ilike.%${sanitized}%,description.ilike.%${sanitized}%`
-      );
+      query = query.or(`name.ilike.%${sanitized}%,description.ilike.%${sanitized}%`);
     }
 
     query = query.range(from, to).order('updated_at', { ascending: false });
@@ -83,10 +78,7 @@ class SupabaseProjectsRepository {
         .eq('id', id);
       if (error) throw error;
     } else {
-      const { error } = await this.supabase
-        .from('projects')
-        .delete()
-        .eq('id', id);
+      const { error } = await this.supabase.from('projects').delete().eq('id', id);
       if (error) throw error;
     }
     return true;
@@ -101,10 +93,7 @@ class SupabaseProjectsRepository {
       order: index,
     }));
 
-    const { data, error } = await this.supabase
-      .from('project_images')
-      .insert(rows)
-      .select();
+    const { data, error } = await this.supabase.from('project_images').insert(rows).select();
     if (error) throw error;
     return data;
   }
@@ -192,8 +181,7 @@ class SupabaseProjectsRepository {
       .limit(1);
     if (versionsError) throw versionsError;
 
-    const versionNumber =
-      versions && versions.length > 0 ? versions[0].version_number + 1 : 1;
+    const versionNumber = versions && versions.length > 0 ? versions[0].version_number + 1 : 1;
 
     const { data: result, error } = await this.supabase
       .from('project_versions')
@@ -267,10 +255,7 @@ class SupabaseAnalyticsRepository {
   }
 
   async trackEvent(event) {
-    const { data, error } = await this.supabase
-      .from('analytics_events')
-      .insert([event])
-      .select();
+    const { data, error } = await this.supabase.from('analytics_events').insert([event]).select();
     if (error) throw error;
     return data[0];
   }
@@ -386,9 +371,7 @@ class SupabaseAnalyticsRepository {
   }
 
   async trackPerformance(metric) {
-    const { data, error } = await this.supabase
-      .from('performance_metrics')
-      .insert([metric]);
+    const { data, error } = await this.supabase.from('performance_metrics').insert([metric]);
     if (error) throw error;
     return data;
   }
@@ -480,12 +463,18 @@ class SupabaseAnalyticsRepository {
     const value = parseInt(match[1]);
     const unit = match[2];
     switch (unit) {
-      case 'd': return value;
-      case 'w': return value * 7;
-      case 'm': return value * 30;
-      case 'y': return value * 365;
-      case 'h': return Math.max(1, Math.ceil(value / 24));
-      default: return 30;
+      case 'd':
+        return value;
+      case 'w':
+        return value * 7;
+      case 'm':
+        return value * 30;
+      case 'y':
+        return value * 365;
+      case 'h':
+        return Math.max(1, Math.ceil(value / 24));
+      default:
+        return 30;
     }
   }
 
@@ -539,8 +528,4 @@ export class SupabaseDbAdapter {
   }
 }
 
-export {
-  SupabaseProjectsRepository,
-  SupabaseAnalyticsRepository,
-  SupabaseImagesRepository,
-};
+export { SupabaseProjectsRepository, SupabaseAnalyticsRepository, SupabaseImagesRepository };

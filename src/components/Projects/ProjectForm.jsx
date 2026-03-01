@@ -112,9 +112,7 @@ export const ProjectForm = ({ projectId, onSuccess, onCancel }) => {
                 }`}
                 onClick={() => applyTemplate(template.id)}
               >
-                {template.thumbnail_url && (
-                  <img src={template.thumbnail_url} alt={template.name} />
-                )}
+                {template.thumbnail_url && <img src={template.thumbnail_url} alt={template.name} />}
                 <h4>{template.name}</h4>
                 <p>{template.description}</p>
               </div>

@@ -1,5 +1,14 @@
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 import './CostAnalytics.css';
 
 export const CostAnalytics = ({ data, period }) => {
@@ -10,11 +19,12 @@ export const CostAnalytics = ({ data, period }) => {
   const { totalCost, averageCostPerDay, costByProvider, timeline } = data;
 
   // Format timeline data for chart
-  const chartData = timeline?.map((item) => ({
-    date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    cost: parseFloat(item.total_cost_usd || 0),
-    images: item.images_generated || 0,
-  })) || [];
+  const chartData =
+    timeline?.map((item) => ({
+      date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      cost: parseFloat(item.total_cost_usd || 0),
+      images: item.images_generated || 0,
+    })) || [];
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {

@@ -34,12 +34,14 @@ src/
 Central authentication state management using React Context API.
 
 **Provides:**
+
 - `user` - Current authenticated user object
 - `session` - Current session object
 - `loading` - Loading state for async operations
 - `error` - Error messages
 
 **Methods:**
+
 - `signUp(email, password, metadata)` - Create new account
 - `signIn(email, password)` - Sign in with credentials
 - `signInWithMagicLink(email)` - Passwordless authentication
@@ -49,11 +51,12 @@ Central authentication state management using React Context API.
 - `resetPassword(email)` - Send password reset email
 
 **Usage:**
+
 ```jsx
-import { useAuth } from './contexts/AuthContext'
+import { useAuth } from './contexts/AuthContext';
 
 function MyComponent() {
-  const { user, signIn, signOut } = useAuth()
+  const { user, signIn, signOut } = useAuth();
   // Use auth methods
 }
 ```
@@ -63,24 +66,27 @@ function MyComponent() {
 ### 2. **Authentication Methods**
 
 #### Email/Password Authentication
+
 ```jsx
 const { error } = await signUp('user@example.com', 'password123', {
-  full_name: 'John Doe'
-})
+  full_name: 'John Doe',
+});
 
-const { error } = await signIn('user@example.com', 'password123')
+const { error } = await signIn('user@example.com', 'password123');
 ```
 
 #### Magic Link (Passwordless)
+
 ```jsx
-const { error } = await signInWithMagicLink('user@example.com')
+const { error } = await signInWithMagicLink('user@example.com');
 // User receives email with one-time login link
 ```
 
 #### Social Login (OAuth)
+
 ```jsx
 // Supported providers: google, github, discord
-const { error } = await signInWithProvider('google')
+const { error } = await signInWithProvider('google');
 ```
 
 ---
@@ -88,6 +94,7 @@ const { error } = await signInWithProvider('google')
 ### 3. **Login Component** (`src/components/auth/Login.jsx`)
 
 **Features:**
+
 - Email/password login form
 - Magic link toggle option
 - Social login buttons (Google, GitHub, Discord)
@@ -98,11 +105,13 @@ const { error } = await signInWithProvider('google')
 - Link to password reset
 
 **Social Providers:**
+
 - **Google** - OAuth 2.0 with Google accounts
 - **GitHub** - OAuth with GitHub accounts
 - **Discord** - OAuth with Discord accounts
 
 **UI Elements:**
+
 - Email input with validation
 - Password input (hidden when using magic link)
 - "Use magic link instead" checkbox
@@ -115,6 +124,7 @@ const { error } = await signInWithProvider('google')
 ### 4. **Signup Component** (`src/components/auth/Signup.jsx`)
 
 **Features:**
+
 - Full name input (optional)
 - Email input with validation
 - Password input with strength requirements
@@ -126,12 +136,14 @@ const { error } = await signInWithProvider('google')
 - Success message with email verification notice
 
 **Validation:**
+
 - Email format validation
 - Password minimum 6 characters
 - Password match confirmation
 - Terms acceptance required
 
 **User Metadata:**
+
 - `full_name` - User's display name
 - `avatar_url` - Auto-generated from initials
 
@@ -140,6 +152,7 @@ const { error } = await signInWithProvider('google')
 ### 5. **User Profile** (`src/components/auth/UserProfile.jsx`)
 
 **Features:**
+
 - View user information
 - Edit profile (name, avatar)
 - Display account details
@@ -147,6 +160,7 @@ const { error } = await signInWithProvider('google')
 - Email verification badge
 
 **Displayed Information:**
+
 - Email (with verification status)
 - Full name (editable)
 - Avatar (editable with URL or auto-generated)
@@ -155,6 +169,7 @@ const { error } = await signInWithProvider('google')
 - Last sign-in time
 
 **Profile Actions:**
+
 - Edit mode toggle
 - Save changes
 - Cancel editing
@@ -167,11 +182,13 @@ const { error } = await signInWithProvider('google')
 **Purpose:** Restrict access to authenticated users only.
 
 **Behavior:**
+
 - Shows loading spinner while checking auth status
 - Redirects to `/auth/login` if not authenticated
 - Renders children if authenticated
 
 **Usage:**
+
 ```jsx
 <Route
   path="/profile"
@@ -188,12 +205,14 @@ const { error } = await signInWithProvider('google')
 ### 7. **Password Reset** (`src/components/auth/ForgotPassword.jsx`)
 
 **Features:**
+
 - Email input for reset link
 - Send reset email via Supabase
 - Success/error messages
 - Link back to login
 
 **Flow:**
+
 1. User enters email
 2. System sends reset link to email
 3. User clicks link in email
@@ -207,6 +226,7 @@ const { error } = await signInWithProvider('google')
 **Purpose:** Handle OAuth redirects after social login.
 
 **Flow:**
+
 1. User clicks social login button
 2. Redirected to provider (Google/GitHub/Discord)
 3. User authorizes application
@@ -239,16 +259,19 @@ Protected Routes:
 In your Supabase Dashboard:
 
 **Email Authentication:**
+
 1. Go to Authentication > Providers
 2. Enable "Email"
 3. Configure email templates (optional)
 
 **Magic Links:**
+
 1. Already enabled with email auth
 2. Configure in Authentication > Email Templates
 3. Customize magic link email
 
 **Google OAuth:**
+
 1. Go to Authentication > Providers > Google
 2. Enable Google provider
 3. Add OAuth credentials from Google Cloud Console:
@@ -259,6 +282,7 @@ In your Supabase Dashboard:
    - `http://localhost:5173/auth/callback` (development)
 
 **GitHub OAuth:**
+
 1. Go to Authentication > Providers > GitHub
 2. Enable GitHub provider
 3. Create OAuth App on GitHub:
@@ -269,6 +293,7 @@ In your Supabase Dashboard:
 4. Add Client ID and Secret to Supabase
 
 **Discord OAuth:**
+
 1. Go to Authentication > Providers > Discord
 2. Enable Discord provider
 3. Create app on Discord Developer Portal:
@@ -282,12 +307,14 @@ In your Supabase Dashboard:
 In Supabase Dashboard > Authentication > URL Configuration:
 
 **Site URL:**
+
 ```
 http://localhost:5173 (development)
 https://your-domain.com (production)
 ```
 
 **Redirect URLs:**
+
 ```
 http://localhost:5173/auth/callback
 https://your-domain.com/auth/callback
@@ -331,6 +358,7 @@ VITE_API_URL=http://localhost:3001
 ## Authentication Flow
 
 ### Sign Up Flow
+
 ```
 1. User fills signup form
 2. Submit to Supabase Auth
@@ -342,6 +370,7 @@ VITE_API_URL=http://localhost:3001
 ```
 
 ### Sign In Flow (Email/Password)
+
 ```
 1. User enters credentials
 2. Submit to Supabase Auth
@@ -352,6 +381,7 @@ VITE_API_URL=http://localhost:3001
 ```
 
 ### Magic Link Flow
+
 ```
 1. User enters email
 2. Supabase sends magic link
@@ -362,6 +392,7 @@ VITE_API_URL=http://localhost:3001
 ```
 
 ### Social Login Flow
+
 ```
 1. User clicks social button
 2. Redirected to provider (Google/GitHub/Discord)
@@ -373,6 +404,7 @@ VITE_API_URL=http://localhost:3001
 ```
 
 ### Sign Out Flow
+
 ```
 1. User clicks sign out
 2. Call Supabase signOut()
@@ -446,28 +478,41 @@ CREATE POLICY "Users can update own profile"
 ### Common Errors
 
 **Invalid credentials:**
+
 ```javascript
-{ message: 'Invalid login credentials' }
+{
+  message: 'Invalid login credentials';
+}
 ```
 
 **Email already registered:**
+
 ```javascript
-{ message: 'User already registered' }
+{
+  message: 'User already registered';
+}
 ```
 
 **Weak password:**
+
 ```javascript
-{ message: 'Password should be at least 6 characters' }
+{
+  message: 'Password should be at least 6 characters';
+}
 ```
 
 **Network error:**
+
 ```javascript
-{ message: 'Failed to fetch' }
+{
+  message: 'Failed to fetch';
+}
 ```
 
 ### Error Display
 
 All authentication components show errors using alert banners:
+
 ```jsx
 <div className="alert alert-error">
   <span>⚠️</span>
@@ -522,20 +567,22 @@ All authentication components show errors using alert banners:
 ### Header with Auth State
 
 ```jsx
-{user ? (
-  <div className="user-menu">
-    <button onClick={() => navigate('/profile')}>
-      <img src={user.user_metadata?.avatar_url} />
-      {user.user_metadata?.full_name || user.email}
-    </button>
-    <button onClick={signOut}>Sign Out</button>
-  </div>
-) : (
-  <div className="auth-buttons">
-    <button onClick={() => navigate('/auth/login')}>Sign In</button>
-    <button onClick={() => navigate('/auth/signup')}>Sign Up</button>
-  </div>
-)}
+{
+  user ? (
+    <div className="user-menu">
+      <button onClick={() => navigate('/profile')}>
+        <img src={user.user_metadata?.avatar_url} />
+        {user.user_metadata?.full_name || user.email}
+      </button>
+      <button onClick={signOut}>Sign Out</button>
+    </div>
+  ) : (
+    <div className="auth-buttons">
+      <button onClick={() => navigate('/auth/login')}>Sign In</button>
+      <button onClick={() => navigate('/auth/signup')}>Sign Up</button>
+    </div>
+  );
+}
 ```
 
 ### Conditional Feature Access
@@ -543,11 +590,11 @@ All authentication components show errors using alert banners:
 ```jsx
 // Show different UI based on auth state
 if (!user) {
-  return <LoginPrompt />
+  return <LoginPrompt />;
 }
 
 // Or disable features
-<button disabled={!user}>Generate Images</button>
+<button disabled={!user}>Generate Images</button>;
 ```
 
 ---
@@ -557,18 +604,21 @@ if (!user) {
 ### Design System
 
 **Colors:**
+
 - Primary: `#667eea` to `#764ba2` (gradient)
 - Success: `#4caf50`
 - Error: `#f44336`
 - Background: `#f5f7fa`
 
 **Components:**
+
 - Auth cards: White with rounded corners (20px)
 - Buttons: Gradient primary, outlined secondary
 - Inputs: 2px border with focus states
 - Alerts: Colored backgrounds with icons
 
 **Animations:**
+
 - Slide up on mount
 - Slide down for alerts
 - Smooth transitions
@@ -653,27 +703,32 @@ CREATE TRIGGER on_auth_user_created
 ## Troubleshooting
 
 ### "Invalid API key"
+
 - Check `VITE_SUPABASE_ANON_KEY` is correct
 - Verify key is for correct project
 - Regenerate key if needed
 
 ### "Email not confirmed"
+
 - Check spam folder for verification email
 - Resend verification from Supabase dashboard
 - Or disable email confirmation requirement
 
 ### Social login not working
+
 - Verify provider is enabled in Supabase
 - Check OAuth credentials are correct
 - Verify redirect URLs match exactly
 - Check provider app is not in development mode
 
 ### Session not persisting
+
 - Check localStorage is enabled
 - Verify no browser extensions blocking storage
 - Check session expiry settings
 
 ### "User already registered"
+
 - User with that email exists
 - Try password reset if forgotten
 - Or use different email
@@ -687,16 +742,16 @@ CREATE TRIGGER on_auth_user_created
 ```jsx
 // Enable MFA for user
 const { data, error } = await supabase.auth.mfa.enroll({
-  factorType: 'totp'
-})
+  factorType: 'totp',
+});
 ```
 
 ### Email Change
 
 ```jsx
 const { error } = await supabase.auth.updateUser({
-  email: 'newemail@example.com'
-})
+  email: 'newemail@example.com',
+});
 // Sends confirmation to both old and new email
 ```
 
@@ -704,8 +759,8 @@ const { error } = await supabase.auth.updateUser({
 
 ```jsx
 const { error } = await supabase.auth.updateUser({
-  password: 'newpassword123'
-})
+  password: 'newpassword123',
+});
 ```
 
 ---
@@ -735,6 +790,7 @@ const { error } = await supabase.auth.updateUser({
 ### AuthContext Methods
 
 #### signUp(email, password, metadata)
+
 - **Parameters:**
   - `email`: string (required)
   - `password`: string (required)
@@ -742,31 +798,37 @@ const { error } = await supabase.auth.updateUser({
 - **Returns:** `{ data, error }`
 
 #### signIn(email, password)
+
 - **Parameters:**
   - `email`: string (required)
   - `password`: string (required)
 - **Returns:** `{ data, error }`
 
 #### signInWithMagicLink(email)
+
 - **Parameters:**
   - `email`: string (required)
 - **Returns:** `{ data, error }`
 
 #### signInWithProvider(provider)
+
 - **Parameters:**
   - `provider`: 'google' | 'github' | 'discord'
 - **Returns:** `{ data, error }`
 
 #### signOut()
+
 - **Parameters:** None
 - **Returns:** `{ error }`
 
 #### updateProfile(updates)
+
 - **Parameters:**
   - `updates`: object - User metadata to update
 - **Returns:** `{ data, error }`
 
 #### resetPassword(email)
+
 - **Parameters:**
   - `email`: string (required)
 - **Returns:** `{ data, error }`

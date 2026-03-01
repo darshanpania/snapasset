@@ -95,7 +95,11 @@ imageGenerationQueue.process(async (job) => {
       // Upload to storage
       const fileName = `${platform}-${width}x${height}.png`;
       const storagePath = `${userId}/${generation.id}/${fileName}`;
-      const { path: savedPath, url } = await uploadToStorage(providers.storage, buffer, storagePath);
+      const { path: savedPath, url } = await uploadToStorage(
+        providers.storage,
+        buffer,
+        storagePath
+      );
 
       // Save to database
       const savedImage = await saveGeneratedImage(providers.db, generation.id, {

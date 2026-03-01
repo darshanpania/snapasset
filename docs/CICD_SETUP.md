@@ -21,10 +21,12 @@ The CI/CD pipeline includes:
 Runs on every push and pull request to `main` and `develop` branches.
 
 **Matrix Strategy**:
+
 - Node.js versions: 18, 20, 21
 - Operating systems: Ubuntu, Windows, macOS
 
 **Features**:
+
 - Dependency caching for faster builds
 - Parallel test execution
 - Build artifact upload
@@ -32,6 +34,7 @@ Runs on every push and pull request to `main` and `develop` branches.
 ### 2. Code Quality (`.github/workflows/code-quality.yml`)
 
 **Checks**:
+
 - ESLint for code linting
 - Prettier for code formatting
 - Bundle size analysis
@@ -40,6 +43,7 @@ Runs on every push and pull request to `main` and `develop` branches.
 ### 3. Security Scanning (`.github/workflows/security.yml`)
 
 **Scans**:
+
 - NPM security audit
 - CodeQL analysis
 - Dependency review for PRs
@@ -50,6 +54,7 @@ Runs on every push and pull request to `main` and `develop` branches.
 ### 4. Performance Testing (`.github/workflows/performance.yml`)
 
 **Tests**:
+
 - Lighthouse CI for web vitals
 - Load testing with k6
 - Bundle analysis and visualization
@@ -57,6 +62,7 @@ Runs on every push and pull request to `main` and `develop` branches.
 ### 5. Release (`.github/workflows/release.yml`)
 
 **Features**:
+
 - Semantic versioning
 - Automated changelog generation
 - GitHub release creation
@@ -68,6 +74,7 @@ Runs on every push and pull request to `main` and `develop` branches.
 ### 6. Deploy to Staging (`.github/workflows/deploy-staging.yml`)
 
 **Features**:
+
 - Automatic deployment on `develop` branch push
 - Environment-specific configuration
 - Smoke tests after deployment
@@ -78,7 +85,8 @@ Runs on every push and pull request to `main` and `develop` branches.
 ### 7. Deploy to Production (`.github/workflows/deploy-production.yml`)
 
 **Features**:
-- Triggered by version tags (v*.*.*)
+
+- Triggered by version tags (v*.*.\*)
 - Full test suite execution
 - Backup creation before deployment
 - Health checks after deployment
@@ -119,6 +127,7 @@ SLACK_WEBHOOK=<your-slack-webhook-url>
 ### 2. Enable Dependabot
 
 Dependabot is configured to:
+
 - Check for npm dependency updates weekly
 - Check for GitHub Actions updates weekly
 - Create PRs with version updates
@@ -152,6 +161,7 @@ BREAKING CHANGE: Breaking change (major version bump)
 ### 5. Performance Monitoring
 
 Lighthouse CI runs on every PR and push to main:
+
 - Performance score
 - Accessibility score
 - Best practices score
@@ -216,6 +226,7 @@ If a deployment fails:
 ### 2. Slack Notifications
 
 Receive notifications for:
+
 - Deployment successes
 - Deployment failures
 - New releases

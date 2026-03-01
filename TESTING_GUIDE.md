@@ -46,34 +46,34 @@ open coverage/index.html
 
 ### Test Files
 
-| Component | Test File | Tests |
-|-----------|-----------|-------|
-| PromptInput | `PromptInput.test.jsx` | 10 |
-| PlatformPresets | `PlatformPresets.test.jsx` | 9 |
-| ResultsGrid | `ResultsGrid.test.jsx` | 10 |
-| Login | `auth/Login.test.jsx` | 12 |
-| Signup | `auth/Signup.test.jsx` | 9 |
-| UserProfile | `auth/UserProfile.test.jsx` | 10 |
-| AuthContext | `AuthContext.test.jsx` | 10 |
-| ProtectedRoute | `auth/ProtectedRoute.test.jsx` | 3 |
+| Component       | Test File                      | Tests |
+| --------------- | ------------------------------ | ----- |
+| PromptInput     | `PromptInput.test.jsx`         | 10    |
+| PlatformPresets | `PlatformPresets.test.jsx`     | 9     |
+| ResultsGrid     | `ResultsGrid.test.jsx`         | 10    |
+| Login           | `auth/Login.test.jsx`          | 12    |
+| Signup          | `auth/Signup.test.jsx`         | 9     |
+| UserProfile     | `auth/UserProfile.test.jsx`    | 10    |
+| AuthContext     | `AuthContext.test.jsx`         | 10    |
+| ProtectedRoute  | `auth/ProtectedRoute.test.jsx` | 3     |
 
 **Total:** 73+ tests
 
 ### Example Test
 
 ```jsx
-import { render, screen, fireEvent } from '../tests/utils/test-utils'
-import PromptInput from './PromptInput'
+import { render, screen, fireEvent } from '../tests/utils/test-utils';
+import PromptInput from './PromptInput';
 
 test('updates character count when typing', async () => {
-  const mockOnGenerate = vi.fn()
-  render(<PromptInput onGenerate={mockOnGenerate} isGenerating={false} />)
-  
-  const textarea = screen.getByPlaceholderText(/describe your image/i)
-  fireEvent.change(textarea, { target: { value: 'Test prompt' } })
-  
-  expect(screen.getByText('11/500')).toBeInTheDocument()
-})
+  const mockOnGenerate = vi.fn();
+  render(<PromptInput onGenerate={mockOnGenerate} isGenerating={false} />);
+
+  const textarea = screen.getByPlaceholderText(/describe your image/i);
+  fireEvent.change(textarea, { target: { value: 'Test prompt' } });
+
+  expect(screen.getByText('11/500')).toBeInTheDocument();
+});
 ```
 
 ### Running Specific Tests
@@ -95,35 +95,35 @@ npm test src/components/PromptInput.test.jsx
 
 ### Test Files
 
-| Module | Test File | Tests |
-|--------|-----------|-------|
-| Server | `index.test.js` | 6 |
-| Image Routes | `routes/images.test.js` | 15 |
-| Image Service | `services/imageService.test.js` | 12 |
-| Error Handler | `middleware/errorHandler.test.js` | 8 |
-| Logger | `tests/unit/logger.test.js` | 5 |
-| Integration | `tests/integration/api.integration.test.js` | 5 |
+| Module        | Test File                                   | Tests |
+| ------------- | ------------------------------------------- | ----- |
+| Server        | `index.test.js`                             | 6     |
+| Image Routes  | `routes/images.test.js`                     | 15    |
+| Image Service | `services/imageService.test.js`             | 12    |
+| Error Handler | `middleware/errorHandler.test.js`           | 8     |
+| Logger        | `tests/unit/logger.test.js`                 | 5     |
+| Integration   | `tests/integration/api.integration.test.js` | 5     |
 
 **Total:** 51+ tests
 
 ### Example Test
 
 ```javascript
-import request from 'supertest'
-import app from '../index.js'
+import request from 'supertest';
+import app from '../index.js';
 
 test('POST /api/generate returns images', async () => {
   const response = await request(app)
     .post('/api/generate')
     .send({
       prompt: 'A beautiful sunset',
-      presets: ['instagram-post']
+      presets: ['instagram-post'],
     })
-    .expect(200)
-  
-  expect(response.body.success).toBe(true)
-  expect(response.body.images).toBeDefined()
-})
+    .expect(200);
+
+  expect(response.body.success).toBe(true);
+  expect(response.body.images).toBeDefined();
+});
 ```
 
 ### Running Specific Tests
@@ -148,25 +148,28 @@ npm test routes/images.test.js
 ### Frontend Mocks
 
 **Supabase:**
+
 ```javascript
-import { mockSupabase } from '../tests/mocks/supabase'
+import { mockSupabase } from '../tests/mocks/supabase';
 
 // Mock is automatically applied
 // Use in tests:
-expect(mockSupabase.auth.signIn).toHaveBeenCalled()
+expect(mockSupabase.auth.signIn).toHaveBeenCalled();
 ```
 
 **API Calls:**
-```javascript
-import { setupFetchMock, mockFetchError } from '../tests/mocks/api'
 
-setupFetchMock() // Mock successful responses
-mockFetchError('Custom error') // Mock error
+```javascript
+import { setupFetchMock, mockFetchError } from '../tests/mocks/api';
+
+setupFetchMock(); // Mock successful responses
+mockFetchError('Custom error'); // Mock error
 ```
 
 ### Backend Mocks
 
 **OpenAI:**
+
 ```javascript
 jest.unstable_mockModule('openai', () => ({
   default: jest.fn().mockImplementation(() => ({
@@ -176,11 +179,12 @@ jest.unstable_mockModule('openai', () => ({
 ```
 
 **Sharp:**
+
 ```javascript
-import { mockSharp, resetSharpMock } from './tests/mocks/sharp'
+import { mockSharp, resetSharpMock } from './tests/mocks/sharp';
 
 // Reset between tests
-beforeEach(() => resetSharpMock())
+beforeEach(() => resetSharpMock());
 ```
 
 ---
@@ -190,12 +194,14 @@ beforeEach(() => resetSharpMock())
 ### Current Coverage
 
 **Frontend:**
+
 - Lines: 80%+
 - Functions: 80%+
 - Branches: 80%+
 - Statements: 80%+
 
 **Backend:**
+
 - Lines: 80%+
 - Functions: 80%+
 - Branches: 80%+
@@ -204,10 +210,12 @@ beforeEach(() => resetSharpMock())
 ### Coverage Reports
 
 **HTML Reports:**
+
 - Frontend: `coverage/index.html`
 - Backend: `server/coverage/index.html`
 
 **LCOV (for CI):**
+
 - Frontend: `coverage/lcov.info`
 - Backend: `server/coverage/lcov.info`
 
@@ -220,11 +228,13 @@ beforeEach(() => resetSharpMock())
 **File:** `.github/workflows/test.yml`
 
 **Jobs:**
+
 1. **frontend-tests** - Run frontend test suite
 2. **backend-tests** - Run backend test suite
 3. **test-summary** - Aggregate results
 
 **Features:**
+
 - Matrix testing (Node 18.x, 20.x)
 - Coverage upload to Codecov
 - Artifact uploads
@@ -233,6 +243,7 @@ beforeEach(() => resetSharpMock())
 ### Running in CI
 
 Tests run automatically on:
+
 - Push to main/develop
 - Pull requests
 - Feature branch pushes
@@ -244,52 +255,47 @@ Tests run automatically on:
 ### Frontend Component Test Template
 
 ```jsx
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '../tests/utils/test-utils'
-import MyComponent from './MyComponent'
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '../tests/utils/test-utils';
+import MyComponent from './MyComponent';
 
 describe('MyComponent', () => {
   it('renders component', () => {
-    render(<MyComponent />)
-    expect(screen.getByText('Expected Text')).toBeInTheDocument()
-  })
+    render(<MyComponent />);
+    expect(screen.getByText('Expected Text')).toBeInTheDocument();
+  });
 
   it('handles user interaction', async () => {
-    const mockHandler = vi.fn()
-    render(<MyComponent onAction={mockHandler} />)
-    
-    const button = screen.getByRole('button')
-    fireEvent.click(button)
-    
-    expect(mockHandler).toHaveBeenCalled()
-  })
-})
+    const mockHandler = vi.fn();
+    render(<MyComponent onAction={mockHandler} />);
+
+    const button = screen.getByRole('button');
+    fireEvent.click(button);
+
+    expect(mockHandler).toHaveBeenCalled();
+  });
+});
 ```
 
 ### Backend API Test Template
 
 ```javascript
-import { describe, it, expect } from '@jest/globals'
-import request from 'supertest'
-import app from '../index.js'
+import { describe, it, expect } from '@jest/globals';
+import request from 'supertest';
+import app from '../index.js';
 
 describe('API Endpoint', () => {
   it('returns expected response', async () => {
-    const response = await request(app)
-      .get('/api/endpoint')
-      .expect(200)
-    
-    expect(response.body).toHaveProperty('success', true)
-    expect(response.body).toHaveProperty('data')
-  })
+    const response = await request(app).get('/api/endpoint').expect(200);
+
+    expect(response.body).toHaveProperty('success', true);
+    expect(response.body).toHaveProperty('data');
+  });
 
   it('validates input', async () => {
-    await request(app)
-      .post('/api/endpoint')
-      .send({ invalid: 'data' })
-      .expect(400)
-  })
-})
+    await request(app).post('/api/endpoint').send({ invalid: 'data' }).expect(400);
+  });
+});
 ```
 
 ---
@@ -323,18 +329,23 @@ describe('API Endpoint', () => {
 ## 🐛 Common Issues
 
 ### "Module not found" in tests
+
 **Solution:** Check import paths, use path aliases in vitest.config.js
 
 ### "fetch is not defined"
+
 **Solution:** Mock fetch in setup.js or use setupFetchMock()
 
 ### "Cannot find module" with ES modules
+
 **Solution:** Use `jest.unstable_mockModule` before importing
 
 ### Tests pass locally but fail in CI
+
 **Solution:** Check environment variables, timeouts, async handling
 
 ### Coverage lower than expected
+
 **Solution:** Check excluded files, add missing test cases
 
 ---
@@ -342,6 +353,7 @@ describe('API Endpoint', () => {
 ## 📚 Best Practices
 
 ### DO:
+
 - ✅ Test user behavior, not implementation
 - ✅ Use descriptive test names
 - ✅ Keep tests focused and simple
@@ -351,6 +363,7 @@ describe('API Endpoint', () => {
 - ✅ Use semantic queries
 
 ### DON'T:
+
 - ❌ Test implementation details
 - ❌ Make tests dependent on each other
 - ❌ Use arbitrary timeouts
@@ -369,34 +382,34 @@ Extend jest-dom with custom matchers:
 ```javascript
 expect.extend({
   toBeValidImage(received) {
-    const pass = received.url && received.width && received.height
+    const pass = received.url && received.width && received.height;
     return {
       pass,
       message: () => `Expected valid image object`,
-    }
+    };
   },
-})
+});
 ```
 
 ### Snapshot Testing
 
 ```jsx
 it('matches snapshot', () => {
-  const { container } = render(<MyComponent />)
-  expect(container).toMatchSnapshot()
-})
+  const { container } = render(<MyComponent />);
+  expect(container).toMatchSnapshot();
+});
 ```
 
 ### Performance Testing
 
 ```javascript
 it('completes within time limit', async () => {
-  const start = Date.now()
-  await myAsyncFunction()
-  const duration = Date.now() - start
-  
-  expect(duration).toBeLessThan(1000) // 1 second
-})
+  const start = Date.now();
+  await myAsyncFunction();
+  const duration = Date.now() - start;
+
+  expect(duration).toBeLessThan(1000); // 1 second
+});
 ```
 
 ---
@@ -421,6 +434,7 @@ open coverage/index.html
 ### Coverage Badge
 
 Add to README.md:
+
 ```markdown
 [![codecov](https://codecov.io/gh/darshanpania/snapasset/branch/main/graph/badge.svg)](https://codecov.io/gh/darshanpania/snapasset)
 ```
@@ -440,13 +454,13 @@ Opens interactive UI at http://localhost:51204
 ### Debug Output
 
 ```javascript
-import { screen, debug } from '@testing-library/react'
+import { screen, debug } from '@testing-library/react';
 
 // Print DOM
-screen.debug()
+screen.debug();
 
 // Print specific element
-screen.debug(screen.getByRole('button'))
+screen.debug(screen.getByRole('button'));
 ```
 
 ### Verbose Mode
@@ -464,12 +478,14 @@ cd server && npm run test:verbose
 ## 📚 Resources
 
 ### Documentation
+
 - [Vitest Docs](https://vitest.dev/)
 - [React Testing Library](https://testing-library.com/)
 - [Jest Docs](https://jestjs.io/)
 - [Supertest Docs](https://github.com/visionmedia/supertest)
 
 ### Testing Guides
+
 - [Common Testing Mistakes](https://kentcdodds.com/blog/common-mistakes-with-react-testing-library)
 - [Testing Best Practices](https://testingjavascript.com/)
 - [React Testing Tutorial](https://www.robinwieruch.de/react-testing-library/)
@@ -479,6 +495,7 @@ cd server && npm run test:verbose
 ## ✅ Test Statistics
 
 **Frontend:**
+
 - Component Tests: 73+
 - Coverage: 80%+
 - Test Files: 8
@@ -486,6 +503,7 @@ cd server && npm run test:verbose
 - Helpers: 2
 
 **Backend:**
+
 - API Tests: 51+
 - Coverage: 80%+
 - Test Files: 6
@@ -499,6 +517,7 @@ cd server && npm run test:verbose
 ## 🎉 Summary
 
 SnapAsset has comprehensive testing with:
+
 - ✅ 124+ automated tests
 - ✅ 80%+ code coverage
 - ✅ CI/CD integration

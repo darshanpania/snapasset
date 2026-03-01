@@ -4,16 +4,16 @@
  */
 export default class SupabaseAuthAdapter {
   constructor(supabaseClient) {
-    this.supabase = supabaseClient
+    this.supabase = supabaseClient;
   }
 
   async verifyToken(token) {
-    const { data, error } = await this.supabase.auth.getUser(token)
+    const { data, error } = await this.supabase.auth.getUser(token);
 
     if (error || !data.user) {
-      throw new Error('Invalid token')
+      throw new Error('Invalid token');
     }
 
-    return data.user
+    return data.user;
   }
 }

@@ -2,13 +2,7 @@
   "name": "SnapAsset - AI Image Generator",
   "description": "AI-powered image generation tool that creates perfectly-sized assets for multiple social media platforms",
   "icon": "🎨",
-  "tags": [
-    "ai",
-    "image-generation",
-    "react",
-    "express",
-    "supabase"
-  ],
+  "tags": ["ai", "image-generation", "react", "express", "supabase"],
   "repository": {
     "repo": "darshanpania/snapasset",
     "branch": "main"

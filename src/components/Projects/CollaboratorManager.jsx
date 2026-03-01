@@ -57,7 +57,11 @@ export const CollaboratorManager = ({ projectId }) => {
       editor: '#3b82f6',
       viewer: '#6b7280',
     };
-    return <span className="role-badge" style={{ background: colors[role] }}>{role}</span>;
+    return (
+      <span className="role-badge" style={{ background: colors[role] }}>
+        {role}
+      </span>
+    );
   };
 
   return (
@@ -105,10 +109,7 @@ export const CollaboratorManager = ({ projectId }) => {
             <div className="collaborator-actions">
               {getRoleBadge(collab.role)}
               {collab.role !== 'owner' && (
-                <button
-                  onClick={() => handleRemove(collab.user_id)}
-                  className="btn-remove"
-                >
+                <button onClick={() => handleRemove(collab.user_id)} className="btn-remove">
                   Remove
                 </button>
               )}

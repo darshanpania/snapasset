@@ -36,7 +36,7 @@ export const AnalyticsDashboard = () => {
     try {
       setExporting(true);
       const blob = await analyticsApi.exportAnalytics(period, format);
-      
+
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -77,7 +77,11 @@ export const AnalyticsDashboard = () => {
           <p className="subtitle">Track your usage, performance, and costs</p>
         </div>
         <div className="header-actions">
-          <select value={period} onChange={(e) => setPeriod(e.target.value)} className="period-selector">
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className="period-selector"
+          >
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>
             <option value="90d">Last 90 days</option>
@@ -199,7 +203,7 @@ export const AnalyticsDashboard = () => {
               <h2>Detailed Usage Analytics</h2>
               <UsageChart data={dailyUsage || []} detailed={true} />
             </div>
-            
+
             <div className="recent-activity">
               <h2>Recent Activity</h2>
               <div className="activity-list">
@@ -209,9 +213,7 @@ export const AnalyticsDashboard = () => {
                     <span className="activity-time">
                       {new Date(event.created_at).toLocaleString()}
                     </span>
-                    {event.platform && (
-                      <span className="activity-platform">{event.platform}</span>
-                    )}
+                    {event.platform && <span className="activity-platform">{event.platform}</span>}
                   </div>
                 ))}
               </div>
@@ -219,17 +221,11 @@ export const AnalyticsDashboard = () => {
           </>
         )}
 
-        {activeTab === 'costs' && (
-          <CostAnalytics data={costAnalysis} period={period} />
-        )}
+        {activeTab === 'costs' && <CostAnalytics data={costAnalysis} period={period} />}
 
-        {activeTab === 'engagement' && (
-          <EngagementMetrics userId={overview.user_id} />
-        )}
+        {activeTab === 'engagement' && <EngagementMetrics userId={overview.user_id} />}
 
-        {activeTab === 'performance' && (
-          <PerformanceMonitor />
-        )}
+        {activeTab === 'performance' && <PerformanceMonitor />}
       </div>
     </div>
   );

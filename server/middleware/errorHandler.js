@@ -21,7 +21,7 @@ export const errorHandler = (err, req, res, next) => {
     message: err.message,
     stack: err.stack,
     url: req.url,
-    method: req.method
+    method: req.method,
   });
 
   // Default error values

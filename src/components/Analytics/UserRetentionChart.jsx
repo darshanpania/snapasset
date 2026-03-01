@@ -62,12 +62,7 @@ export const UserRetentionChart = ({ data }) => {
             >
               {chartData.map((entry, index) => {
                 const cohortKey = entry.name.toLowerCase().replace(' ', '_');
-                return (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COHORT_COLORS[cohortKey] || '#6b7280'}
-                  />
-                );
+                return <Cell key={`cell-${index}`} fill={COHORT_COLORS[cohortKey] || '#6b7280'} />;
               })}
             </Pie>
             <Tooltip content={<CustomTooltip />} />
@@ -80,10 +75,7 @@ export const UserRetentionChart = ({ data }) => {
         {Object.entries(breakdown).map(([cohort, count]) => (
           <div key={cohort} className="cohort-row">
             <div className="cohort-info">
-              <div
-                className="cohort-indicator"
-                style={{ background: COHORT_COLORS[cohort] }}
-              />
+              <div className="cohort-indicator" style={{ background: COHORT_COLORS[cohort] }} />
               <span className="cohort-name">{cohort.replace('_', ' ')}</span>
             </div>
             <div className="cohort-stats">
@@ -98,13 +90,17 @@ export const UserRetentionChart = ({ data }) => {
         <h3>💡 Retention Insights</h3>
         <ul>
           {parseFloat(percentages.active) > 50 && (
-            <li className="insight-good">Excellent retention rate! Over 50% of users are highly active.</li>
+            <li className="insight-good">
+              Excellent retention rate! Over 50% of users are highly active.
+            </li>
           )}
           {parseFloat(percentages.churned) > 30 && (
             <li className="insight-warning">High churn rate. Consider re-engagement campaigns.</li>
           )}
           {parseFloat(percentages.at_risk) > 20 && (
-            <li className="insight-warning">{percentages.at_risk}% of users are at risk of churning.</li>
+            <li className="insight-warning">
+              {percentages.at_risk}% of users are at risk of churning.
+            </li>
           )}
           <li>Send weekly engagement emails to at-risk users</li>
           <li>Offer premium features to highly active users</li>

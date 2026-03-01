@@ -74,9 +74,5 @@ export const AnalyticsProvider = ({ children }) => {
     setRealtimeStats,
   };
 
-  return (
-    <AnalyticsContext.Provider value={value}>
-      {children}
-    </AnalyticsContext.Provider>
-  );
+  return <AnalyticsContext.Provider value={value}>{children}</AnalyticsContext.Provider>;
 };

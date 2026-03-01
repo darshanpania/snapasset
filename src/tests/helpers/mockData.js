@@ -4,7 +4,7 @@ export const mockPrompts = [
   'A serene mountain landscape at sunset',
   'Modern minimalist logo with geometric shapes',
   'Abstract digital art with flowing colors',
-]
+];
 
 export const mockPlatformPresets = {
   instagram: {
@@ -20,11 +20,9 @@ export const mockPlatformPresets = {
     name: 'Twitter/X',
     icon: '🐦',
     category: 'social',
-    dimensions: [
-      { label: 'Post', width: 1200, height: 675 },
-    ],
+    dimensions: [{ label: 'Post', width: 1200, height: 675 }],
   },
-}
+};
 
 export const mockGeneratedImages = [
   {
@@ -45,7 +43,7 @@ export const mockGeneratedImages = [
     url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
     fileSize: 180000,
   },
-]
+];
 
 export const mockUser = {
   id: 'user-123',
@@ -57,7 +55,7 @@ export const mockUser = {
     full_name: 'Test User',
     avatar_url: 'https://example.com/avatar.jpg',
   },
-}
+};
 
 export const mockSession = {
   access_token: 'mock-access-token',
@@ -65,4 +63,4 @@ export const mockSession = {
   expires_in: 3600,
   expires_at: Math.floor(Date.now() / 1000) + 3600,
   user: mockUser,
-}
+};

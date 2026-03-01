@@ -65,7 +65,7 @@ export const trackEvent = (eventType, category = null) => {
     try {
       if (req.user) {
         const analyticsService = new AnalyticsService(req.app.locals.providers.db);
-        
+
         await analyticsService.trackEvent({
           user_id: req.user.id,
           session_id: req.sessionID || req.get('x-session-id'),
@@ -92,7 +92,7 @@ export const trackImageGeneration = async (req, res, next) => {
   try {
     if (req.user && res.locals.imageData) {
       const analyticsService = new AnalyticsService(req.app.locals.providers.db);
-      
+
       await analyticsService.trackEvent({
         user_id: req.user.id,
         session_id: req.sessionID,
@@ -111,10 +111,7 @@ export const trackImageGeneration = async (req, res, next) => {
 
       // Track platform usage
       if (res.locals.imageData.platform) {
-        await analyticsService.trackPlatformUsage(
-          req.user.id,
-          res.locals.imageData.platform
-        );
+        await analyticsService.trackPlatformUsage(req.user.id, res.locals.imageData.platform);
       }
     }
   } catch (error) {

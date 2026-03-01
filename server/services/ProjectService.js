@@ -45,10 +45,7 @@ export class ProjectService {
     if (!data) throw new Error('Project not found');
 
     // Check if user has access
-    if (
-      data.owner_id !== userId &&
-      !data.collaborators?.some((c) => c.user_id === userId)
-    ) {
+    if (data.owner_id !== userId && !data.collaborators?.some((c) => c.user_id === userId)) {
       throw new Error('Access denied');
     }
 

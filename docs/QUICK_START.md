@@ -51,18 +51,21 @@ REDIS_PORT=6379
 ### 4. Start Redis (Optional)
 
 **macOS:**
+
 ```bash
 brew install redis
 brew services start redis
 ```
 
 **Ubuntu/Debian:**
+
 ```bash
 sudo apt-get install redis-server
 sudo systemctl start redis
 ```
 
 **Docker:**
+
 ```bash
 docker run -d -p 6379:6379 redis:7-alpine
 ```
@@ -81,6 +84,7 @@ npm run worker
 ```
 
 You should see:
+
 ```
 🚀 SnapAsset API Server
 📝 Environment: development
@@ -98,6 +102,7 @@ curl http://localhost:3001/health
 ```
 
 Expected response:
+
 ```json
 {
   "status": "ok",
@@ -124,6 +129,7 @@ curl -X POST http://localhost:3001/api/jobs \
 ```
 
 Response:
+
 ```json
 {
   "jobId": "gen-1706102400-abc123",
@@ -140,6 +146,7 @@ curl http://localhost:3001/api/jobs/gen-1706102400-abc123
 ```
 
 Response (while processing):
+
 ```json
 {
   "jobId": "gen-1706102400-abc123",
@@ -155,6 +162,7 @@ Response (while processing):
 ```
 
 Response (completed):
+
 ```json
 {
   "jobId": "gen-1706102400-abc123",
@@ -194,34 +202,32 @@ Monitor job progress in real-time:
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Job Monitor</title>
-</head>
-<body>
-  <h1>Job Progress</h1>
-  <div id="status">Connecting...</div>
-  <div id="progress">0%</div>
-  <div id="logs"></div>
+  <head>
+    <title>Job Monitor</title>
+  </head>
+  <body>
+    <h1>Job Progress</h1>
+    <div id="status">Connecting...</div>
+    <div id="progress">0%</div>
+    <div id="logs"></div>
 
-  <script>
-    const jobId = 'gen-1706102400-abc123';
-    const eventSource = new EventSource(
-      `http://localhost:3001/api/sse/jobs/${jobId}`
-    );
+    <script>
+      const jobId = 'gen-1706102400-abc123';
+      const eventSource = new EventSource(`http://localhost:3001/api/sse/jobs/${jobId}`);
 
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      
-      document.getElementById('status').textContent = data.status;
-      document.getElementById('progress').textContent = data.progress + '%';
-      
-      if (data.type === 'done') {
-        console.log('Completed!', data.result);
-        eventSource.close();
-      }
-    };
-  </script>
-</body>
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        document.getElementById('status').textContent = data.status;
+        document.getElementById('progress').textContent = data.progress + '%';
+
+        if (data.type === 'done') {
+          console.log('Completed!', data.result);
+          eventSource.close();
+        }
+      };
+    </script>
+  </body>
 </html>
 ```
 
@@ -255,15 +261,13 @@ function ImageGenerator() {
   useEffect(() => {
     if (!jobId) return;
 
-    const eventSource = new EventSource(
-      `http://localhost:3001/api/sse/jobs/${jobId}`
-    );
+    const eventSource = new EventSource(`http://localhost:3001/api/sse/jobs/${jobId}`);
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      
+
       setProgress(data.progress);
-      
+
       if (data.type === 'done' && data.result) {
         setImages(data.result.images);
         eventSource.close();
@@ -277,7 +281,7 @@ function ImageGenerator() {
     <div>
       <button onClick={generateImages}>Generate</button>
       {progress > 0 && <progress value={progress} max="100" />}
-      {images.map(img => (
+      {images.map((img) => (
         <img key={img.url} src={img.url} alt={img.platform} />
       ))}
     </div>
@@ -287,16 +291,16 @@ function ImageGenerator() {
 
 ## Available Platforms
 
-| Platform | ID | Dimensions |
-|----------|----|------------|
-| Instagram Post | `instagram-post` | 1080x1080 |
-| Instagram Story | `instagram-story` | 1080x1920 |
-| Twitter Post | `twitter-post` | 1200x675 |
-| Twitter Header | `twitter-header` | 1500x500 |
-| Facebook Post | `facebook-post` | 1200x630 |
-| Facebook Cover | `facebook-cover` | 820x312 |
-| LinkedIn Post | `linkedin-post` | 1200x627 |
-| YouTube Thumbnail | `youtube-thumbnail` | 1280x720 |
+| Platform          | ID                  | Dimensions |
+| ----------------- | ------------------- | ---------- |
+| Instagram Post    | `instagram-post`    | 1080x1080  |
+| Instagram Story   | `instagram-story`   | 1080x1920  |
+| Twitter Post      | `twitter-post`      | 1200x675   |
+| Twitter Header    | `twitter-header`    | 1500x500   |
+| Facebook Post     | `facebook-post`     | 1200x630   |
+| Facebook Cover    | `facebook-cover`    | 820x312    |
+| LinkedIn Post     | `linkedin-post`     | 1200x627   |
+| YouTube Thumbnail | `youtube-thumbnail` | 1280x720   |
 
 ## Testing
 

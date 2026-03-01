@@ -64,14 +64,11 @@ export const analyticsApi = {
    * Export analytics data
    */
   exportAnalytics: async (period = '30d', format = 'json') => {
-    const response = await fetch(
-      `${API_BASE}/analytics/export?period=${period}&format=${format}`,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('snapasset_token')}`,
-        },
-      }
-    );
+    const response = await fetch(`${API_BASE}/analytics/export?period=${period}&format=${format}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('snapasset_token')}`,
+      },
+    });
 
     if (!response.ok) {
       throw new Error('Export failed');

@@ -25,12 +25,14 @@ MAJOR.MINOR.PATCH
 ### Version Format
 
 **URL-based versioning:**
+
 ```
 https://api.snapasset.com/v1/jobs
 https://api.snapasset.com/v2/jobs
 ```
 
 **Current:** Version is implicit (v1)
+
 ```
 https://api.snapasset.com/api/jobs  # Same as v1
 ```
@@ -40,6 +42,7 @@ https://api.snapasset.com/api/jobs  # Same as v1
 ### v1.0.0 (Current) - January 2026
 
 **Features:**
+
 - Job queue system with Bull and Redis
 - Image generation with DALL-E 3
 - 8 platform presets
@@ -48,6 +51,7 @@ https://api.snapasset.com/api/jobs  # Same as v1
 - Comprehensive API documentation
 
 **Endpoints:**
+
 - `POST /api/jobs` - Create job
 - `GET /api/jobs/:jobId` - Get job status
 - `GET /api/jobs` - List jobs
@@ -113,9 +117,9 @@ Link: <https://api.snapasset.com/docs/migration>; rel="deprecation"
 
 **Changed Endpoints:**
 
-| v1 Endpoint | v2 Endpoint | Changes |
-|-------------|-------------|----------|
-| `POST /api/jobs` | `POST /v2/jobs` | TBD |
+| v1 Endpoint      | v2 Endpoint     | Changes |
+| ---------------- | --------------- | ------- |
+| `POST /api/jobs` | `POST /v2/jobs` | TBD     |
 
 **Migration Steps:**
 
@@ -135,21 +139,23 @@ Link: <https://api.snapasset.com/docs/migration>; rel="deprecation"
 
 ### Version Support Matrix
 
-| Version | Status | Support Until | Security Updates |
-|---------|--------|---------------|------------------|
-| v1.0.0 | Current | TBD | Yes |
-| v0.x.x | Deprecated | July 2026 | Critical only |
+| Version | Status     | Support Until | Security Updates |
+| ------- | ---------- | ------------- | ---------------- |
+| v1.0.0  | Current    | TBD           | Yes              |
+| v0.x.x  | Deprecated | July 2026     | Critical only    |
 
 ## Best Practices
 
 ### For API Consumers
 
 1. **Always specify version** in production:
+
    ```javascript
    const API_BASE = 'https://api.snapasset.com/v1';
    ```
 
 2. **Handle deprecation warnings**:
+
    ```javascript
    const response = await fetch(url);
    if (response.headers.get('Deprecated')) {
@@ -159,11 +165,13 @@ Link: <https://api.snapasset.com/docs/migration>; rel="deprecation"
    ```
 
 3. **Test with new versions early**:
+
    ```javascript
    // Test v2 in development
-   const baseUrl = process.env.NODE_ENV === 'development'
-     ? 'https://api.snapasset.com/v2'
-     : 'https://api.snapasset.com/v1';
+   const baseUrl =
+     process.env.NODE_ENV === 'development'
+       ? 'https://api.snapasset.com/v2'
+       : 'https://api.snapasset.com/v1';
    ```
 
 4. **Subscribe to changelog**:

@@ -15,9 +15,11 @@ describe('SQLite Schema', () => {
   });
 
   const getTableNames = (db) => {
-    const rows = db.prepare(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
-    ).all();
+    const rows = db
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+      )
+      .all();
     return rows.map((r) => r.name);
   };
 
@@ -372,9 +374,11 @@ describe('SQLite Schema', () => {
     test('creates indexes', () => {
       initializeSchema(db);
 
-      const indexes = db.prepare(
-        "SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_%' ORDER BY name"
-      ).all();
+      const indexes = db
+        .prepare(
+          "SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_%' ORDER BY name"
+        )
+        .all();
 
       expect(indexes.length).toBeGreaterThan(0);
 

@@ -1,38 +1,41 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { supabase, isLocalMode } from '../../services/supabase'
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase, isLocalMode } from '../../services/supabase';
 
 const AuthCallback = () => {
-  const navigate = useNavigate()
-  const [error, setError] = useState(null)
+  const navigate = useNavigate();
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
         if (isLocalMode) {
-          navigate('/', { replace: true })
-          return
+          navigate('/', { replace: true });
+          return;
         }
 
-        const { data: { session }, error } = await supabase.auth.getSession()
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
 
-        if (error) throw error
+        if (error) throw error;
 
         if (session) {
-          navigate('/', { replace: true })
+          navigate('/', { replace: true });
         } else {
-          setError('Authentication failed. Please try again.')
-          setTimeout(() => navigate('/auth/login'), 3000)
+          setError('Authentication failed. Please try again.');
+          setTimeout(() => navigate('/auth/login'), 3000);
         }
       } catch (error) {
-        console.error('Auth callback error:', error)
-        setError(error.message)
-        setTimeout(() => navigate('/auth/login'), 3000)
+        console.error('Auth callback error:', error);
+        setError(error.message);
+        setTimeout(() => navigate('/auth/login'), 3000);
       }
-    }
+    };
 
-    handleAuthCallback()
-  }, [navigate])
+    handleAuthCallback();
+  }, [navigate]);
 
   return (
     <div className="auth-container">
@@ -55,7 +58,7 @@ const AuthCallback = () => {
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default AuthCallback
+export default AuthCallback;

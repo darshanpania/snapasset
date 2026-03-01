@@ -5,11 +5,13 @@ Backend API for SnapAsset - AI-powered image generation and optimization.
 ## Features
 
 ### 🎨 Image Generation
+
 - DALL-E 3 integration for AI image generation
 - Automatic resizing for 8+ social media platforms
 - High-quality image optimization with Sharp
 
 ### 🔄 Job Queue System
+
 - Bull queue with Redis backend
 - Concurrent job processing
 - Automatic retry with exponential backoff
@@ -17,12 +19,14 @@ Backend API for SnapAsset - AI-powered image generation and optimization.
 - Real-time updates via Server-Sent Events
 
 ### 📚 API Documentation
+
 - Complete OpenAPI 3.0 specification
 - Interactive Swagger UI
 - Postman collection generation
 - Request/response examples
 
 ### 🔒 Security & Performance
+
 - Rate limiting
 - Helmet security headers
 - CORS configuration
@@ -56,6 +60,7 @@ nano .env
 The server supports two database modes that are auto-detected:
 
 **Local mode** (default - no external services needed):
+
 ```env
 PORT=3001
 NODE_ENV=development
@@ -64,6 +69,7 @@ OPENAI_API_KEY=your-openai-key
 ```
 
 **Supabase mode** (cloud PostgreSQL + storage):
+
 ```env
 PORT=3001
 NODE_ENV=development
@@ -104,11 +110,13 @@ docker-compose up
 ## API Endpoints
 
 ### Health Check
+
 ```
 GET /health
 ```
 
 ### Job Management
+
 ```
 POST   /api/jobs           # Create new job
 GET    /api/jobs/:jobId    # Get job status
@@ -118,11 +126,13 @@ DELETE /api/jobs/:jobId/cancel  # Cancel job
 ```
 
 ### Real-time Updates
+
 ```
 GET /api/sse/jobs/:jobId   # Subscribe to job updates (SSE)
 ```
 
 ### Queue Management
+
 ```
 GET  /api/queue/stats      # Get queue statistics
 POST /api/queue/pause      # Pause queue
@@ -131,6 +141,7 @@ POST /api/queue/clean      # Clean old jobs
 ```
 
 ### Documentation
+
 ```
 GET /api-docs              # Swagger UI
 GET /api-docs/openapi.json # OpenAPI spec
@@ -153,9 +164,9 @@ const response = await fetch('http://localhost:3001/api/jobs', {
     platforms: ['instagram-post', 'twitter-post', 'facebook-post'],
     options: {
       quality: 'hd',
-      style: 'vivid'
-    }
-  })
+      style: 'vivid',
+    },
+  }),
 });
 
 const { jobId } = await response.json();
@@ -170,7 +181,7 @@ const eventSource = new EventSource(`http://localhost:3001/api/sse/jobs/${jobId}
 eventSource.onmessage = (event) => {
   const data = JSON.parse(event.data);
   console.log('Progress:', data.progress + '%');
-  
+
   if (data.type === 'done') {
     console.log('Completed!', data.result);
     eventSource.close();
@@ -242,16 +253,16 @@ if (job.result) {
 
 Supported platforms with exact dimensions:
 
-| Platform | Preset ID | Dimensions |
-|----------|-----------|------------|
-| Instagram Post | `instagram-post` | 1080x1080 |
-| Instagram Story | `instagram-story` | 1080x1920 |
-| Twitter Post | `twitter-post` | 1200x675 |
-| Twitter Header | `twitter-header` | 1500x500 |
-| Facebook Post | `facebook-post` | 1200x630 |
-| Facebook Cover | `facebook-cover` | 820x312 |
-| LinkedIn Post | `linkedin-post` | 1200x627 |
-| YouTube Thumbnail | `youtube-thumbnail` | 1280x720 |
+| Platform          | Preset ID           | Dimensions |
+| ----------------- | ------------------- | ---------- |
+| Instagram Post    | `instagram-post`    | 1080x1080  |
+| Instagram Story   | `instagram-story`   | 1080x1920  |
+| Twitter Post      | `twitter-post`      | 1200x675   |
+| Twitter Header    | `twitter-header`    | 1500x500   |
+| Facebook Post     | `facebook-post`     | 1200x630   |
+| Facebook Cover    | `facebook-cover`    | 820x312    |
+| LinkedIn Post     | `linkedin-post`     | 1200x627   |
+| YouTube Thumbnail | `youtube-thumbnail` | 1280x720   |
 
 ## Rate Limiting
 
@@ -261,14 +272,14 @@ Supported platforms with exact dimensions:
 
 ## Error Codes
 
-| Code | Description |
-|------|-------------|
-| `INVALID_REQUEST` | Missing or invalid request data |
-| `UNAUTHORIZED` | Invalid or missing authentication |
-| `RATE_LIMIT_EXCEEDED` | Too many requests |
-| `JOB_LIMIT_EXCEEDED` | Too many jobs created |
-| `JOB_NOT_FOUND` | Job ID doesn't exist |
-| `INTERNAL_ERROR` | Server error |
+| Code                  | Description                       |
+| --------------------- | --------------------------------- |
+| `INVALID_REQUEST`     | Missing or invalid request data   |
+| `UNAUTHORIZED`        | Invalid or missing authentication |
+| `RATE_LIMIT_EXCEEDED` | Too many requests                 |
+| `JOB_LIMIT_EXCEEDED`  | Too many jobs created             |
+| `JOB_NOT_FOUND`       | Job ID doesn't exist              |
+| `INTERNAL_ERROR`      | Server error                      |
 
 ## Monitoring
 
@@ -279,6 +290,7 @@ curl http://localhost:3001/api/queue/stats
 ```
 
 Response:
+
 ```json
 {
   "waiting": 5,
@@ -297,6 +309,7 @@ curl http://localhost:3001/health
 ```
 
 Response:
+
 ```json
 {
   "status": "ok",
@@ -353,17 +366,21 @@ docker run -p 3001:3001 --env-file .env snapasset-api
 ### Environment Variables
 
 **Always required:**
+
 - `OPENAI_API_KEY` - For image generation
 
 **Local mode (default):**
+
 - `JWT_SECRET` - Secret for signing JWT tokens (min 32 chars)
 - `LOCAL_DATA_DIR` - Data directory (default: `./data`)
 
 **Supabase mode:**
+
 - `SUPABASE_URL` - Supabase project URL (triggers Supabase mode)
 - `SUPABASE_SERVICE_KEY` - Supabase service role key
 
 **Optional:**
+
 - `PORT` (default: 3001)
 - `NODE_ENV` (default: development)
 - `DB_PROVIDER` - Force `local` or `supabase` (auto-detected if omitted)

@@ -1,16 +1,16 @@
-import { vi } from 'vitest'
+import { vi } from 'vitest';
 
 // Mock Supabase client
 const mockSupabaseClient = {
   auth: {
-    getSession: vi.fn(() => 
-      Promise.resolve({ 
-        data: { session: null }, 
-        error: null 
+    getSession: vi.fn(() =>
+      Promise.resolve({
+        data: { session: null },
+        error: null,
       })
     ),
     onAuthStateChange: vi.fn(() => ({
-      data: { subscription: { unsubscribe: vi.fn() } }
+      data: { subscription: { unsubscribe: vi.fn() } },
     })),
     signUp: vi.fn((credentials) =>
       Promise.resolve({
@@ -93,11 +93,11 @@ const mockSupabaseClient = {
       getPublicUrl: vi.fn(() => ({ data: { publicUrl: 'https://example.com/image.png' } })),
     })),
   },
-}
+};
 
 // Mock the Supabase module
 vi.mock('../services/supabase', () => ({
   supabase: mockSupabaseClient,
-}))
+}));
 
-export { mockSupabaseClient }
+export { mockSupabaseClient };

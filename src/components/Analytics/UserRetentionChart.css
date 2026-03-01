@@ -3,9 +3,9 @@
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
   grid-template-areas:
-    "overview overview"
-    "visualization breakdown"
-    "insights insights";
+    'overview overview'
+    'visualization breakdown'
+    'insights insights';
 }
 
 .retention-overview {
@@ -127,9 +127,9 @@
   .retention-chart {
     grid-template-columns: 1fr;
     grid-template-areas:
-      "overview"
-      "visualization"
-      "breakdown"
-      "insights";
+      'overview'
+      'visualization'
+      'breakdown'
+      'insights';
   }
 }

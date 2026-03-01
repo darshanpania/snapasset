@@ -69,11 +69,10 @@ export class LocalAuthAdapter {
       throw new Error('Invalid email or password');
     }
 
-    const token = jwt.sign(
-      { sub: row.id, email: row.email },
-      this.jwtSecret,
-      { algorithm: 'HS256', expiresIn: TOKEN_EXPIRY }
-    );
+    const token = jwt.sign({ sub: row.id, email: row.email }, this.jwtSecret, {
+      algorithm: 'HS256',
+      expiresIn: TOKEN_EXPIRY,
+    });
 
     return {
       token,
@@ -104,7 +103,7 @@ export class LocalAuthAdapter {
    */
   _sanitizeUser(user) {
     const { password_hash, metadata, ...sanitized } = user;
-    const parsed = typeof metadata === 'string' ? JSON.parse(metadata) : (metadata || {});
+    const parsed = typeof metadata === 'string' ? JSON.parse(metadata) : metadata || {};
     return {
       ...sanitized,
       ...parsed,

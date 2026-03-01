@@ -1,8 +1,8 @@
-import { Navigate } from 'react-router-dom'
-import { useAuth } from '../../contexts/AuthContext'
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
-  const { user, loading } = useAuth()
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -10,14 +10,14 @@ const ProtectedRoute = ({ children }) => {
         <div className="spinner-large"></div>
         <p>Loading...</p>
       </div>
-    )
+    );
   }
 
   if (!user) {
-    return <Navigate to="/auth/login" replace />
+    return <Navigate to="/auth/login" replace />;
   }
 
-  return children
-}
+  return children;
+};
 
-export default ProtectedRoute
+export default ProtectedRoute;

@@ -133,12 +133,18 @@ export const parsePeriod = (period) => {
   const unit = match[2];
 
   switch (unit) {
-    case 'd': return value;
-    case 'w': return value * 7;
-    case 'm': return value * 30;
-    case 'y': return value * 365;
-    case 'h': return Math.ceil(value / 24);
-    default: return 30;
+    case 'd':
+      return value;
+    case 'w':
+      return value * 7;
+    case 'm':
+      return value * 30;
+    case 'y':
+      return value * 365;
+    case 'h':
+      return Math.ceil(value / 24);
+    default:
+      return 30;
   }
 };
 
@@ -191,7 +197,7 @@ export const calculateMovingAverage = (data, metric, window = 7) => {
     const start = Math.max(0, i - window + 1);
     const slice = data.slice(start, i + 1);
     const average = slice.reduce((sum, item) => sum + (item[metric] || 0), 0) / slice.length;
-    
+
     result.push({
       ...data[i],
       [`${metric}_ma`]: Math.round(average),
@@ -239,7 +245,7 @@ export const generateSessionId = () => {
  */
 export const getSessionId = () => {
   let sessionId = sessionStorage.getItem('analytics_session_id');
-  
+
   if (!sessionId) {
     sessionId = generateSessionId();
     sessionStorage.setItem('analytics_session_id', sessionId);

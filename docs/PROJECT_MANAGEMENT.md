@@ -5,6 +5,7 @@ Comprehensive guide to using the project management features in SnapAsset.
 ## Overview
 
 The project management system allows users to:
+
 - Organize images into projects
 - Collaborate with team members
 - Track version history
@@ -23,7 +24,7 @@ const project = await projectApi.createProject({
   description: 'A project for my website assets',
   visibility: 'private', // private, shared, public
   tags: ['website', 'marketing'],
-  categories: ['web-design']
+  categories: ['web-design'],
 });
 ```
 
@@ -36,7 +37,7 @@ const templates = await projectApi.getTemplates();
 // Create project from template
 const project = await projectApi.createProject({
   name: 'Social Media Campaign',
-  template_id: templates[0].id
+  template_id: templates[0].id,
 });
 ```
 
@@ -45,11 +46,7 @@ const project = await projectApi.createProject({
 #### Add Images
 
 ```javascript
-await projectApi.addImagesToProject(projectId, [
-  'image-id-1',
-  'image-id-2',
-  'image-id-3'
-]);
+await projectApi.addImagesToProject(projectId, ['image-id-1', 'image-id-2', 'image-id-3']);
 ```
 
 #### Get Project Images
@@ -57,7 +54,7 @@ await projectApi.addImagesToProject(projectId, [
 ```javascript
 const response = await projectApi.getProjectImages(projectId, {
   page: 1,
-  limit: 50
+  limit: 50,
 });
 
 console.log(response.data); // Array of images
@@ -67,10 +64,7 @@ console.log(response.pagination); // Pagination info
 #### Remove Images
 
 ```javascript
-await projectApi.removeImagesFromProject(projectId, [
-  'image-id-1',
-  'image-id-2'
-]);
+await projectApi.removeImagesFromProject(projectId, ['image-id-1', 'image-id-2']);
 ```
 
 ### 3. Collaboration
@@ -81,7 +75,7 @@ await projectApi.removeImagesFromProject(projectId, [
 await projectApi.addCollaborator(projectId, {
   user_id: 'user-id',
   role: 'editor', // owner, editor, viewer
-  permissions: ['read', 'write', 'delete']
+  permissions: ['read', 'write', 'delete'],
 });
 ```
 
@@ -108,9 +102,7 @@ await projectApi.removeCollaborator(projectId, userId);
 #### Create Version
 
 ```javascript
-const version = await projectApi.createVersion(projectId, 
-  'Added new social media assets'
-);
+const version = await projectApi.createVersion(projectId, 'Added new social media assets');
 ```
 
 #### Get Version History
@@ -130,13 +122,10 @@ await projectApi.restoreVersion(projectId, versionId);
 #### Bulk Delete
 
 ```javascript
-const result = await projectApi.bulkOperation('delete', [
-  'project-id-1',
-  'project-id-2'
-]);
+const result = await projectApi.bulkOperation('delete', ['project-id-1', 'project-id-2']);
 
 console.log(result.success); // Successfully deleted
-console.log(result.failed);  // Failed deletions
+console.log(result.failed); // Failed deletions
 ```
 
 #### Bulk Archive
@@ -150,7 +139,7 @@ await projectApi.bulkOperation('archive', projectIds);
 ```javascript
 await projectApi.bulkOperation('update', projectIds, {
   tags: ['archived', '2024'],
-  status: 'archived'
+  status: 'archived',
 });
 ```
 
@@ -184,10 +173,10 @@ const newProject = await projectApi.importProject(importData);
 ```javascript
 const analytics = await projectApi.getAnalytics(projectId, '30d');
 
-console.log(analytics.images_added);      // Images added in period
-console.log(analytics.collaborators);     // Number of collaborators
-console.log(analytics.versions_created);  // Versions created
-console.log(analytics.timeline);          // Activity timeline
+console.log(analytics.images_added); // Images added in period
+console.log(analytics.collaborators); // Number of collaborators
+console.log(analytics.versions_created); // Versions created
+console.log(analytics.timeline); // Activity timeline
 ```
 
 #### Dashboard Statistics
@@ -211,7 +200,7 @@ const results = await projectApi.getProjects({
   status: 'active',
   tags: ['website', 'social-media'],
   page: 1,
-  limit: 20
+  limit: 20,
 });
 ```
 
@@ -245,10 +234,7 @@ import { ProjectForm } from './components/Projects/ProjectForm';
 
 function CreateProject() {
   return (
-    <ProjectForm
-      onSuccess={() => navigate('/projects')}
-      onCancel={() => navigate('/projects')}
-    />
+    <ProjectForm onSuccess={() => navigate('/projects')} onCancel={() => navigate('/projects')} />
   );
 }
 ```
@@ -282,6 +268,7 @@ function ProjectHistory({ projectId }) {
 ### Tables
 
 #### projects
+
 ```sql
 id                UUID PRIMARY KEY
 name              VARCHAR(100)
@@ -299,6 +286,7 @@ deleted_at        TIMESTAMP
 ```
 
 #### project_images
+
 ```sql
 id                UUID PRIMARY KEY
 project_id        UUID REFERENCES projects
@@ -310,6 +298,7 @@ created_at        TIMESTAMP
 ```
 
 #### project_collaborators
+
 ```sql
 id                UUID PRIMARY KEY
 project_id        UUID REFERENCES projects
@@ -322,6 +311,7 @@ accepted_at       TIMESTAMP
 ```
 
 #### project_versions
+
 ```sql
 id                UUID PRIMARY KEY
 project_id        UUID REFERENCES projects
@@ -380,6 +370,7 @@ notes             TEXT
 ### Row Level Security (RLS)
 
 All tables have RLS enabled:
+
 - Users can only see their own projects
 - Collaborators can access shared projects
 - Public projects are visible to all
@@ -387,6 +378,7 @@ All tables have RLS enabled:
 ### Authentication
 
 All API endpoints require authentication:
+
 ```javascript
 headers: {
   'Authorization': `Bearer ${token}`
@@ -398,6 +390,7 @@ headers: {
 ### 1. Regular Backups
 
 Create versions before major changes:
+
 ```javascript
 await projectApi.createVersion(projectId, 'Before bulk image update');
 // Make changes
@@ -406,31 +399,34 @@ await projectApi.createVersion(projectId, 'Before bulk image update');
 ### 2. Use Tags Effectively
 
 Organize projects with consistent tags:
+
 ```javascript
 // Good
-tags: ['client-name', 'project-type', 'year']
+tags: ['client-name', 'project-type', 'year'];
 
 // Avoid
-tags: ['misc', 'stuff', 'things']
+tags: ['misc', 'stuff', 'things'];
 ```
 
 ### 3. Manage Collaborators
 
 Grant minimum necessary permissions:
+
 ```javascript
 // For clients - view only
-role: 'viewer'
+role: 'viewer';
 
 // For team members - edit
-role: 'editor'
+role: 'editor';
 
 // For project managers - full control
-role: 'owner'
+role: 'owner';
 ```
 
 ### 4. Archive Old Projects
 
 Keep active projects manageable:
+
 ```javascript
 await projectApi.bulkOperation('archive', oldProjectIds);
 ```

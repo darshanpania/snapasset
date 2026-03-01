@@ -13,23 +13,23 @@ jobs:
     environment:
       name: production
       url: https://snapasset.app
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run full test suite
         run: npm test -- --run
-      
+
       - name: Build for production
         run: npm run build
         env:
@@ -37,19 +37,19 @@ jobs:
           VITE_API_URL: ${{ secrets.PRODUCTION_API_URL }}
           VITE_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
-      
+
       - name: Create backup
         run: |
           echo "Creating backup before deployment"
           # Add backup logic here
         continue-on-error: true
-      
+
       - name: Deploy to Railway (Production)
         uses: bervProject/railway-deploy@main
         with:
           railway_token: ${{ secrets.RAILWAY_TOKEN }}
           service: snapasset-production
-      
+
       - name: Deploy to Vercel (Production)
         uses: amondnet/vercel-action@v25
         with:
@@ -58,17 +58,17 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: '--prod'
           alias-domains: snapasset.app
-      
+
       - name: Run smoke tests
         run: |
           npm install -g wait-on
           wait-on https://snapasset.app
           npx playwright test --grep @smoke
-      
+
       - name: Run health checks
         run: |
           curl -f https://snapasset.app/api/health || exit 1
-      
+
       - name: Notify deployment success
         uses: 8398a7/action-slack@v3
         if: success()
@@ -77,7 +77,7 @@ jobs:
           text: '✅ Production deployment successful! Version: ${{ github.ref_name }}'
           webhook_url: ${{ secrets.SLACK_WEBHOOK }}
         continue-on-error: true
-      
+
       - name: Notify deployment failure
         uses: 8398a7/action-slack@v3
         if: failure()
@@ -86,7 +86,7 @@ jobs:
           text: '❌ Production deployment failed! Rolling back...'
           webhook_url: ${{ secrets.SLACK_WEBHOOK }}
         continue-on-error: true
-      
+
       - name: Rollback on failure
         if: failure()
         run: |

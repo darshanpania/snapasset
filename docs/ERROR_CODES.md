@@ -24,6 +24,7 @@ All errors follow this format:
 **Description:** The request is missing required fields or contains invalid data.
 
 **Example:**
+
 ```json
 {
   "error": "Invalid request",
@@ -36,6 +37,7 @@ All errors follow this format:
 **Resolution:** Check request body and ensure all required fields are present and valid.
 
 **Required Fields for Job Creation:**
+
 - `userId` (string, UUID format)
 - `prompt` (string, min 10 characters)
 - `platforms` (array, min 1 item)
@@ -45,12 +47,14 @@ All errors follow this format:
 **Description:** Request data failed validation.
 
 **Common Causes:**
+
 - Invalid platform ID
 - Prompt too short (< 10 characters)
 - Invalid user ID format
 - Unsupported image options
 
 **Example:**
+
 ```json
 {
   "error": "Validation error",
@@ -61,6 +65,7 @@ All errors follow this format:
 ```
 
 **Valid Platforms:**
+
 - `instagram-post`, `instagram-story`
 - `twitter-post`, `twitter-header`
 - `facebook-post`, `facebook-cover`
@@ -74,6 +79,7 @@ All errors follow this format:
 **Description:** Authentication token is missing or invalid.
 
 **Example:**
+
 ```json
 {
   "error": "Unauthorized",
@@ -84,12 +90,14 @@ All errors follow this format:
 ```
 
 **Resolution:**
+
 1. Check Authorization header is present
 2. Verify token hasn't expired
 3. Refresh token if expired
 4. Re-authenticate if refresh fails
 
 **Headers:**
+
 ```
 Authorization: Bearer YOUR_JWT_TOKEN
 ```
@@ -101,6 +109,7 @@ Authorization: Bearer YOUR_JWT_TOKEN
 **Description:** User doesn't have permission for this action.
 
 **Example:**
+
 ```json
 {
   "error": "Forbidden",
@@ -119,6 +128,7 @@ Authorization: Bearer YOUR_JWT_TOKEN
 **Description:** Requested resource doesn't exist.
 
 **Example:**
+
 ```json
 {
   "error": "Not found",
@@ -135,6 +145,7 @@ Authorization: Bearer YOUR_JWT_TOKEN
 **Description:** Job with specified ID doesn't exist.
 
 **Example:**
+
 ```json
 {
   "error": "Job not found",
@@ -145,6 +156,7 @@ Authorization: Bearer YOUR_JWT_TOKEN
 ```
 
 **Common Causes:**
+
 - Invalid job ID
 - Job was cleaned up (>24 hours old)
 - Job was cancelled
@@ -156,6 +168,7 @@ Authorization: Bearer YOUR_JWT_TOKEN
 **Description:** General API rate limit exceeded.
 
 **Example:**
+
 ```json
 {
   "error": "Rate limit exceeded",
@@ -167,14 +180,17 @@ Authorization: Bearer YOUR_JWT_TOKEN
 ```
 
 **Limits:**
+
 - 100 requests per 15 minutes per IP
 
 **Resolution:**
+
 1. Wait for `retryAfter` seconds
 2. Implement exponential backoff
 3. Cache responses when possible
 
 **Response Headers:**
+
 ```
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 0
@@ -187,6 +203,7 @@ Retry-After: 60
 **Description:** Job creation limit exceeded.
 
 **Example:**
+
 ```json
 {
   "error": "Job creation limit exceeded",
@@ -200,9 +217,11 @@ Retry-After: 60
 ```
 
 **Limits:**
+
 - 20 jobs per hour per user
 
 **Resolution:**
+
 1. Wait for current jobs to complete
 2. Wait for rate limit window to reset
 3. Batch multiple platforms in single job
@@ -216,6 +235,7 @@ Retry-After: 60
 **Description:** An unexpected error occurred on the server.
 
 **Example:**
+
 ```json
 {
   "error": "Internal server error",
@@ -226,11 +246,13 @@ Retry-After: 60
 ```
 
 **Resolution:**
+
 1. Retry the request
 2. Check system status
 3. Contact support if persists
 
 **Common Causes:**
+
 - OpenAI API down
 - Supabase unavailable
 - Redis connection lost
@@ -241,6 +263,7 @@ Retry-After: 60
 **Description:** Error communicating with OpenAI API.
 
 **Example:**
+
 ```json
 {
   "error": "Image generation failed",
@@ -251,6 +274,7 @@ Retry-After: 60
 ```
 
 **Resolution:**
+
 1. Job will automatically retry
 2. Check OpenAI status page
 3. Verify API key is valid
@@ -260,6 +284,7 @@ Retry-After: 60
 **Description:** Error uploading to Supabase Storage.
 
 **Example:**
+
 ```json
 {
   "error": "Upload failed",
@@ -270,6 +295,7 @@ Retry-After: 60
 ```
 
 **Resolution:**
+
 1. Job will automatically retry
 2. Check Supabase status
 3. Verify storage bucket exists
@@ -279,6 +305,7 @@ Retry-After: 60
 **Description:** Error with job queue system.
 
 **Example:**
+
 ```json
 {
   "error": "Queue error",
@@ -289,6 +316,7 @@ Retry-After: 60
 ```
 
 **Resolution:**
+
 1. Check Redis connection
 2. Verify Redis has available memory
 3. Restart worker if needed
@@ -300,6 +328,7 @@ Retry-After: 60
 **Description:** Required service is not available.
 
 **Example:**
+
 ```json
 {
   "error": "Service unavailable",
@@ -310,11 +339,13 @@ Retry-After: 60
 ```
 
 **Common Causes:**
+
 - Supabase not configured
 - Redis not available
 - OpenAI API key missing
 
 **Resolution:**
+
 1. Check environment variables
 2. Verify service configuration
 3. Restart server if needed
@@ -337,13 +368,13 @@ When a job fails, the failure reason is included:
 
 **Common Failure Reasons:**
 
-| Reason | Cause | Retry? |
-|--------|-------|--------|
-| OpenAI timeout | API slow/down | Yes (auto) |
-| Storage upload failed | Supabase issue | Yes (auto) |
-| Invalid prompt | Violates content policy | No |
-| Out of memory | Image too large | No |
-| Network error | Connection issue | Yes (auto) |
+| Reason                | Cause                   | Retry?     |
+| --------------------- | ----------------------- | ---------- |
+| OpenAI timeout        | API slow/down           | Yes (auto) |
+| Storage upload failed | Supabase issue          | Yes (auto) |
+| Invalid prompt        | Violates content policy | No         |
+| Out of memory         | Image too large         | No         |
+| Network error         | Connection issue        | Yes (auto) |
 
 ## Error Handling Examples
 
@@ -364,29 +395,29 @@ async function handleApiCall<T>(apiCall: () => Promise<T>): Promise<T> {
   } catch (error) {
     if (error.response) {
       const apiError: ApiError = error.response.data;
-      
+
       switch (apiError.code) {
         case 'RATE_LIMIT_EXCEEDED':
         case 'JOB_LIMIT_EXCEEDED':
           console.log(`Rate limited. Retry after ${apiError.retryAfter}s`);
           await sleep(apiError.retryAfter! * 1000);
           return handleApiCall(apiCall); // Retry
-          
+
         case 'UNAUTHORIZED':
           await refreshAuthentication();
           return handleApiCall(apiCall); // Retry with new token
-          
+
         case 'INTERNAL_ERROR':
         case 'QUEUE_ERROR':
           // Retry with exponential backoff
           await sleep(5000);
           return handleApiCall(apiCall);
-          
+
         default:
           throw new Error(apiError.message);
       }
     }
-    
+
     throw error;
   }
 }
@@ -414,13 +445,13 @@ def api_call_with_retry(func, max_retries=3):
                 if e.retry_after:
                     time.sleep(e.retry_after)
                     continue
-            
+
             if e.code == 'INTERNAL_ERROR' and attempt < max_retries - 1:
                 time.sleep(2 ** attempt)  # Exponential backoff
                 continue
-            
+
             raise
-    
+
     raise ApiError('MAX_RETRIES', 'Maximum retries exceeded')
 ```
 
@@ -436,12 +467,12 @@ const THRESHOLDS = {
 };
 
 async function checkHealth() {
-  const stats = await fetch('/api/queue/stats').then(r => r.json());
-  
+  const stats = await fetch('/api/queue/stats').then((r) => r.json());
+
   if (stats.failed > THRESHOLDS.failedJobs) {
     sendAlert('High number of failed jobs', stats);
   }
-  
+
   if (stats.waiting > THRESHOLDS.queueLength) {
     sendAlert('Queue is backed up', stats);
   }

@@ -1,11 +1,15 @@
-import express from 'express'
-import multer from 'multer'
-import { generateImagesFromPrompt, getPlatformPresets, IMAGE_MODELS } from '../services/imageService.js'
-import { decryptApiKey } from '../utils/encryption.js'
-import { authMiddleware } from '../middleware/auth.js'
-import logger from '../utils/logger.js'
+import express from 'express';
+import multer from 'multer';
+import {
+  generateImagesFromPrompt,
+  getPlatformPresets,
+  IMAGE_MODELS,
+} from '../services/imageService.js';
+import { decryptApiKey } from '../utils/encryption.js';
+import { authMiddleware } from '../middleware/auth.js';
+import logger from '../utils/logger.js';
 
-const router = express.Router()
+const router = express.Router();
 
 // Configure multer for image uploads
 const upload = multer({
@@ -14,14 +18,14 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
     if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true)
+      cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only JPEG, PNG, and WebP images are allowed.'))
+      cb(new Error('Invalid file type. Only JPEG, PNG, and WebP images are allowed.'));
     }
-  }
-})
+  },
+});
 
 // Get available image generation models
 router.get('/models', (req, res) => {
@@ -29,112 +33,113 @@ router.get('/models', (req, res) => {
     success: true,
     models: Object.entries(IMAGE_MODELS).map(([id, config]) => ({ id, ...config })),
     default: 'gpt-image-1',
-  })
-})
+  });
+});
 
 // Get available platform presets
 router.get('/platforms', (req, res) => {
   try {
-    const presets = getPlatformPresets()
+    const presets = getPlatformPresets();
     res.json({
       success: true,
       platforms: presets,
-      count: presets.length
-    })
+      count: presets.length,
+    });
   } catch (error) {
-    logger.error('Error fetching platforms:', error)
+    logger.error('Error fetching platforms:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch platform presets'
-    })
+      error: 'Failed to fetch platform presets',
+    });
   }
-})
+});
 
 // Generate images from text prompt
 router.post('/generate', authMiddleware, async (req, res) => {
   try {
-    const { prompt, presets, model, quality, style } = req.body
+    const { prompt, presets, model, quality, style } = req.body;
 
     // Validation
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       return res.status(400).json({
         success: false,
-        error: 'Prompt is required and must be a non-empty string'
-      })
+        error: 'Prompt is required and must be a non-empty string',
+      });
     }
 
     if (!presets || !Array.isArray(presets) || presets.length === 0) {
       return res.status(400).json({
         success: false,
-        error: 'At least one preset must be selected'
-      })
+        error: 'At least one preset must be selected',
+      });
     }
 
     if (presets.length > 10) {
       return res.status(400).json({
         success: false,
-        error: 'Maximum 10 presets allowed per request'
-      })
+        error: 'Maximum 10 presets allowed per request',
+      });
     }
 
     // Resolve user's API key (falls back to server-wide key in imageService)
-    let userApiKey = null
+    let userApiKey = null;
     try {
-      const userId = req.user?.id || req.user?.sub
+      const userId = req.user?.id || req.user?.sub;
       if (userId) {
-        const db = req.app.locals.providers?.db
-        const keyData = await db?.users?.getApiKey(userId)
+        const db = req.app.locals.providers?.db;
+        const keyData = await db?.users?.getApiKey(userId);
         if (keyData?.encryptedKey) {
-          userApiKey = decryptApiKey(keyData.encryptedKey)
+          userApiKey = decryptApiKey(keyData.encryptedKey);
         }
       }
     } catch (err) {
-      logger.warn('Could not resolve user API key, falling back to server key:', err.message)
+      logger.warn('Could not resolve user API key, falling back to server key:', err.message);
     }
 
-    logger.info(`Generating images for prompt: "${prompt.substring(0, 50)}..." with ${presets.length} presets`)
+    logger.info(
+      `Generating images for prompt: "${prompt.substring(0, 50)}..." with ${presets.length} presets`
+    );
 
     // Generate images
-    const genOptions = {}
-    if (model) genOptions.model = model
-    if (quality) genOptions.quality = quality
-    if (style) genOptions.style = style
-    const result = await generateImagesFromPrompt(prompt, presets, userApiKey, genOptions)
+    const genOptions = {};
+    if (model) genOptions.model = model;
+    if (quality) genOptions.quality = quality;
+    if (style) genOptions.style = style;
+    const result = await generateImagesFromPrompt(prompt, presets, userApiKey, genOptions);
 
     res.json({
       success: true,
       prompt: prompt,
       images: result,
       count: result.length,
-      timestamp: new Date().toISOString()
-    })
-
+      timestamp: new Date().toISOString(),
+    });
   } catch (error) {
-    logger.error('Error generating images:', error)
-    
+    logger.error('Error generating images:', error);
+
     if (error.message.includes('API key')) {
       return res.status(503).json({
         success: false,
         error: 'Image generation service not configured. Please contact administrator.',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      })
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      });
     }
 
     if (error.message.includes('rate limit')) {
       return res.status(429).json({
         success: false,
         error: 'Rate limit exceeded. Please try again later.',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      })
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      });
     }
 
     res.status(500).json({
       success: false,
       error: 'Failed to generate images. Please try again.',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    })
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
   }
-})
+});
 
 // Upload and process image
 router.post('/images/upload', upload.single('image'), async (req, res) => {
@@ -142,19 +147,19 @@ router.post('/images/upload', upload.single('image'), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        error: 'No image file provided'
-      })
+        error: 'No image file provided',
+      });
     }
 
-    const storage = req.app.locals.providers?.storage
+    const storage = req.app.locals.providers?.storage;
     if (!storage) {
       return res.status(503).json({
         success: false,
-        error: 'Storage service not configured'
-      })
+        error: 'Storage service not configured',
+      });
     }
 
-    logger.info(`Image upload received: ${req.file.originalname} (${req.file.size} bytes)`)
+    logger.info(`Image upload received: ${req.file.originalname} (${req.file.size} bytes)`);
 
     // TODO: Implement upload to Supabase Storage
     // This is a placeholder for future implementation
@@ -164,18 +169,17 @@ router.post('/images/upload', upload.single('image'), async (req, res) => {
       file: {
         name: req.file.originalname,
         size: req.file.size,
-        mimeType: req.file.mimetype
-      }
-    })
-
+        mimeType: req.file.mimetype,
+      },
+    });
   } catch (error) {
-    logger.error('Error uploading image:', error)
+    logger.error('Error uploading image:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to upload image',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    })
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
   }
-})
+});
 
-export default router
+export default router;

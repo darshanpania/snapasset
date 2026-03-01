@@ -13,7 +13,7 @@ describe('Job API Endpoints', () => {
     it('should create a new job successfully', async () => {
       const mockJob = {
         id: 'test-job-123',
-        data: {}
+        data: {},
       };
 
       imageGenerationQueue.add.mockResolvedValue(mockJob);
@@ -23,7 +23,7 @@ describe('Job API Endpoints', () => {
         .send({
           userId: 'user-123',
           prompt: 'A beautiful sunset',
-          platforms: ['instagram-post']
+          platforms: ['instagram-post'],
         });
 
       expect(response.status).toBe(201);
@@ -32,22 +32,18 @@ describe('Job API Endpoints', () => {
     });
 
     it('should return 400 for missing required fields', async () => {
-      const response = await request(app)
-        .post('/api/jobs')
-        .send({ userId: 'user-123' });
+      const response = await request(app).post('/api/jobs').send({ userId: 'user-123' });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Missing required fields');
     });
 
     it('should return 400 for empty platforms array', async () => {
-      const response = await request(app)
-        .post('/api/jobs')
-        .send({
-          userId: 'user-123',
-          prompt: 'Test',
-          platforms: []
-        });
+      const response = await request(app).post('/api/jobs').send({
+        userId: 'user-123',
+        prompt: 'Test',
+        platforms: [],
+      });
 
       expect(response.status).toBe(400);
     });
@@ -68,8 +64,7 @@ describe('Job API Endpoints', () => {
 
       imageGenerationQueue.getJob.mockResolvedValue(mockJob);
 
-      const response = await request(app)
-        .get('/api/jobs/test-job-123');
+      const response = await request(app).get('/api/jobs/test-job-123');
 
       expect(response.status).toBe(200);
       expect(response.body.jobId).toBe('test-job-123');
@@ -80,8 +75,7 @@ describe('Job API Endpoints', () => {
     it('should return 404 for non-existent job', async () => {
       imageGenerationQueue.getJob.mockResolvedValue(null);
 
-      const response = await request(app)
-        .get('/api/jobs/non-existent');
+      const response = await request(app).get('/api/jobs/non-existent');
 
       expect(response.status).toBe(404);
       expect(response.body.error).toBe('Job not found');
@@ -97,8 +91,7 @@ describe('Job API Endpoints', () => {
 
       imageGenerationQueue.getJob.mockResolvedValue(mockJob);
 
-      const response = await request(app)
-        .post('/api/jobs/test-job-123/retry');
+      const response = await request(app).post('/api/jobs/test-job-123/retry');
 
       expect(response.status).toBe(200);
       expect(response.body.status).toBe('retrying');
@@ -115,8 +108,7 @@ describe('Job API Endpoints', () => {
 
       imageGenerationQueue.getJob.mockResolvedValue(mockJob);
 
-      const response = await request(app)
-        .delete('/api/jobs/test-job-123/cancel');
+      const response = await request(app).delete('/api/jobs/test-job-123/cancel');
 
       expect(response.status).toBe(200);
       expect(response.body.status).toBe('cancelled');
@@ -138,8 +130,7 @@ describe('Job API Endpoints', () => {
 
       imageGenerationQueue.getActive.mockResolvedValue(mockJobs);
 
-      const response = await request(app)
-        .get('/api/jobs?status=active');
+      const response = await request(app).get('/api/jobs?status=active');
 
       expect(response.status).toBe(200);
       expect(response.body.jobs).toHaveLength(1);

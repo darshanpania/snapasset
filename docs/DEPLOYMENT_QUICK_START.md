@@ -39,6 +39,7 @@ OPENAI_API_KEY=sk-...
 ```
 
 **Get Supabase credentials:**
+
 1. Open [app.supabase.com](https://app.supabase.com)
 2. Go to Settings → API
 3. Copy URL and service_role key
@@ -60,6 +61,7 @@ curl https://your-app.railway.app/health
 ## 📋 Complete Deployment Checklist
 
 ### Before Deployment
+
 - [ ] Supabase project created
 - [ ] Database schema migrated
 - [ ] Storage buckets configured
@@ -67,12 +69,14 @@ curl https://your-app.railway.app/health
 - [ ] Environment variables ready
 
 ### Deployment
+
 - [ ] Railway project created
 - [ ] GitHub repo connected
 - [ ] Environment variables set
 - [ ] Deploy triggered
 
 ### After Deployment
+
 - [ ] Health check passes
 - [ ] Frontend loads
 - [ ] API responding
@@ -159,7 +163,7 @@ ALLOWED_ORIGINS=https://your-app.railway.app,https://your-domain.com
 
 - **Complete Guide**: [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md)
 - **Environment Variables**: [.env.railway.example](../.env.railway.example)
-- **Configuration Files**: 
+- **Configuration Files**:
   - `railway.json` - Project config
   - `nixpacks.toml` - Build config
 
@@ -195,7 +199,7 @@ Once deployed, you should have:
 ✅ API at `https://your-app.railway.app/api`  
 ✅ Health check at `https://your-app.railway.app/health`  
 ✅ Auto-deployments on push  
-✅ SSL certificate (automatic)  
+✅ SSL certificate (automatic)
 
 **What's next?**
 

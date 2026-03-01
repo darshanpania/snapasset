@@ -3,12 +3,12 @@ services:
     image: redis:7-alpine
     container_name: snapasset-redis
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - '${REDIS_PORT:-6379}:6379'
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 3s
       retries: 3
@@ -17,8 +17,8 @@ services:
     build: ./server
     container_name: snapasset-api
     ports:
-      - "${API_PORT:-3001}:3001"
-      - "${OAUTH_PORT:-1455}:1455"
+      - '${API_PORT:-3001}:3001'
+      - '${OAUTH_PORT:-1455}:1455'
     environment:
       - NODE_ENV=production
       - PORT=3001
@@ -68,7 +68,7 @@ services:
         - VITE_API_URL=${VITE_API_URL:-http://localhost:${API_PORT:-3001}}
     container_name: snapasset-frontend
     ports:
-      - "${FRONTEND_PORT:-5173}:5173"
+      - '${FRONTEND_PORT:-5173}:5173'
     depends_on:
       - api
     restart: unless-stopped

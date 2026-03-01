@@ -17,8 +17,7 @@ describe('Queue Management Endpoints', () => {
       imageGenerationQueue.getFailedCount.mockResolvedValue(3);
       imageGenerationQueue.getDelayedCount.mockResolvedValue(0);
 
-      const response = await request(app)
-        .get('/api/queue/stats');
+      const response = await request(app).get('/api/queue/stats');
 
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
@@ -36,8 +35,7 @@ describe('Queue Management Endpoints', () => {
     it('should pause the queue', async () => {
       imageGenerationQueue.pause.mockResolvedValue(true);
 
-      const response = await request(app)
-        .post('/api/queue/pause');
+      const response = await request(app).post('/api/queue/pause');
 
       expect(response.status).toBe(200);
       expect(response.body.message).toContain('paused');
@@ -49,8 +47,7 @@ describe('Queue Management Endpoints', () => {
     it('should resume the queue', async () => {
       imageGenerationQueue.resume.mockResolvedValue(true);
 
-      const response = await request(app)
-        .post('/api/queue/resume');
+      const response = await request(app).post('/api/queue/resume');
 
       expect(response.status).toBe(200);
       expect(response.body.message).toContain('resumed');
@@ -62,12 +59,10 @@ describe('Queue Management Endpoints', () => {
     it('should clean completed jobs', async () => {
       imageGenerationQueue.clean.mockResolvedValue(['job-1', 'job-2']);
 
-      const response = await request(app)
-        .post('/api/queue/clean')
-        .send({
-          grace: 86400000,
-          status: 'completed'
-        });
+      const response = await request(app).post('/api/queue/clean').send({
+        grace: 86400000,
+        status: 'completed',
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.cleaned).toBe(2);

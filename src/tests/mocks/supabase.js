@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi } from 'vitest';
 
 // Mock user object
 export const mockUser = {
@@ -12,7 +12,7 @@ export const mockUser = {
     avatar_url: 'https://example.com/avatar.jpg',
   },
   app_metadata: {},
-}
+};
 
 // Mock session object
 export const mockSession = {
@@ -21,7 +21,7 @@ export const mockSession = {
   expires_in: 3600,
   expires_at: Date.now() / 1000 + 3600,
   user: mockUser,
-}
+};
 
 // Mock Supabase auth methods
 export const mockSupabaseAuth = {
@@ -40,7 +40,7 @@ export const mockSupabaseAuth = {
       },
     },
   })),
-}
+};
 
 // Mock Supabase client
 export const mockSupabase = {
@@ -58,9 +58,9 @@ export const mockSupabase = {
       remove: vi.fn(() => Promise.resolve({ data: {}, error: null })),
     })),
   },
-}
+};
 
 // Mock Supabase module
 vi.mock('../services/supabase', () => ({
   supabase: mockSupabase,
-}))
+}));

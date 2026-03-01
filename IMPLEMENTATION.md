@@ -7,12 +7,14 @@ This implementation includes the core functionality for SnapAsset, an AI-powered
 ### ✅ Frontend Features
 
 #### 1. **Main Application (`src/App.jsx`)**
+
 - Central application logic
 - State management for prompt, presets, results, and loading states
 - Error handling and user feedback
 - Integration between all components
 
 #### 2. **Prompt Input Component (`src/components/PromptInput.jsx`)**
+
 - Rich textarea for image description
 - Character counter (1000 char limit)
 - Example prompts with one-click insertion
@@ -20,6 +22,7 @@ This implementation includes the core functionality for SnapAsset, an AI-powered
 - Keyboard shortcuts (Ctrl/Cmd + Enter to generate)
 
 #### 3. **Preset Selector Component (`src/components/PresetSelector.jsx`)**
+
 - 9 platform presets (Instagram, Twitter, Facebook, LinkedIn, YouTube, Pinterest)
 - Visual preset cards with icons and dimensions
 - Platform filtering (All, Instagram, Twitter, Facebook, etc.)
@@ -28,6 +31,7 @@ This implementation includes the core functionality for SnapAsset, an AI-powered
 - Display of aspect ratios and dimensions
 
 #### 4. **Results Grid Component (`src/components/ResultsGrid.jsx`)**
+
 - Responsive grid layout for generated images
 - Individual image download
 - Bulk download all images
@@ -36,6 +40,7 @@ This implementation includes the core functionality for SnapAsset, an AI-powered
 - Hover effects and transitions
 
 #### 5. **API Service (`src/services/api.js`)**
+
 - Frontend API client
 - POST request to `/api/generate` endpoint
 - Error handling and user-friendly messages
@@ -44,6 +49,7 @@ This implementation includes the core functionality for SnapAsset, an AI-powered
 ### ✅ Backend Features
 
 #### 1. **Express Server (`server/index.js`)**
+
 - Express.js server setup
 - CORS configuration
 - Security middleware (Helmet)
@@ -54,6 +60,7 @@ This implementation includes the core functionality for SnapAsset, an AI-powered
 - Comprehensive error handling
 
 #### 2. **Image Routes (`server/routes/images.js`)**
+
 - `POST /api/generate` - Generate images from text prompt
 - `POST /api/images/upload` - Upload images (placeholder)
 - `GET /api/platforms` - Get available platform presets
@@ -62,6 +69,7 @@ This implementation includes the core functionality for SnapAsset, an AI-powered
 - Error handling with appropriate status codes
 
 #### 3. **Image Service (`server/services/imageService.js`)**
+
 - **DALL-E 3 Integration**: Generate base images using OpenAI's DALL-E 3 API
 - **Sharp Image Processing**: Resize and optimize images for each platform
 - **Platform Presets**: 9 pre-configured social media and web platforms
@@ -70,12 +78,14 @@ This implementation includes the core functionality for SnapAsset, an AI-powered
 - **Batch Processing**: Generate multiple sizes from a single AI-generated image
 
 #### 4. **Middleware (`server/middleware/errorHandler.js`)**
+
 - Global error handler
 - Multer error handling (file size, type validation)
 - 404 not found handler
 - Development vs production error responses
 
 #### 5. **Logger Utility (`server/utils/logger.js`)**
+
 - Custom logging utility
 - Formatted log messages with timestamps
 - Different log levels (info, warn, error, debug)
@@ -88,6 +98,7 @@ This implementation includes the core functionality for SnapAsset, an AI-powered
 ### Frontend Architecture
 
 **State Management:**
+
 ```javascript
 - prompt: String - User's image description
 - selectedPresets: Array - Selected platform IDs
@@ -97,11 +108,13 @@ This implementation includes the core functionality for SnapAsset, an AI-powered
 ```
 
 **Component Communication:**
+
 - Parent component (App) manages all state
 - Child components receive props and callbacks
 - One-way data flow pattern
 
 **Styling:**
+
 - Modular CSS per component
 - Responsive design with media queries
 - CSS animations and transitions
@@ -110,6 +123,7 @@ This implementation includes the core functionality for SnapAsset, an AI-powered
 ### Backend Architecture
 
 **Layered Structure:**
+
 ```
 Routes → Services → External APIs
    ↓         ↓
@@ -117,6 +131,7 @@ Middleware  Utils
 ```
 
 **Image Generation Flow:**
+
 1. Receive prompt and preset IDs from frontend
 2. Validate input data
 3. Generate base image using DALL-E 3 (1024x1024)
@@ -128,6 +143,7 @@ Middleware  Utils
 6. Return array of processed images
 
 **Error Handling:**
+
 - Try-catch blocks at all async operations
 - Specific error messages for different failure types
 - Status codes: 400 (validation), 429 (rate limit), 503 (service unavailable)
@@ -138,6 +154,7 @@ Middleware  Utils
 ## 🚀 Setup Instructions
 
 ### Prerequisites
+
 ```bash
 Node.js >= 18.0.0
 npm or yarn
@@ -147,11 +164,13 @@ OpenAI API key (for DALL-E 3)
 ### 1. Install Dependencies
 
 **Frontend:**
+
 ```bash
 npm install
 ```
 
 **Backend:**
+
 ```bash
 cd server
 npm install
@@ -160,6 +179,7 @@ npm install
 ### 2. Configure Environment Variables
 
 **Frontend (`.env`):**
+
 ```env
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_key
@@ -167,6 +187,7 @@ VITE_API_URL=http://localhost:3001
 ```
 
 **Backend (`server/.env`):**
+
 ```env
 PORT=3001
 NODE_ENV=development
@@ -185,23 +206,27 @@ ALLOWED_ORIGINS=http://localhost:5173
 5. Copy key to `server/.env`
 
 **Note:** DALL-E 3 API pricing:
+
 - Standard quality: $0.040 per image
 - HD quality: $0.080 per image
 
 ### 4. Run Development Servers
 
 **Terminal 1 - Backend:**
+
 ```bash
 cd server
 npm run dev
 ```
 
 **Terminal 2 - Frontend:**
+
 ```bash
 npm run dev
 ```
 
 **Access:**
+
 - Frontend: http://localhost:5173
 - Backend: http://localhost:3001
 - Health check: http://localhost:3001/health
@@ -211,6 +236,7 @@ npm run dev
 ## 📦 Dependencies Added
 
 ### Frontend
+
 ```json
 {
   "react": "^18.2.0",
@@ -221,6 +247,7 @@ npm run dev
 ```
 
 ### Backend
+
 ```json
 {
   "express": "^4.18.2",
@@ -228,10 +255,10 @@ npm run dev
   "helmet": "^7.1.0",
   "morgan": "^1.10.0",
   "dotenv": "^16.4.1",
-  "openai": "^4.26.0",      // NEW: DALL-E API
-  "sharp": "^0.33.2",        // NEW: Image processing
-  "axios": "^1.6.5",         // NEW: HTTP requests
-  "multer": "^1.4.5-lts.1",  // NEW: File uploads
+  "openai": "^4.26.0", // NEW: DALL-E API
+  "sharp": "^0.33.2", // NEW: Image processing
+  "axios": "^1.6.5", // NEW: HTTP requests
+  "multer": "^1.4.5-lts.1", // NEW: File uploads
   "@supabase/supabase-js": "^2.39.3"
 }
 ```
@@ -243,16 +270,19 @@ npm run dev
 ### Test the Backend
 
 **1. Health Check:**
+
 ```bash
 curl http://localhost:3001/health
 ```
 
 **2. Get Platforms:**
+
 ```bash
 curl http://localhost:3001/api/platforms
 ```
 
 **3. Generate Images:**
+
 ```bash
 curl -X POST http://localhost:3001/api/generate \
   -H "Content-Type: application/json" \
@@ -275,24 +305,26 @@ curl -X POST http://localhost:3001/api/generate \
 
 ## 🎯 Platform Presets Included
 
-| Platform | Preset | Dimensions | Aspect Ratio |
-|----------|--------|------------|--------------|
-| Instagram | Post | 1080×1080 | 1:1 |
-| Instagram | Story | 1080×1920 | 9:16 |
-| Twitter | Post | 1200×675 | 16:9 |
-| Twitter | Header | 1500×500 | 3:1 |
-| Facebook | Post | 1200×630 | 1.91:1 |
-| Facebook | Cover | 820×312 | 2.63:1 |
-| LinkedIn | Post | 1200×627 | 1.91:1 |
-| YouTube | Thumbnail | 1280×720 | 16:9 |
-| Pinterest | Pin | 1000×1500 | 2:3 |
+| Platform  | Preset    | Dimensions | Aspect Ratio |
+| --------- | --------- | ---------- | ------------ |
+| Instagram | Post      | 1080×1080  | 1:1          |
+| Instagram | Story     | 1080×1920  | 9:16         |
+| Twitter   | Post      | 1200×675   | 16:9         |
+| Twitter   | Header    | 1500×500   | 3:1          |
+| Facebook  | Post      | 1200×630   | 1.91:1       |
+| Facebook  | Cover     | 820×312    | 2.63:1       |
+| LinkedIn  | Post      | 1200×627   | 1.91:1       |
+| YouTube   | Thumbnail | 1280×720   | 16:9         |
+| Pinterest | Pin       | 1000×1500  | 2:3          |
 
 ---
 
 ## 🔍 API Endpoints
 
 ### `GET /health`
+
 Health check endpoint
+
 ```json
 {
   "status": "ok",
@@ -303,7 +335,9 @@ Health check endpoint
 ```
 
 ### `GET /api/platforms`
+
 Get available platform presets
+
 ```json
 {
   "success": true,
@@ -313,9 +347,11 @@ Get available platform presets
 ```
 
 ### `POST /api/generate`
+
 Generate images from prompt
 
 **Request:**
+
 ```json
 {
   "prompt": "A beautiful sunset over mountains",
@@ -324,6 +360,7 @@ Generate images from prompt
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -345,12 +382,14 @@ Generate images from prompt
 ## 🚧 Known Limitations & Future Work
 
 ### Current Implementation
+
 - ✅ AI image generation with DALL-E 3
 - ✅ Multi-platform image resizing
 - ✅ Base64 data URLs for instant display
 - ✅ Error handling and validation
 
 ### Not Yet Implemented
+
 - ❌ Supabase Storage integration (images are not persisted)
 - ❌ User authentication
 - ❌ Image history/gallery
@@ -389,11 +428,13 @@ Generate images from prompt
 ### Writing Good Prompts
 
 **Good:**
+
 - "A modern minimalist logo with geometric shapes in blue and white"
 - "Professional product photography of a coffee mug on white background"
 - "Abstract digital art with flowing purple and pink gradients"
 
 **Avoid:**
+
 - Too vague: "An image"
 - Too complex: Multiple unrelated subjects
 - Inappropriate content
@@ -411,23 +452,27 @@ Generate images from prompt
 ## 🐛 Troubleshooting
 
 ### "OpenAI API key not configured"
+
 - Ensure `OPENAI_API_KEY` is set in `server/.env`
 - Key must start with `sk-`
 - Verify key is active on OpenAI platform
 
 ### "Failed to generate images"
+
 - Check OpenAI account has credits
 - Verify internet connection
 - Check API status: https://status.openai.com/
 - Review server logs for detailed errors
 
 ### Images not displaying
+
 - Check browser console for errors
 - Verify API URL in frontend `.env`
 - Ensure CORS is properly configured
 - Check base64 data URL format
 
 ### Slow generation
+
 - DALL-E 3 typically takes 10-20 seconds
 - Processing 5+ presets adds 5-10 seconds
 - Consider implementing queue system for better UX
@@ -437,11 +482,13 @@ Generate images from prompt
 ## 📊 Performance Considerations
 
 ### Current Performance
+
 - DALL-E generation: ~15 seconds
 - Image processing per preset: ~1-2 seconds
 - Total time for 5 presets: ~20-25 seconds
 
 ### Optimization Opportunities
+
 1. Implement caching for repeated prompts
 2. Use job queue for async processing
 3. Stream processing status to frontend
