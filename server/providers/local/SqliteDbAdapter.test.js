@@ -206,6 +206,92 @@ describe('SqliteDbAdapter - images', () => {
   });
 });
 
+describe('SqliteDbAdapter - adaptations', () => {
+  let db, adapter;
+  const userId = 'user-1';
+
+  beforeEach(() => {
+    db = new Database(':memory:');
+    db.pragma('foreign_keys = ON');
+    initializeSchema(db);
+    adapter = new SqliteDbAdapter(db);
+    db.prepare('INSERT INTO users (id, email, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?)').run(userId, 'test@test.com', 'hash', new Date().toISOString(), new Date().toISOString());
+  });
+
+  afterEach(() => { db.close(); });
+
+  it('creates an adaptation project and lists it by owner', async () => {
+    const project = await adapter.adaptations.createProject({
+      owner_id: userId,
+      name: 'Spring Campaign',
+      preservation_intent: ['logo integrity', 'cta prominence'],
+      settings: { campaign: 'spring-sale' },
+    });
+
+    expect(project.id).toBeDefined();
+    expect(project.name).toBe('Spring Campaign');
+    expect(project.preservation_intent).toEqual(['logo integrity', 'cta prominence']);
+
+    const result = await adapter.adaptations.listProjectsByOwner(userId, {}, { page: 1, limit: 10 });
+    expect(result.count).toBe(1);
+    expect(result.data[0].name).toBe('Spring Campaign');
+  });
+
+  it('hydrates a nested adaptation project with source asset, outputs, and attempts', async () => {
+    const project = await adapter.adaptations.createProject({
+      owner_id: userId,
+      name: 'Spring Campaign',
+    });
+
+    const sourceAsset = await adapter.adaptations.createSourceAsset({
+      project_id: project.id,
+      storage_path: '/uploads/source.png',
+      original_filename: 'source.png',
+      mime_type: 'image/png',
+      width: 1200,
+      height: 1500,
+      metadata: { dominantColor: '#24ae7c' },
+    });
+
+    const output = await adapter.adaptations.createRequestedOutput({
+      project_id: project.id,
+      label: 'Instagram Story',
+      aspect_ratio: '9:16',
+      target_width: 1080,
+      target_height: 1920,
+      sort_order: 1,
+    });
+
+    const firstAttempt = await adapter.adaptations.createOutputAttempt({
+      output_id: output.id,
+      status: 'queued',
+      diagnostics: { phase: 'scheduled' },
+    });
+
+    const secondAttempt = await adapter.adaptations.createOutputAttempt({
+      output_id: output.id,
+      status: 'running',
+    });
+
+    expect(firstAttempt.attempt_number).toBe(1);
+    expect(secondAttempt.attempt_number).toBe(2);
+
+    await adapter.adaptations.updateRequestedOutput(output.id, {
+      status: 'approved',
+      approved_attempt_id: secondAttempt.id,
+      review_notes: 'Looks good',
+    });
+
+    const hydrated = await adapter.adaptations.getProjectById(project.id);
+
+    expect(hydrated.source_asset.original_filename).toBe(sourceAsset.original_filename);
+    expect(hydrated.requested_outputs).toHaveLength(1);
+    expect(hydrated.requested_outputs[0].approved_attempt_id).toBe(secondAttempt.id);
+    expect(hydrated.requested_outputs[0].attempts).toHaveLength(2);
+    expect(hydrated.requested_outputs[0].attempts[0].diagnostics).toEqual({ phase: 'scheduled' });
+  });
+});
+
 describe('SqliteDbAdapter - users', () => {
   let db, adapter;
 

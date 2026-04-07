@@ -190,6 +190,53 @@ describe('SupabaseDbAdapter', () => {
     });
   });
 
+  describe('adaptations', () => {
+    it('createProject() inserts into adaptation_projects and returns the row', async () => {
+      const project = { id: 'ap1', name: 'Spring Campaign' };
+      const mock = createChainableMock({ data: project, error: null });
+      const adapter = new SupabaseDbAdapter(mock);
+
+      const result = await adapter.adaptations.createProject({ name: 'Spring Campaign' });
+
+      expect(mock.from).toHaveBeenCalledWith('adaptation_projects');
+      expect(mock.insert).toHaveBeenCalledWith([{ name: 'Spring Campaign' }]);
+      expect(mock.single).toHaveBeenCalled();
+      expect(result).toEqual(project);
+    });
+
+    it('getProjectById() selects nested source assets, outputs, and attempts', async () => {
+      const project = { id: 'ap1', source_asset: null, requested_outputs: [] };
+      const mock = createChainableMock({ data: project, error: null });
+      const adapter = new SupabaseDbAdapter(mock);
+
+      const result = await adapter.adaptations.getProjectById('ap1');
+
+      expect(mock.from).toHaveBeenCalledWith('adaptation_projects');
+      expect(mock.select).toHaveBeenCalledWith(expect.stringContaining('source_asset:adaptation_source_assets(*)'));
+      expect(mock.select).toHaveBeenCalledWith(expect.stringContaining('attempts:adaptation_output_attempts(*)'));
+      expect(mock.eq).toHaveBeenCalledWith('id', 'ap1');
+      expect(result).toEqual(project);
+    });
+
+    it('createOutputAttempt() computes the next attempt number when not provided', async () => {
+      const firstQuery = createChainableMock({ data: [{ attempt_number: 2 }], error: null });
+      const secondQuery = createChainableMock({ data: { id: 'aoa3', output_id: 'out1', attempt_number: 3 }, error: null });
+      const mock = {
+        from: vi.fn()
+          .mockReturnValueOnce(firstQuery)
+          .mockReturnValueOnce(secondQuery),
+      };
+      const adapter = new SupabaseDbAdapter(mock);
+
+      const result = await adapter.adaptations.createOutputAttempt({ output_id: 'out1', status: 'queued' });
+
+      expect(mock.from).toHaveBeenNthCalledWith(1, 'adaptation_output_attempts');
+      expect(mock.from).toHaveBeenNthCalledWith(2, 'adaptation_output_attempts');
+      expect(secondQuery.insert).toHaveBeenCalledWith([{ output_id: 'out1', status: 'queued', attempt_number: 3 }]);
+      expect(result).toEqual({ id: 'aoa3', output_id: 'out1', attempt_number: 3 });
+    });
+  });
+
   // -------------------------------------------------------------------------
   // analytics namespace
   // -------------------------------------------------------------------------

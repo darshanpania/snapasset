@@ -27,6 +27,10 @@ describe('SQLite Schema', () => {
     'project_images',
     'project_collaborators',
     'project_versions',
+    'adaptation_projects',
+    'adaptation_source_assets',
+    'adaptation_requested_outputs',
+    'adaptation_output_attempts',
     'analytics_events',
     'user_usage_stats',
     'daily_usage_aggregates',
@@ -179,6 +183,61 @@ describe('SQLite Schema', () => {
           `INSERT INTO project_versions (id, project_id, version_number, snapshot, created_by, created_at)
            VALUES (?, ?, ?, ?, ?, ?)`
         ).run('pv2', 'p1', 1, '{}', 'u1', now);
+      }).toThrow();
+    });
+
+    test('enforces UNIQUE(project_id) on adaptation_source_assets', () => {
+      initializeSchema(db);
+
+      const now = new Date().toISOString();
+      db.prepare(
+        `INSERT INTO users (id, email, password_hash, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?)`
+      ).run('u1', 'owner@test.com', 'hash', now, now);
+      db.prepare(
+        `INSERT INTO adaptation_projects (id, owner_id, name, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?)`
+      ).run('ap1', 'u1', 'Campaign', now, now);
+
+      db.prepare(
+        `INSERT INTO adaptation_source_assets (id, project_id, storage_path, original_filename, mime_type, created_at)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      ).run('asa1', 'ap1', '/uploads/source.png', 'source.png', 'image/png', now);
+
+      expect(() => {
+        db.prepare(
+          `INSERT INTO adaptation_source_assets (id, project_id, storage_path, original_filename, mime_type, created_at)
+           VALUES (?, ?, ?, ?, ?, ?)`
+        ).run('asa2', 'ap1', '/uploads/source-2.png', 'source-2.png', 'image/png', now);
+      }).toThrow();
+    });
+
+    test('enforces UNIQUE(output_id, attempt_number) on adaptation_output_attempts', () => {
+      initializeSchema(db);
+
+      const now = new Date().toISOString();
+      db.prepare(
+        `INSERT INTO users (id, email, password_hash, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?)`
+      ).run('u1', 'owner@test.com', 'hash', now, now);
+      db.prepare(
+        `INSERT INTO adaptation_projects (id, owner_id, name, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?)`
+      ).run('ap1', 'u1', 'Campaign', now, now);
+      db.prepare(
+        `INSERT INTO adaptation_requested_outputs (id, project_id, label, aspect_ratio, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      ).run('aro1', 'ap1', 'Story', '9:16', now, now);
+      db.prepare(
+        `INSERT INTO adaptation_output_attempts (id, output_id, attempt_number, created_at)
+         VALUES (?, ?, ?, ?)`
+      ).run('aoa1', 'aro1', 1, now);
+
+      expect(() => {
+        db.prepare(
+          `INSERT INTO adaptation_output_attempts (id, output_id, attempt_number, created_at)
+           VALUES (?, ?, ?, ?)`
+        ).run('aoa2', 'aro1', 1, now);
       }).toThrow();
     });
 
@@ -369,6 +428,44 @@ describe('SQLite Schema', () => {
       }).toThrow();
     });
 
+    test('enforces CHECK constraints on adaptation_projects.status', () => {
+      initializeSchema(db);
+
+      const now = new Date().toISOString();
+      db.prepare(
+        `INSERT INTO users (id, email, password_hash, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?)`
+      ).run('u1', 'user@test.com', 'hash', now, now);
+
+      expect(() => {
+        db.prepare(
+          `INSERT INTO adaptation_projects (id, owner_id, name, status, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?)`
+        ).run('ap1', 'u1', 'Campaign', 'bad_status', now, now);
+      }).toThrow();
+    });
+
+    test('enforces CHECK constraints on adaptation_requested_outputs.status', () => {
+      initializeSchema(db);
+
+      const now = new Date().toISOString();
+      db.prepare(
+        `INSERT INTO users (id, email, password_hash, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?)`
+      ).run('u1', 'user@test.com', 'hash', now, now);
+      db.prepare(
+        `INSERT INTO adaptation_projects (id, owner_id, name, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?)`
+      ).run('ap1', 'u1', 'Campaign', now, now);
+
+      expect(() => {
+        db.prepare(
+          `INSERT INTO adaptation_requested_outputs (id, project_id, label, aspect_ratio, status, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`
+        ).run('aro1', 'ap1', 'Story', '9:16', 'retrying', now, now);
+      }).toThrow();
+    });
+
     test('creates indexes', () => {
       initializeSchema(db);
 
@@ -385,6 +482,8 @@ describe('SQLite Schema', () => {
       expect(indexNames).toContain('idx_analytics_events_created_at');
       expect(indexNames).toContain('idx_generations_user_id');
       expect(indexNames).toContain('idx_generated_images_generation_id');
+      expect(indexNames).toContain('idx_adaptation_projects_owner_id');
+      expect(indexNames).toContain('idx_adaptation_output_attempts_output_id');
     });
 
     test('can insert and retrieve across related tables', () => {
@@ -417,6 +516,48 @@ describe('SQLite Schema', () => {
       const img = db.prepare('SELECT * FROM generated_images WHERE generation_id = ?').get('g1');
       expect(img.platform_name).toBe('Instagram Post');
       expect(img.width).toBe(1080);
+    });
+
+    test('can insert and retrieve adaptation project data across related tables', () => {
+      initializeSchema(db);
+
+      const now = new Date().toISOString();
+
+      db.prepare(
+        `INSERT INTO users (id, email, password_hash, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?)`
+      ).run('u1', 'user@test.com', 'hash', now, now);
+
+      db.prepare(
+        `INSERT INTO adaptation_projects (id, owner_id, name, preservation_intent, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      ).run('ap1', 'u1', 'Spring Sale', '["logo integrity"]', now, now);
+
+      db.prepare(
+        `INSERT INTO adaptation_source_assets (id, project_id, storage_path, original_filename, mime_type, width, height, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      ).run('asa1', 'ap1', '/uploads/source.png', 'source.png', 'image/png', 1200, 1500, now);
+
+      db.prepare(
+        `INSERT INTO adaptation_requested_outputs (id, project_id, label, aspect_ratio, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      ).run('aro1', 'ap1', 'Instagram Story', '9:16', now, now);
+
+      db.prepare(
+        `INSERT INTO adaptation_output_attempts (id, output_id, attempt_number, status, created_at)
+         VALUES (?, ?, ?, ?, ?)`
+      ).run('aoa1', 'aro1', 1, 'queued', now);
+
+      const project = db.prepare('SELECT * FROM adaptation_projects WHERE id = ?').get('ap1');
+      const sourceAsset = db.prepare('SELECT * FROM adaptation_source_assets WHERE project_id = ?').get('ap1');
+      const output = db.prepare('SELECT * FROM adaptation_requested_outputs WHERE project_id = ?').get('ap1');
+      const attempt = db.prepare('SELECT * FROM adaptation_output_attempts WHERE output_id = ?').get('aro1');
+
+      expect(project.name).toBe('Spring Sale');
+      expect(JSON.parse(project.preservation_intent)).toEqual(['logo integrity']);
+      expect(sourceAsset.original_filename).toBe('source.png');
+      expect(output.aspect_ratio).toBe('9:16');
+      expect(attempt.status).toBe('queued');
     });
 
     test('stores JSON fields as TEXT', () => {

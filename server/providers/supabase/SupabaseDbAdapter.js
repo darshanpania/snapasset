@@ -528,12 +528,163 @@ class SupabaseImagesRepository {
 }
 
 // ---------------------------------------------------------------------------
+// Creative Adaptation Repository
+// ---------------------------------------------------------------------------
+
+class SupabaseAdaptationsRepository {
+  constructor(supabaseClient) {
+    this.supabase = supabaseClient;
+  }
+
+  async createProject(data) {
+    const { data: result, error } = await this.supabase
+      .from('adaptation_projects')
+      .insert([data])
+      .select()
+      .single();
+    if (error) throw error;
+    return result;
+  }
+
+  async getProjectById(id) {
+    const { data, error } = await this.supabase
+      .from('adaptation_projects')
+      .select(`
+        *,
+        source_asset:adaptation_source_assets(*),
+        requested_outputs:adaptation_requested_outputs(
+          *,
+          attempts:adaptation_output_attempts(*)
+        )
+      `)
+      .eq('id', id)
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async listProjectsByOwner(ownerId, filters = {}, pagination = {}) {
+    const page = pagination.page || 1;
+    const limit = pagination.limit || 20;
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    let query = this.supabase
+      .from('adaptation_projects')
+      .select('*', { count: 'exact' })
+      .eq('owner_id', ownerId);
+
+    if (filters.status) {
+      query = query.eq('status', filters.status);
+    }
+
+    query = query.range(from, to).order('updated_at', { ascending: false });
+
+    const { data, error, count } = await query;
+    if (error) throw error;
+    return { data, count };
+  }
+
+  async updateProject(id, updates) {
+    const { data, error } = await this.supabase
+      .from('adaptation_projects')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async createSourceAsset(data) {
+    const { data: result, error } = await this.supabase
+      .from('adaptation_source_assets')
+      .insert([data])
+      .select()
+      .single();
+    if (error) throw error;
+    return result;
+  }
+
+  async updateSourceAsset(id, updates) {
+    const { data, error } = await this.supabase
+      .from('adaptation_source_assets')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async createRequestedOutput(data) {
+    const { data: result, error } = await this.supabase
+      .from('adaptation_requested_outputs')
+      .insert([data])
+      .select()
+      .single();
+    if (error) throw error;
+    return result;
+  }
+
+  async updateRequestedOutput(id, updates) {
+    const { data, error } = await this.supabase
+      .from('adaptation_requested_outputs')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async createOutputAttempt(data) {
+    const payload = {
+      ...data,
+      attempt_number: data.attempt_number || await this._nextAttemptNumber(data.output_id),
+    };
+
+    const { data: result, error } = await this.supabase
+      .from('adaptation_output_attempts')
+      .insert([payload])
+      .select()
+      .single();
+    if (error) throw error;
+    return result;
+  }
+
+  async updateOutputAttempt(id, updates) {
+    const { data, error } = await this.supabase
+      .from('adaptation_output_attempts')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async _nextAttemptNumber(outputId) {
+    const { data, error } = await this.supabase
+      .from('adaptation_output_attempts')
+      .select('attempt_number')
+      .eq('output_id', outputId)
+      .order('attempt_number', { ascending: false })
+      .limit(1);
+    if (error) throw error;
+
+    return data && data.length > 0 ? data[0].attempt_number + 1 : 1;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Adapter
 // ---------------------------------------------------------------------------
 
 export class SupabaseDbAdapter {
   constructor(supabaseClient) {
     this.projects = new SupabaseProjectsRepository(supabaseClient);
+    this.adaptations = new SupabaseAdaptationsRepository(supabaseClient);
     this.analytics = new SupabaseAnalyticsRepository(supabaseClient);
     this.images = new SupabaseImagesRepository(supabaseClient);
   }
@@ -541,6 +692,7 @@ export class SupabaseDbAdapter {
 
 export {
   SupabaseProjectsRepository,
+  SupabaseAdaptationsRepository,
   SupabaseAnalyticsRepository,
   SupabaseImagesRepository,
 };

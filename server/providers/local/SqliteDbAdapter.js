@@ -4,6 +4,7 @@ export class SqliteDbAdapter {
   constructor(db) {
     this.db = db;
     this.projects = new ProjectsRepository(db);
+    this.adaptations = new AdaptationsRepository(db);
     this.analytics = new AnalyticsRepository(db);
     this.images = new ImagesRepository(db);
     this.users = new UsersRepository(db);
@@ -353,6 +354,289 @@ class AnalyticsRepository {
     const d = new Date();
     d.setDate(d.getDate() - days);
     return d.toISOString();
+  }
+}
+
+class AdaptationsRepository {
+  constructor(db) { this.db = db; }
+
+  async createProject(data) {
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    this.db.prepare(`
+      INSERT INTO adaptation_projects (id, owner_id, name, status, preservation_intent, settings, created_at, updated_at, archived_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id,
+      data.owner_id,
+      data.name,
+      data.status || 'draft',
+      JSON.stringify(data.preservation_intent || []),
+      JSON.stringify(data.settings || {}),
+      now,
+      now,
+      data.archived_at || null,
+    )
+
+    return this.getProjectById(id)
+  }
+
+  async getProjectById(id) {
+    const project = this.db.prepare('SELECT * FROM adaptation_projects WHERE id = ?').get(id)
+    if (!project) return undefined
+
+    const parsedProject = this._parseAdaptationProject(project)
+    const sourceAsset = this.db.prepare('SELECT * FROM adaptation_source_assets WHERE project_id = ?').get(id)
+    const outputs = this.db.prepare(`
+      SELECT * FROM adaptation_requested_outputs
+      WHERE project_id = ?
+      ORDER BY sort_order ASC, created_at ASC
+    `).all(id).map((row) => this._parseRequestedOutput(row))
+
+    const attemptsByOutputId = new Map()
+    const attempts = this.db.prepare(`
+      SELECT aoa.*
+      FROM adaptation_output_attempts aoa
+      INNER JOIN adaptation_requested_outputs aro ON aro.id = aoa.output_id
+      WHERE aro.project_id = ?
+      ORDER BY aoa.attempt_number ASC, aoa.created_at ASC
+    `).all(id).map((row) => this._parseOutputAttempt(row))
+
+    attempts.forEach((attempt) => {
+      const list = attemptsByOutputId.get(attempt.output_id) || []
+      list.push(attempt)
+      attemptsByOutputId.set(attempt.output_id, list)
+    })
+
+    return {
+      ...parsedProject,
+      source_asset: sourceAsset ? this._parseSourceAsset(sourceAsset) : null,
+      requested_outputs: outputs.map((output) => ({
+        ...output,
+        attempts: attemptsByOutputId.get(output.id) || [],
+      })),
+    }
+  }
+
+  async listProjectsByOwner(ownerId, filters = {}, pagination = {}) {
+    const page = pagination.page || 1
+    const limit = pagination.limit || 20
+    const offset = (page - 1) * limit
+
+    let where = 'WHERE owner_id = ?'
+    const params = [ownerId]
+
+    if (filters.status) {
+      where += ' AND status = ?'
+      params.push(filters.status)
+    }
+
+    const count = this.db.prepare(`SELECT COUNT(*) as count FROM adaptation_projects ${where}`).get(...params).count
+    const rows = this.db.prepare(`
+      SELECT * FROM adaptation_projects
+      ${where}
+      ORDER BY updated_at DESC
+      LIMIT ? OFFSET ?
+    `).all(...params, limit, offset).map((row) => this._parseAdaptationProject(row))
+
+    return { data: rows, count }
+  }
+
+  async updateProject(id, updates) {
+    return this._updateRow({
+      table: 'adaptation_projects',
+      id,
+      allowedColumns: ['name', 'status', 'preservation_intent', 'settings', 'archived_at'],
+      jsonColumns: ['preservation_intent', 'settings'],
+      parser: () => this.getProjectById(id),
+      updates,
+    })
+  }
+
+  async createSourceAsset(data) {
+    const id = uuidv4()
+    const now = new Date().toISOString()
+
+    this.db.prepare(`
+      INSERT INTO adaptation_source_assets (id, project_id, storage_path, original_filename, mime_type, file_size, width, height, metadata, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id,
+      data.project_id,
+      data.storage_path,
+      data.original_filename,
+      data.mime_type,
+      data.file_size ?? null,
+      data.width ?? null,
+      data.height ?? null,
+      JSON.stringify(data.metadata || {}),
+      now,
+    )
+
+    const row = this.db.prepare('SELECT * FROM adaptation_source_assets WHERE id = ?').get(id)
+    return this._parseSourceAsset(row)
+  }
+
+  async updateSourceAsset(id, updates) {
+    return this._updateRow({
+      table: 'adaptation_source_assets',
+      id,
+      allowedColumns: ['storage_path', 'original_filename', 'mime_type', 'file_size', 'width', 'height', 'metadata'],
+      jsonColumns: ['metadata'],
+      parser: (rowId) => this._parseSourceAsset(this.db.prepare('SELECT * FROM adaptation_source_assets WHERE id = ?').get(rowId)),
+      updates,
+    })
+  }
+
+  async createRequestedOutput(data) {
+    const id = uuidv4()
+    const now = new Date().toISOString()
+
+    this.db.prepare(`
+      INSERT INTO adaptation_requested_outputs (
+        id, project_id, preset_id, label, aspect_ratio, target_width, target_height,
+        status, review_notes, approved_attempt_id, sort_order, created_at, updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id,
+      data.project_id,
+      data.preset_id || null,
+      data.label,
+      data.aspect_ratio,
+      data.target_width ?? null,
+      data.target_height ?? null,
+      data.status || 'pending',
+      data.review_notes || '',
+      data.approved_attempt_id || null,
+      data.sort_order ?? 0,
+      now,
+      now,
+    )
+
+    return this._parseRequestedOutput(
+      this.db.prepare('SELECT * FROM adaptation_requested_outputs WHERE id = ?').get(id)
+    )
+  }
+
+  async updateRequestedOutput(id, updates) {
+    return this._updateRow({
+      table: 'adaptation_requested_outputs',
+      id,
+      allowedColumns: [
+        'preset_id', 'label', 'aspect_ratio', 'target_width', 'target_height',
+        'status', 'review_notes', 'approved_attempt_id', 'sort_order',
+      ],
+      jsonColumns: [],
+      parser: (rowId) => this._parseRequestedOutput(this.db.prepare('SELECT * FROM adaptation_requested_outputs WHERE id = ?').get(rowId)),
+      updates,
+    })
+  }
+
+  async createOutputAttempt(data) {
+    const id = uuidv4()
+    const now = new Date().toISOString()
+    const attemptNumber = data.attempt_number || this._nextAttemptNumber(data.output_id)
+
+    this.db.prepare(`
+      INSERT INTO adaptation_output_attempts (
+        id, output_id, attempt_number, status, provider, model, instructions, storage_path,
+        mime_type, width, height, error_message, diagnostics, created_at, completed_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id,
+      data.output_id,
+      attemptNumber,
+      data.status || 'queued',
+      data.provider || null,
+      data.model || null,
+      data.instructions || '',
+      data.storage_path || null,
+      data.mime_type || null,
+      data.width ?? null,
+      data.height ?? null,
+      data.error_message || null,
+      JSON.stringify(data.diagnostics || {}),
+      now,
+      data.completed_at || null,
+    )
+
+    return this._parseOutputAttempt(
+      this.db.prepare('SELECT * FROM adaptation_output_attempts WHERE id = ?').get(id)
+    )
+  }
+
+  async updateOutputAttempt(id, updates) {
+    return this._updateRow({
+      table: 'adaptation_output_attempts',
+      id,
+      allowedColumns: [
+        'status', 'provider', 'model', 'instructions', 'storage_path', 'mime_type',
+        'width', 'height', 'error_message', 'diagnostics', 'completed_at',
+      ],
+      jsonColumns: ['diagnostics'],
+      parser: (rowId) => this._parseOutputAttempt(this.db.prepare('SELECT * FROM adaptation_output_attempts WHERE id = ?').get(rowId)),
+      updates,
+    })
+  }
+
+  _nextAttemptNumber(outputId) {
+    const row = this.db.prepare(`
+      SELECT MAX(attempt_number) as max_attempt
+      FROM adaptation_output_attempts
+      WHERE output_id = ?
+    `).get(outputId)
+
+    return (row?.max_attempt || 0) + 1
+  }
+
+  _updateRow({ table, id, allowedColumns, jsonColumns, parser, updates }) {
+    const sets = []
+    const params = []
+
+    for (const [key, value] of Object.entries(updates)) {
+      if (!allowedColumns.includes(key)) continue
+      sets.push(`${key} = ?`)
+      params.push(jsonColumns.includes(key) ? JSON.stringify(value) : value)
+    }
+
+    if (sets.length === 0) return parser(id)
+
+    if (table === 'adaptation_projects' || table === 'adaptation_requested_outputs') {
+      sets.push('updated_at = ?')
+      params.push(new Date().toISOString())
+    }
+
+    params.push(id)
+    this.db.prepare(`UPDATE ${table} SET ${sets.join(', ')} WHERE id = ?`).run(...params)
+    return parser(id)
+  }
+
+  _parseAdaptationProject(row) {
+    return {
+      ...row,
+      preservation_intent: JSON.parse(row.preservation_intent || '[]'),
+      settings: JSON.parse(row.settings || '{}'),
+    }
+  }
+
+  _parseSourceAsset(row) {
+    return {
+      ...row,
+      metadata: JSON.parse(row.metadata || '{}'),
+    }
+  }
+
+  _parseRequestedOutput(row) {
+    return { ...row }
+  }
+
+  _parseOutputAttempt(row) {
+    return {
+      ...row,
+      diagnostics: JSON.parse(row.diagnostics || '{}'),
+    }
   }
 }
 

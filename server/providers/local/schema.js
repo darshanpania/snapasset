@@ -256,6 +256,78 @@ export function initializeSchema(db) {
     );
 
     -- ============================================================
+    -- Adaptation Projects
+    -- ============================================================
+    CREATE TABLE IF NOT EXISTS adaptation_projects (
+      id TEXT PRIMARY KEY,
+      owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'processing', 'review', 'completed', 'archived')),
+      preservation_intent TEXT DEFAULT '[]',
+      settings TEXT DEFAULT '{}',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      archived_at TEXT
+    );
+
+    -- ============================================================
+    -- Adaptation Source Assets
+    -- ============================================================
+    CREATE TABLE IF NOT EXISTS adaptation_source_assets (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL UNIQUE REFERENCES adaptation_projects(id) ON DELETE CASCADE,
+      storage_path TEXT NOT NULL,
+      original_filename TEXT NOT NULL,
+      mime_type TEXT NOT NULL,
+      file_size INTEGER,
+      width INTEGER,
+      height INTEGER,
+      metadata TEXT DEFAULT '{}',
+      created_at TEXT NOT NULL
+    );
+
+    -- ============================================================
+    -- Adaptation Requested Outputs
+    -- ============================================================
+    CREATE TABLE IF NOT EXISTS adaptation_requested_outputs (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL REFERENCES adaptation_projects(id) ON DELETE CASCADE,
+      preset_id TEXT,
+      label TEXT NOT NULL,
+      aspect_ratio TEXT NOT NULL,
+      target_width INTEGER,
+      target_height INTEGER,
+      status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'generating', 'generated', 'approved', 'rejected', 'failed')),
+      review_notes TEXT DEFAULT '',
+      approved_attempt_id TEXT,
+      sort_order INTEGER DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    -- ============================================================
+    -- Adaptation Output Attempts
+    -- ============================================================
+    CREATE TABLE IF NOT EXISTS adaptation_output_attempts (
+      id TEXT PRIMARY KEY,
+      output_id TEXT NOT NULL REFERENCES adaptation_requested_outputs(id) ON DELETE CASCADE,
+      attempt_number INTEGER NOT NULL,
+      status TEXT DEFAULT 'queued' CHECK (status IN ('queued', 'running', 'succeeded', 'failed', 'cancelled')),
+      provider TEXT,
+      model TEXT,
+      instructions TEXT DEFAULT '',
+      storage_path TEXT,
+      mime_type TEXT,
+      width INTEGER,
+      height INTEGER,
+      error_message TEXT,
+      diagnostics TEXT DEFAULT '{}',
+      created_at TEXT NOT NULL,
+      completed_at TEXT,
+      UNIQUE(output_id, attempt_number)
+    );
+
+    -- ============================================================
     -- Indexes
     -- ============================================================
 
@@ -311,6 +383,21 @@ export function initializeSchema(db) {
 
     -- Generated Images
     CREATE INDEX IF NOT EXISTS idx_generated_images_generation_id ON generated_images(generation_id);
+
+    -- Adaptation Projects
+    CREATE INDEX IF NOT EXISTS idx_adaptation_projects_owner_id ON adaptation_projects(owner_id);
+    CREATE INDEX IF NOT EXISTS idx_adaptation_projects_status ON adaptation_projects(status);
+
+    -- Adaptation Source Assets
+    CREATE INDEX IF NOT EXISTS idx_adaptation_source_assets_project_id ON adaptation_source_assets(project_id);
+
+    -- Adaptation Requested Outputs
+    CREATE INDEX IF NOT EXISTS idx_adaptation_requested_outputs_project_id ON adaptation_requested_outputs(project_id);
+    CREATE INDEX IF NOT EXISTS idx_adaptation_requested_outputs_status ON adaptation_requested_outputs(status);
+
+    -- Adaptation Output Attempts
+    CREATE INDEX IF NOT EXISTS idx_adaptation_output_attempts_output_id ON adaptation_output_attempts(output_id);
+    CREATE INDEX IF NOT EXISTS idx_adaptation_output_attempts_status ON adaptation_output_attempts(status);
   `);
 
   // Migrate existing databases: add columns if missing
