@@ -23,6 +23,9 @@
 5. **Keep infrastructure proportionate to product maturity**
    This is a pivot of a non-deployed product. The first implementation should be simple unless complexity is clearly buying product value.
 
+6. **Keep tests basic while the workflow is still moving**
+   Early steps should have lightweight smoke coverage around new persistence boundaries, routes, and happy-path behavior. Detailed matrix testing can be added once the workflow shape is more stable.
+
 ---
 
 ## Phase 0: Foundations And Product Reframing
@@ -202,6 +205,16 @@ ZIP generation should package approved attempts, not raw latest outputs. This ke
 ### 5. Observability Should Stay Lightweight At First
 
 Approval rate, retry rate, and failure modes matter, but the first version does not need enterprise-grade telemetry or infrastructure.
+
+### 6. Test Depth Should Lag Product Churn
+
+During the current build sequence:
+
+- add basic tests for new models, repositories, and critical route wiring
+- prefer one or two representative happy-path tests over exhaustive permutations
+- defer broad edge-case suites until the upload, generation, review, and export workflow stabilizes
+
+This keeps test maintenance proportional to the speed of product change.
 
 ---
 

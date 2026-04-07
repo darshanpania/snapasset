@@ -135,6 +135,7 @@ Suggested capability:
 
 - choose platform presets or raw ratios
 - capture preservation intent
+- optionally choose a generation strategy such as generative adaptation or deterministic white-bar padding
 - create per-output records before generation starts
 
 ### Batch Generation
@@ -247,6 +248,7 @@ Suggested capability areas:
 - `expand_canvas`
 - `retouch_or_cleanup`
 - `strict_resize`
+- `pad_to_fit`
 - `analyze_composition`
 
 Each attempt should record:
@@ -258,6 +260,26 @@ Each attempt should record:
 - relevant quality and failure signals
 
 This creates the foundation for future routing and evaluation.
+
+### Deterministic Padding Path
+
+Some requested outputs should not require model inference at all.
+
+For a user-selected white-bar mode:
+
+- the system should execute a deterministic local image transformation
+- the source creative should be resized to fit inside the target box while preserving aspect ratio
+- the remaining area should be filled with a white background
+- the attempt should still be persisted as a normal `Output Attempt`
+- the attempt metadata should clearly indicate that the strategy was `pad_to_fit`
+- pricing logic can treat this path as `0` credits because no provider inference is used
+
+Preferred implementation direction:
+
+- use the existing server-side image tooling in Node
+- avoid introducing a separate Python service for this path unless later requirements clearly justify it
+
+This keeps the low-cost padding option simple, fast, and operationally lightweight.
 
 ---
 

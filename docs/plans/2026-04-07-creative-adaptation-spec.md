@@ -130,6 +130,13 @@ The user selects either:
 
 - platform presets
 - raw aspect ratios
+- an adaptation mode for each selected output when relevant
+
+The initial non-AI mode should include:
+
+- `Pad with white bars`
+
+This mode should preserve the original creative exactly, place it inside the requested aspect ratio, and fill the remaining area with white padding. It should cost `0` credits because it does not require model inference.
 
 The first release should support a focused set of high-value outputs rather than every possible dimension.
 
@@ -196,6 +203,7 @@ spring-sale/
 - Optionally support more than one candidate for difficult ratios later
 - Preserve project history so retries do not lose previous good outputs
 - Assume one generation flow may take roughly `45-60` seconds and design the user experience accordingly
+- support a deterministic no-AI padding path for users who only want white bars added to match the target ratio
 
 ### Review State
 
@@ -258,8 +266,22 @@ At a high level, the system should support:
 - generative canvas expansion for ratio changes
 - selective cleanup or retouching when needed
 - plain resize/crop fallback only for low-risk cases
+- deterministic padding with white bars when the user explicitly chooses that mode
 
 The provider layer should allow SnapAsset to route requests based on task difficulty and evolve with model changes over time.
+
+### Zero-Credit Padding Mode
+
+The white-bar option should not be implemented as a model call or a Python sidecar by default.
+
+Preferred direction:
+
+- use the server image pipeline directly
+- resize the source asset to fit within the target dimensions without cropping
+- center the resized image on a white canvas sized to the requested output
+- record the result as a normal output attempt with strategy metadata indicating deterministic padding
+
+This is better than a separate Python path for v1 because it is simpler to operate, deterministic, fast, and already aligned with the existing Node image-processing stack.
 
 ### Execution Model
 
