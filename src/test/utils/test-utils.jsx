@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from '../../contexts/AuthContext'
+import { ThemeProvider } from '../../contexts/ThemeContext'
 import { vi } from 'vitest'
 
 // Custom render function that includes providers
@@ -17,9 +18,11 @@ export function renderWithProviders(
   function Wrapper({ children }) {
     return (
       <BrowserRouter>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
       </BrowserRouter>
     )
   }
