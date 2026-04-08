@@ -1,15 +1,36 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { Route, Routes } from 'react-router-dom'
 import { renderWithProviders, mockUser } from '../test/utils/test-utils'
 import Home from './Home'
 import * as AuthContext from '../contexts/AuthContext'
+import { adaptationApi } from '../services/api'
+
+vi.mock('../services/api', () => ({
+  adaptationApi: {
+    createProject: vi.fn(),
+    getProject: vi.fn(),
+  },
+}))
 
 describe('Home Component', () => {
   const mockSignOut = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
+    adaptationApi.getProject.mockResolvedValue({
+      data: {
+        id: 'ap1',
+        name: 'Spring Launch',
+        preservation_intent: [],
+        source_asset: {
+          original_filename: 'creative.png',
+          mime_type: 'image/png',
+          public_url: '/storage/adaptation-source-assets/test/creative.png',
+        },
+      },
+    })
   })
 
   it('renders the creative adaptation hero shell', () => {
@@ -81,6 +102,24 @@ describe('Home Component', () => {
 
     renderWithProviders(<Home />)
 
-    expect(screen.getByRole('button', { name: /start project/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /create project/i })).toBeDisabled()
+  })
+
+  it('loads a saved project when visiting an adaptation URL', async () => {
+    vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
+      user: mockUser,
+      signOut: mockSignOut,
+    })
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/adaptations/:projectId" element={<Home />} />
+      </Routes>,
+      { route: '/adaptations/ap1' },
+    )
+
+    expect(await screen.findByText('Spring Launch')).toBeInTheDocument()
+    expect(screen.getByText(/saved and reopenable at this url/i)).toBeInTheDocument()
+    expect(adaptationApi.getProject).toHaveBeenCalledWith('ap1')
   })
 })

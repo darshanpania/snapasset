@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { useTheme } from '../contexts/ThemeContext'
+import { adaptationApi } from '../services/api'
 import './Home.css'
 
 const TARGET_GROUPS = [
@@ -52,11 +54,17 @@ const PRESERVATION_OPTIONS = [
 function Home() {
   const { user, signOut } = useAuth()
   const { theme, toggle: toggleTheme } = useTheme()
+  const toast = useToast()
   const navigate = useNavigate()
+  const { projectId } = useParams()
   const [selectedTargets, setSelectedTargets] = useState(['instagram-story', 'instagram-post'])
   const [preservationIntent, setPreservationIntent] = useState('brand')
   const [sourceAsset, setSourceAsset] = useState(null)
   const [previewUrl, setPreviewUrl] = useState('')
+  const [project, setProject] = useState(null)
+  const [isLoadingProject, setIsLoadingProject] = useState(false)
+  const [isCreatingProject, setIsCreatingProject] = useState(false)
+  const [projectError, setProjectError] = useState('')
 
   useEffect(() => {
     if (!sourceAsset) {
@@ -70,10 +78,66 @@ function Home() {
     return () => URL.revokeObjectURL(nextUrl)
   }, [sourceAsset])
 
+  useEffect(() => {
+    if (!projectId) {
+      setProject(null)
+      setProjectError('')
+      setIsLoadingProject(false)
+      return
+    }
+
+    if (!projectId || !user) {
+      return
+    }
+
+    let cancelled = false
+
+    const loadProject = async () => {
+      try {
+        setIsLoadingProject(true)
+        setProjectError('')
+        const response = await adaptationApi.getProject(projectId)
+        if (cancelled) {
+          return
+        }
+
+        setProject(response.data)
+        if (Array.isArray(response.data.preservation_intent) && response.data.preservation_intent.length > 0) {
+          setPreservationIntent(response.data.preservation_intent[0])
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setProject(null)
+          setProjectError(error.message)
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingProject(false)
+        }
+      }
+    }
+
+    loadProject()
+
+    return () => {
+      cancelled = true
+    }
+  }, [projectId, user])
+
   const selectedTargetDetails = useMemo(
     () => TARGET_GROUPS.flatMap(group => group.targets).filter(target => selectedTargets.includes(target.id)),
     [selectedTargets],
   )
+
+  const activeSourceAsset = sourceAsset
+    ? {
+        original_filename: sourceAsset.name,
+        mime_type: sourceAsset.type || 'image/jpeg',
+        public_url: previewUrl,
+      }
+    : project?.source_asset || null
+
+  const hasSourceAsset = Boolean(activeSourceAsset)
 
   const toggleTarget = (targetId) => {
     setSelectedTargets(current =>
@@ -90,7 +154,39 @@ function Home() {
       return
     }
 
+    setProjectError('')
     setSourceAsset(file)
+  }
+
+  const handleCreateProject = async () => {
+    if (!sourceAsset) {
+      return
+    }
+
+    if (!user) {
+      navigate('/auth/signup')
+      return
+    }
+
+    try {
+      setIsCreatingProject(true)
+      setProjectError('')
+
+      const formData = new FormData()
+      formData.append('source_image', sourceAsset)
+      formData.append('name', sourceAsset.name.replace(/\.[^.]+$/, ''))
+
+      const response = await adaptationApi.createProject(formData)
+      setProject(response.data)
+      setSourceAsset(null)
+      toast.success('Project created')
+      navigate(`/adaptations/${response.data.id}`)
+    } catch (error) {
+      setProjectError(error.message)
+      toast.error(error.message)
+    } finally {
+      setIsCreatingProject(false)
+    }
   }
 
   return (
@@ -221,9 +317,19 @@ function Home() {
         <section className="panel source-panel">
           <div className="section-heading">
             <span className="field-label">Source Creative</span>
-            <h2>Upload your campaign creative</h2>
+            <h2>{project ? 'Project source creative' : 'Upload your campaign creative'}</h2>
             <p>Start with a flat `PNG` or `JPG`, then prepare versions for the channels you care about.</p>
           </div>
+
+          {project ? (
+            <div className="project-banner">
+              <div>
+                <span className="project-banner-label">Current project</span>
+                <strong>{project.name}</strong>
+              </div>
+              <span className="project-banner-meta">Saved and reopenable at this URL</span>
+            </div>
+          ) : null}
 
           <label className={`upload-dropzone ${sourceAsset ? 'has-file' : ''}`} htmlFor="source-upload">
             <input
@@ -232,12 +338,12 @@ function Home() {
               accept="image/png,image/jpeg"
               onChange={handleFileChange}
             />
-            {previewUrl ? (
+            {activeSourceAsset?.public_url ? (
               <div className="upload-preview">
-                <img src={previewUrl} alt="Uploaded source creative preview" />
+                <img src={activeSourceAsset.public_url} alt="Uploaded source creative preview" />
                 <div className="upload-meta">
-                  <strong>{sourceAsset?.name}</strong>
-                  <span>{sourceAsset?.type || 'image/jpeg'}</span>
+                  <strong>{activeSourceAsset.original_filename}</strong>
+                  <span>{activeSourceAsset.mime_type || 'image/jpeg'}</span>
                 </div>
               </div>
             ) : (
@@ -319,7 +425,7 @@ function Home() {
           <div className="review-summary">
             <div className="summary-card">
               <span className="summary-label">Source status</span>
-              <strong>{sourceAsset ? 'Creative ready' : 'Waiting for upload'}</strong>
+              <strong>{hasSourceAsset ? 'Creative ready' : 'Waiting for upload'}</strong>
             </div>
             <div className="summary-card">
               <span className="summary-label">Selected targets</span>
@@ -368,11 +474,26 @@ function Home() {
           </div>
 
           <div className="review-actions">
-            <button type="button" className="tb-btn primary" disabled={!sourceAsset || selectedTargets.length === 0}>
-              Start Project
+            <button
+              type="button"
+              className="tb-btn primary"
+              disabled={!sourceAsset || selectedTargets.length === 0 || isCreatingProject}
+              onClick={handleCreateProject}
+            >
+              {isCreatingProject ? 'Creating Project...' : 'Create Project'}
             </button>
-            <span className="action-hint">Choose a source creative and at least one placement to continue.</span>
+            <span className="action-hint">
+              {!user
+                ? 'Sign in to save a project you can reopen later.'
+                : 'Choose a source creative and at least one placement to continue.'}
+            </span>
           </div>
+
+          {(projectError || isLoadingProject) ? (
+            <div className="project-status" role="status">
+              {isLoadingProject ? 'Loading saved project...' : projectError}
+            </div>
+          ) : null}
         </section>
       </main>
     </div>

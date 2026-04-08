@@ -11,9 +11,9 @@ class ApiClient {
 
   async request(endpoint, options = {}) {
     const token = localStorage.getItem('snapasset_token');
-    
+    const isFormData = options.body instanceof FormData;
     const headers = {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...options.headers,
     };
 
@@ -42,7 +42,7 @@ class ApiClient {
   post(endpoint, body) {
     return this.request(endpoint, {
       method: 'POST',
-      body: JSON.stringify(body),
+      body: body instanceof FormData ? body : JSON.stringify(body),
     });
   }
 
@@ -61,6 +61,15 @@ class ApiClient {
 }
 
 const apiClient = new ApiClient(API_BASE_URL);
+
+export const adaptationApi = {
+  createProject: (formData) => apiClient.post('/api/adaptations', formData),
+  getProject: (id) => apiClient.get(`/api/adaptations/${id}`),
+  getProjects: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return apiClient.get(`/api/adaptations${query ? `?${query}` : ''}`);
+  },
+};
 
 // Project API
 export const projectApi = {

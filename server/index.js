@@ -18,6 +18,7 @@ import queueRouter from './routes/queue.js';
 import logger from './utils/logger.js';
 import analyticsRouter from './routes/analytics.js';
 import projectsRouter from './routes/projects.js';
+import adaptationsRouter from './routes/adaptations.js';
 import authRouter from './routes/auth.js';
 import settingsRouter from './routes/settings.js';
 import chatgptAuthRouter, { createCallbackHandler } from './routes/chatgpt-auth.js';
@@ -189,6 +190,7 @@ app.use('/api/sse', sseRouter);
 app.use('/api/queue', queueRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/projects', projectsRouter);
+app.use('/api/adaptations', adaptationsRouter);
 
 // API Documentation
 app.use(
