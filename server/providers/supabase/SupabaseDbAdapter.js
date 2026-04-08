@@ -638,6 +638,14 @@ class SupabaseAdaptationsRepository {
     return data;
   }
 
+  async deleteRequestedOutputsByProject(projectId) {
+    const { error } = await this.supabase
+      .from('adaptation_requested_outputs')
+      .delete()
+      .eq('project_id', projectId);
+    if (error) throw error;
+  }
+
   async createOutputAttempt(data) {
     const payload = {
       ...data,

@@ -297,6 +297,8 @@ export function initializeSchema(db) {
       aspect_ratio TEXT NOT NULL,
       target_width INTEGER,
       target_height INTEGER,
+      generation_strategy TEXT DEFAULT 'adapt',
+      max_file_size_bytes INTEGER,
       status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'generating', 'generated', 'approved', 'rejected', 'failed')),
       review_notes TEXT DEFAULT '',
       approved_attempt_id TEXT,
@@ -413,5 +415,13 @@ export function initializeSchema(db) {
   }
   if (!userColumns.includes('encrypted_refresh_token')) {
     db.exec(`ALTER TABLE users ADD COLUMN encrypted_refresh_token TEXT DEFAULT NULL`);
+  }
+
+  const requestedOutputColumns = db.pragma('table_info(adaptation_requested_outputs)').map(c => c.name);
+  if (!requestedOutputColumns.includes('generation_strategy')) {
+    db.exec(`ALTER TABLE adaptation_requested_outputs ADD COLUMN generation_strategy TEXT DEFAULT 'adapt'`);
+  }
+  if (!requestedOutputColumns.includes('max_file_size_bytes')) {
+    db.exec(`ALTER TABLE adaptation_requested_outputs ADD COLUMN max_file_size_bytes INTEGER`);
   }
 }

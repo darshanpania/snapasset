@@ -114,6 +114,8 @@ export class RequestedOutput {
     this.aspect_ratio = data.aspect_ratio
     this.target_width = data.target_width ?? null
     this.target_height = data.target_height ?? null
+    this.generation_strategy = data.generation_strategy || 'adapt'
+    this.max_file_size_bytes = data.max_file_size_bytes ?? null
     this.status = data.status || 'pending'
     this.review_notes = data.review_notes || ''
     this.approved_attempt_id = data.approved_attempt_id || null
@@ -128,9 +130,11 @@ export class RequestedOutput {
     if (!this.project_id) errors.push('Requested output project_id is required')
     if (!hasText(this.label)) errors.push('Requested output label is required')
     if (!hasText(this.aspect_ratio)) errors.push('Requested output aspect_ratio is required')
+    if (!['adapt', 'pad_to_fit'].includes(this.generation_strategy)) errors.push('Invalid generation strategy')
     if (!OUTPUT_STATUSES.includes(this.status)) errors.push('Invalid requested output status')
     if (this.target_width !== null && (!Number.isInteger(this.target_width) || this.target_width <= 0)) errors.push('Requested output target_width must be a positive integer')
     if (this.target_height !== null && (!Number.isInteger(this.target_height) || this.target_height <= 0)) errors.push('Requested output target_height must be a positive integer')
+    if (this.max_file_size_bytes !== null && (!Number.isInteger(this.max_file_size_bytes) || this.max_file_size_bytes <= 0)) errors.push('Requested output max_file_size_bytes must be a positive integer')
     if (!Number.isInteger(this.sort_order) || this.sort_order < 0) errors.push('Requested output sort_order must be a non-negative integer')
 
     return {
@@ -148,6 +152,8 @@ export class RequestedOutput {
       aspect_ratio: this.aspect_ratio,
       target_width: this.target_width,
       target_height: this.target_height,
+      generation_strategy: this.generation_strategy,
+      max_file_size_bytes: this.max_file_size_bytes,
       status: this.status,
       review_notes: this.review_notes,
       approved_attempt_id: this.approved_attempt_id,

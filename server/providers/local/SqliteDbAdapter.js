@@ -495,9 +495,10 @@ class AdaptationsRepository {
     this.db.prepare(`
       INSERT INTO adaptation_requested_outputs (
         id, project_id, preset_id, label, aspect_ratio, target_width, target_height,
-        status, review_notes, approved_attempt_id, sort_order, created_at, updated_at
+        generation_strategy, max_file_size_bytes, status, review_notes, approved_attempt_id,
+        sort_order, created_at, updated_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
       data.project_id,
@@ -506,6 +507,8 @@ class AdaptationsRepository {
       data.aspect_ratio,
       data.target_width ?? null,
       data.target_height ?? null,
+      data.generation_strategy || 'adapt',
+      data.max_file_size_bytes ?? null,
       data.status || 'pending',
       data.review_notes || '',
       data.approved_attempt_id || null,
@@ -525,12 +528,17 @@ class AdaptationsRepository {
       id,
       allowedColumns: [
         'preset_id', 'label', 'aspect_ratio', 'target_width', 'target_height',
-        'status', 'review_notes', 'approved_attempt_id', 'sort_order',
+        'generation_strategy', 'max_file_size_bytes', 'status', 'review_notes',
+        'approved_attempt_id', 'sort_order',
       ],
       jsonColumns: [],
       parser: (rowId) => this._parseRequestedOutput(this.db.prepare('SELECT * FROM adaptation_requested_outputs WHERE id = ?').get(rowId)),
       updates,
     })
+  }
+
+  async deleteRequestedOutputsByProject(projectId) {
+    this.db.prepare('DELETE FROM adaptation_requested_outputs WHERE project_id = ?').run(projectId)
   }
 
   async createOutputAttempt(data) {

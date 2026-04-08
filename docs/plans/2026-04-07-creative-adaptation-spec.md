@@ -131,6 +131,15 @@ The user selects either:
 - platform presets
 - raw aspect ratios
 - an adaptation mode for each selected output when relevant
+- an output file-size target for exported/generated assets
+
+The initial output size options should be:
+
+- `2MB`
+- `1MB`
+- `500KB`
+
+The generated asset should be at or below the selected size cap for that requested output.
 
 The initial non-AI mode should include:
 
@@ -204,6 +213,7 @@ spring-sale/
 - Preserve project history so retries do not lose previous good outputs
 - Assume one generation flow may take roughly `45-60` seconds and design the user experience accordingly
 - support a deterministic no-AI padding path for users who only want white bars added to match the target ratio
+- respect a user-selected output file-size cap of `2MB`, `1MB`, or `500KB`
 
 ### Review State
 

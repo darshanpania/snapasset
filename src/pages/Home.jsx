@@ -51,6 +51,17 @@ const PRESERVATION_OPTIONS = [
   },
 ]
 
+const OUTPUT_SIZE_OPTIONS = [
+  { id: '2097152', label: '2 MB', bytes: 2 * 1024 * 1024 },
+  { id: '1048576', label: '1 MB', bytes: 1024 * 1024 },
+  { id: '512000', label: '500 KB', bytes: 500 * 1024 },
+]
+
+const STRATEGY_OPTIONS = [
+  { id: 'adapt', label: 'Adapt layout' },
+  { id: 'pad_to_fit', label: 'White bars' },
+]
+
 function Home() {
   const { user, signOut } = useAuth()
   const { theme, toggle: toggleTheme } = useTheme()
@@ -64,7 +75,10 @@ function Home() {
   const [project, setProject] = useState(null)
   const [isLoadingProject, setIsLoadingProject] = useState(false)
   const [isCreatingProject, setIsCreatingProject] = useState(false)
+  const [isSavingSetup, setIsSavingSetup] = useState(false)
   const [projectError, setProjectError] = useState('')
+  const [outputSizeLimitBytes, setOutputSizeLimitBytes] = useState(1024 * 1024)
+  const [targetStrategies, setTargetStrategies] = useState({})
 
   useEffect(() => {
     if (!sourceAsset) {
@@ -104,6 +118,21 @@ function Home() {
         setProject(response.data)
         if (Array.isArray(response.data.preservation_intent) && response.data.preservation_intent.length > 0) {
           setPreservationIntent(response.data.preservation_intent[0])
+        }
+        if (Array.isArray(response.data.requested_outputs) && response.data.requested_outputs.length > 0) {
+          setSelectedTargets(response.data.requested_outputs.map(output => output.preset_id).filter(Boolean))
+          setTargetStrategies(
+            Object.fromEntries(
+              response.data.requested_outputs
+                .filter(output => output.preset_id)
+                .map(output => [output.preset_id, output.generation_strategy || 'adapt']),
+            ),
+          )
+        }
+        const savedLimit = response.data.settings?.output_size_limit_bytes
+          || response.data.requested_outputs?.[0]?.max_file_size_bytes
+        if (savedLimit) {
+          setOutputSizeLimitBytes(savedLimit)
         }
       } catch (error) {
         if (!cancelled) {
@@ -145,6 +174,17 @@ function Home() {
         ? current.filter(id => id !== targetId)
         : [...current, targetId]
     )
+    setTargetStrategies(current => ({
+      ...current,
+      [targetId]: current[targetId] || 'adapt',
+    }))
+  }
+
+  const setTargetStrategy = (targetId, strategy) => {
+    setTargetStrategies(current => ({
+      ...current,
+      [targetId]: strategy,
+    }))
   }
 
   const handleFileChange = (event) => {
@@ -189,6 +229,41 @@ function Home() {
     }
   }
 
+  const handleSaveSetup = async () => {
+    if (!project) {
+      return
+    }
+
+    try {
+      setIsSavingSetup(true)
+      setProjectError('')
+
+      const payload = {
+        preservation_intent: [preservationIntent],
+        output_size_limit_bytes: outputSizeLimitBytes,
+        requested_outputs: selectedTargetDetails.map((target, index) => ({
+          preset_id: target.id,
+          label: target.label,
+          aspect_ratio: target.ratio,
+          target_width: Number.parseInt(target.size.split(' x ')[0], 10),
+          target_height: Number.parseInt(target.size.split(' x ')[1], 10),
+          generation_strategy: targetStrategies[target.id] || 'adapt',
+          max_file_size_bytes: outputSizeLimitBytes,
+          sort_order: index,
+        })),
+      }
+
+      const response = await adaptationApi.updateSetup(project.id, payload)
+      setProject(response.data)
+      toast.success('Project setup saved')
+    } catch (error) {
+      setProjectError(error.message)
+      toast.error(error.message)
+    } finally {
+      setIsSavingSetup(false)
+    }
+  }
+
   return (
     <div className="app creative-app">
       <header className="topbar">
@@ -228,35 +303,9 @@ function Home() {
       <section className="creative-hero">
         <div className="creative-hero-inner">
           <div className="hero-copy">
-            <span className="hero-kicker">Built for campaign teams</span>
-            <h1>Turn one ad creative into every format you need.</h1>
-            <p>
-              Upload your existing asset, choose the placements you need, review each version,
-              and export the approved set for launch.
-            </p>
-            <div className="hero-steps">
-              <div className="hero-step">
-                <span className="hero-step-number">1</span>
-                <div>
-                  <strong>Upload your approved creative</strong>
-                  <span>Start with the ad your team already plans to run.</span>
-                </div>
-              </div>
-              <div className="hero-step">
-                <span className="hero-step-number">2</span>
-                <div>
-                  <strong>Pick the formats you need</strong>
-                  <span>Choose feed, story, banner, and other placements.</span>
-                </div>
-              </div>
-              <div className="hero-step">
-                <span className="hero-step-number">3</span>
-                <div>
-                  <strong>Review before export</strong>
-                  <span>Approve what works and export a clean set for launch.</span>
-                </div>
-              </div>
-            </div>
+            <span className="hero-kicker">Resize one creative for every channel</span>
+            <h1>Make one ad fit every placement.</h1>
+            <p>Upload your creative, pick the sizes you need, and save the setup.</p>
             <div className="hero-actions">
               <button
                 type="button"
@@ -308,7 +357,7 @@ function Home() {
                 </div>
               </div>
             </div>
-            <p className="demo-caption">One creative becomes a reviewed set of ready-to-use campaign formats.</p>
+            <p className="demo-caption">Preview: one source becomes story, feed, and banner versions.</p>
           </div>
         </div>
       </section>
@@ -316,9 +365,9 @@ function Home() {
       <main className="creative-workspace">
         <section className="panel source-panel">
           <div className="section-heading">
-            <span className="field-label">Source Creative</span>
-            <h2>{project ? 'Project source creative' : 'Upload your campaign creative'}</h2>
-            <p>Start with a flat `PNG` or `JPG`, then prepare versions for the channels you care about.</p>
+            <span className="field-label">1. Upload</span>
+            <h2>{project ? 'Source creative' : 'Upload your creative'}</h2>
+            <p>Use a PNG or JPG.</p>
           </div>
 
           {project ? (
@@ -348,17 +397,16 @@ function Home() {
               </div>
             ) : (
               <div className="upload-empty">
-                <strong>Drop a creative here or browse files</strong>
-                <span>Use a single approved asset as the starting point for all selected placements.</span>
+                <strong>Drop a file here or browse</strong>
+                <span>PNG or JPG</span>
               </div>
             )}
           </label>
 
           <div className="preservation-panel">
             <div className="section-heading compact">
-              <span className="field-label">Preservation Intent</span>
-              <h3>What matters most to preserve?</h3>
-              <p className="section-note">Choose the priority that should guide the adaptation.</p>
+              <span className="field-label">2. Priority</span>
+              <h3>What should stay strongest?</h3>
             </div>
             <div className="intent-grid">
               {PRESERVATION_OPTIONS.map(option => (
@@ -378,9 +426,28 @@ function Home() {
 
         <section className="panel targets-panel">
           <div className="section-heading">
-            <span className="field-label">Targets</span>
-            <h2>Choose where this creative should run</h2>
-            <p>Select the placements you want to generate so every exported asset is campaign-ready.</p>
+            <span className="field-label">3. Outputs</span>
+            <h2>Pick sizes and formats</h2>
+          </div>
+
+          <div className="size-panel">
+            <div className="section-heading compact">
+              <span className="field-label">File Size</span>
+              <h3>Choose a max file size</h3>
+            </div>
+            <div className="size-option-grid">
+              {OUTPUT_SIZE_OPTIONS.map(option => (
+                <button
+                  key={option.id}
+                  type="button"
+                  className={`size-option ${outputSizeLimitBytes === option.bytes ? 'active' : ''}`}
+                  onClick={() => setOutputSizeLimitBytes(option.bytes)}
+                >
+                  <strong>{option.label}</strong>
+                  <span>Max file size</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="target-groups">
@@ -410,82 +477,102 @@ function Home() {
               </div>
             ))}
           </div>
+
+          {selectedTargetDetails.length > 0 ? (
+            <div className="selected-output-settings">
+              <div className="section-heading compact">
+                <span className="field-label">Format Style</span>
+                <h3>Choose how each format should be made</h3>
+              </div>
+              <div className="selected-output-list">
+                {selectedTargetDetails.map(target => (
+                  <div key={target.id} className="selected-output-row">
+                    <div>
+                      <strong>{target.label}</strong>
+                      <span>{target.ratio} · {target.size}</span>
+                    </div>
+                    <div className="strategy-toggle" role="group" aria-label={`${target.label} format style`}>
+                      {STRATEGY_OPTIONS.map(option => (
+                        <button
+                          key={option.id}
+                          type="button"
+                          className={`strategy-pill ${(targetStrategies[target.id] || 'adapt') === option.id ? 'active' : ''}`}
+                          onClick={() => setTargetStrategy(target.id, option.id)}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </section>
 
         <section className="panel review-panel">
           <div className="section-heading">
-            <span className="field-label">Review</span>
-            <h2>Keep approval and export simple</h2>
-            <p>
-              Review each version by format, keep the ones that are ready, and export a clean set
-              for handoff.
-            </p>
+            <span className="field-label">4. Save</span>
+            <h2>Ready to save this setup?</h2>
           </div>
 
           <div className="review-summary">
             <div className="summary-card">
-              <span className="summary-label">Source status</span>
-              <strong>{hasSourceAsset ? 'Creative ready' : 'Waiting for upload'}</strong>
+              <span className="summary-label">Creative</span>
+              <strong>{hasSourceAsset ? 'Added' : 'Not added yet'}</strong>
             </div>
             <div className="summary-card">
-              <span className="summary-label">Selected targets</span>
+              <span className="summary-label">Formats</span>
               <strong>{selectedTargets.length} placement{selectedTargets.length === 1 ? '' : 's'}</strong>
             </div>
             <div className="summary-card">
-              <span className="summary-label">Preservation focus</span>
+              <span className="summary-label">Priority</span>
               <strong>{PRESERVATION_OPTIONS.find(option => option.id === preservationIntent)?.title}</strong>
             </div>
-          </div>
-
-          <div className="review-checklist">
-            <div className="checklist-column">
-              <h3>Selected formats</h3>
-              {selectedTargetDetails.length > 0 ? (
-                <ul>
-                  {selectedTargetDetails.map(target => (
-                    <li key={target.id}>
-                      <span>{target.label}</span>
-                      <strong>{target.ratio}</strong>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p>Select at least one target placement to continue.</p>
-              )}
-            </div>
-
-            <div className="checklist-column">
-              <h3>What you can expect</h3>
-              <ul>
-                <li>
-                  <span>Each format is reviewed separately</span>
-                  <strong>Clear approvals</strong>
-                </li>
-                <li>
-                  <span>Approved assets stay ready for export</span>
-                  <strong>Export-ready set</strong>
-                </li>
-                <li>
-                  <span>Only the formats that need work should be retried</span>
-                  <strong>Selective updates</strong>
-                </li>
-              </ul>
+            <div className="summary-card">
+              <span className="summary-label">File size</span>
+              <strong>{OUTPUT_SIZE_OPTIONS.find(option => option.bytes === outputSizeLimitBytes)?.label}</strong>
             </div>
           </div>
+
+          {selectedTargetDetails.length > 0 ? (
+            <div className="selected-format-chips">
+              {selectedTargetDetails.map(target => (
+                <span key={target.id} className="format-chip">
+                  {target.label}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-summary">Pick at least one format to continue.</p>
+          )}
 
           <div className="review-actions">
-            <button
-              type="button"
-              className="tb-btn primary"
-              disabled={!sourceAsset || selectedTargets.length === 0 || isCreatingProject}
-              onClick={handleCreateProject}
-            >
-              {isCreatingProject ? 'Creating Project...' : 'Create Project'}
-            </button>
+            {!project ? (
+              <button
+                type="button"
+                className="tb-btn primary"
+                disabled={!sourceAsset || selectedTargets.length === 0 || isCreatingProject}
+                onClick={handleCreateProject}
+              >
+                {isCreatingProject ? 'Creating Project...' : 'Create Project'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="tb-btn primary"
+                disabled={selectedTargets.length === 0 || isSavingSetup}
+                onClick={handleSaveSetup}
+              >
+                {isSavingSetup ? 'Saving Setup...' : 'Save Project Setup'}
+              </button>
+            )}
             <span className="action-hint">
-              {!user
-                ? 'Sign in to save a project you can reopen later.'
-                : 'Choose a source creative and at least one placement to continue.'}
+              {!project
+                ? (!user
+                ? 'Sign in to save your project.'
+                : 'Add a creative and choose at least one format.')
+                : 'Save these choices before generation.'}
             </span>
           </div>
 

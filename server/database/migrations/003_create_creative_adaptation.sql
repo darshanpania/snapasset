@@ -33,6 +33,8 @@ CREATE TABLE IF NOT EXISTS adaptation_requested_outputs (
   aspect_ratio TEXT NOT NULL,
   target_width INTEGER,
   target_height INTEGER,
+  generation_strategy TEXT DEFAULT 'adapt',
+  max_file_size_bytes INTEGER,
   status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'generating', 'generated', 'approved', 'rejected', 'failed')),
   review_notes TEXT DEFAULT '',
   approved_attempt_id UUID,
@@ -130,3 +132,6 @@ CREATE POLICY "Users can manage attempts in their adaptation projects" ON adapta
       WHERE project_id IN (SELECT id FROM adaptation_projects WHERE owner_id = auth.uid())
     )
   );
+
+ALTER TABLE adaptation_requested_outputs ADD COLUMN IF NOT EXISTS generation_strategy TEXT DEFAULT 'adapt';
+ALTER TABLE adaptation_requested_outputs ADD COLUMN IF NOT EXISTS max_file_size_bytes INTEGER;

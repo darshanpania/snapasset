@@ -136,6 +136,7 @@ Suggested capability:
 - choose platform presets or raw ratios
 - capture preservation intent
 - optionally choose a generation strategy such as generative adaptation or deterministic white-bar padding
+- capture a user-selected output size cap such as `2MB`, `1MB`, or `500KB`
 - create per-output records before generation starts
 
 ### Batch Generation
@@ -231,6 +232,7 @@ At a high level, store:
 - source asset metadata
 - preservation intent selections
 - requested outputs
+- requested output size caps
 - attempt history
 - review decisions
 - export history

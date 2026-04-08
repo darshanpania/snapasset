@@ -65,6 +65,7 @@ const apiClient = new ApiClient(API_BASE_URL);
 export const adaptationApi = {
   createProject: (formData) => apiClient.post('/api/adaptations', formData),
   getProject: (id) => apiClient.get(`/api/adaptations/${id}`),
+  updateSetup: (id, data) => apiClient.put(`/api/adaptations/${id}/setup`, data),
   getProjects: (params = {}) => {
     const query = new URLSearchParams(params).toString();
     return apiClient.get(`/api/adaptations${query ? `?${query}` : ''}`);

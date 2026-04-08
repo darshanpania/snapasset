@@ -1,9 +1,10 @@
 import path from 'path';
 import sharp from 'sharp';
-import { AdaptationProject, SourceAsset } from '../models/CreativeAdaptation.js';
+import { AdaptationProject, RequestedOutput, SourceAsset } from '../models/CreativeAdaptation.js';
 
 const SOURCE_BUCKET = 'adaptation-source-assets';
 const ALLOWED_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/jpg']);
+const ALLOWED_OUTPUT_SIZE_LIMITS = new Set([2 * 1024 * 1024, 1024 * 1024, 500 * 1024]);
 
 function sanitizeFileSegment(value) {
   return String(value || '')
@@ -146,6 +147,60 @@ export class CreativeAdaptationService {
       data: (result?.data || []).map((project) => withPublicAssetUrl(project, this.storage)),
       count: result?.count || 0,
     };
+  }
+
+  async saveProjectSetup(projectId, ownerId, setup = {}) {
+    const project = await this.db?.adaptations?.getProjectById(projectId);
+    if (!project || project.owner_id !== ownerId) {
+      return null;
+    }
+
+    if (project.requested_outputs?.some((output) => (output.attempts || []).length > 0)) {
+      throw new Error('Project setup cannot be replaced after generation has started');
+    }
+
+    const preservationIntent = Array.isArray(setup.preservation_intent)
+      ? setup.preservation_intent.filter((value) => typeof value === 'string' && value.trim())
+      : [];
+    const requestedOutputs = Array.isArray(setup.requested_outputs) ? setup.requested_outputs : [];
+    const outputSizeLimitBytes = Number.parseInt(setup.output_size_limit_bytes, 10);
+
+    if (!ALLOWED_OUTPUT_SIZE_LIMITS.has(outputSizeLimitBytes)) {
+      throw new Error('Invalid output size selection');
+    }
+
+    await this.db.adaptations.updateProject(projectId, {
+      preservation_intent: preservationIntent,
+      settings: {
+        ...(project.settings || {}),
+        output_size_limit_bytes: outputSizeLimitBytes,
+      },
+    });
+
+    await this.db.adaptations.deleteRequestedOutputsByProject(projectId);
+
+    for (const [index, output] of requestedOutputs.entries()) {
+      const requestedOutput = new RequestedOutput({
+        project_id: projectId,
+        preset_id: output.preset_id || null,
+        label: output.label,
+        aspect_ratio: output.aspect_ratio,
+        target_width: output.target_width ?? null,
+        target_height: output.target_height ?? null,
+        generation_strategy: output.generation_strategy || 'adapt',
+        max_file_size_bytes: output.max_file_size_bytes ?? outputSizeLimitBytes,
+        sort_order: output.sort_order ?? index,
+      });
+      const validation = requestedOutput.validate();
+      if (!validation.isValid) {
+        throw new Error(validation.errors[0]);
+      }
+
+      await this.db.adaptations.createRequestedOutput(requestedOutput.toJSON());
+    }
+
+    const hydratedProject = await this.db.adaptations.getProjectById(projectId);
+    return withPublicAssetUrl(hydratedProject, this.storage);
   }
 }
 

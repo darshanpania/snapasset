@@ -91,4 +91,50 @@ describe('CreativeAdaptationService', () => {
 
     await expect(service.getProjectById(project.id, 'user-2')).resolves.toBeNull();
   });
+
+  it('saves setup inputs as requested outputs with a size cap', async () => {
+    const project = await service.createProjectFromUpload({
+      ownerId: 'user-1',
+      file: {
+        originalname: 'creative.png',
+        mimetype: 'image/png',
+        size: 68,
+        buffer: Buffer.from(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9WnLJtQAAAAASUVORK5CYII=',
+          'base64',
+        ),
+      },
+    });
+
+    const updated = await service.saveProjectSetup(project.id, 'user-1', {
+      preservation_intent: ['brand'],
+      output_size_limit_bytes: 512000,
+      requested_outputs: [
+        {
+          preset_id: 'instagram-story',
+          label: 'Instagram Story',
+          aspect_ratio: '9:16',
+          target_width: 1080,
+          target_height: 1920,
+          generation_strategy: 'adapt',
+          max_file_size_bytes: 512000,
+        },
+        {
+          preset_id: 'instagram-post',
+          label: 'Instagram Feed',
+          aspect_ratio: '1:1',
+          target_width: 1080,
+          target_height: 1080,
+          generation_strategy: 'pad_to_fit',
+          max_file_size_bytes: 512000,
+        },
+      ],
+    });
+
+    expect(updated.preservation_intent).toEqual(['brand']);
+    expect(updated.settings.output_size_limit_bytes).toBe(512000);
+    expect(updated.requested_outputs).toHaveLength(2);
+    expect(updated.requested_outputs[1].generation_strategy).toBe('pad_to_fit');
+    expect(updated.requested_outputs[1].max_file_size_bytes).toBe(512000);
+  });
 });

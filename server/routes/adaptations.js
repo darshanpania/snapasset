@@ -98,6 +98,28 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+router.put('/:id/setup', async (req, res) => {
+  try {
+    const project = await req.adaptationService.saveProjectSetup(req.params.id, req.user.id, req.body);
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        error: 'Adaptation project not found',
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: project,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 router.use((error, req, res, next) => {
   if (error?.name === 'MulterError') {
     return res.status(400).json({
