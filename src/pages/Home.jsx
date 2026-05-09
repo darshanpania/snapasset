@@ -77,7 +77,11 @@ function Home() {
         setModels(res.models)
         if (res.default) setModel(res.default)
       })
-      .catch(() => { /* fall back to default; UI still usable */ })
+      .catch((err) => {
+        // Don't break the UI, but surface the failure so we can debug
+        // CORS / server-down issues instead of silently degrading.
+        console.warn('Could not load image models, falling back to default:', err)
+      })
     return () => { cancelled = true }
   }, [])
 

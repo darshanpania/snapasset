@@ -17,13 +17,21 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+# Using `npm install --omit=dev` rather than `npm ci` because the committed
+# lockfile drifts from package.json (vitest@^3 was added without a lockfile
+# refresh). Switch back to `npm ci` once `npm install` has been run on a
+# clean checkout and the updated server/package-lock.json is committed.
+RUN npm install --omit=dev
 
 # Copy app source
 COPY . .
 
 # Create non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+# Pre-create the local data dir so the named volume mounted at /usr/src/app/data
+# inherits appuser ownership on first creation (otherwise the volume is
+# root-owned and the non-root process can't mkdir inside it).
+RUN mkdir -p /usr/src/app/data/storage /usr/src/app/logs
 RUN chown -R appuser:appgroup /usr/src/app
 USER appuser
 
