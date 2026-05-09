@@ -53,7 +53,7 @@ router.get('/platforms', (req, res) => {
 // Generate images from text prompt
 router.post('/generate', authMiddleware, async (req, res) => {
   try {
-    const { prompt, presets, model, quality, style } = req.body
+    const { prompt, presets, model, quality, style, augment } = req.body
 
     // Validation
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
@@ -99,6 +99,7 @@ router.post('/generate', authMiddleware, async (req, res) => {
     if (model) genOptions.model = model
     if (quality) genOptions.quality = quality
     if (style) genOptions.style = style
+    if (augment === false) genOptions.augment = false
     const result = await generateImagesFromPrompt(prompt, presets, userApiKey, genOptions)
 
     res.json({

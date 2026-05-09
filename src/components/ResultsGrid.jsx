@@ -6,7 +6,13 @@ import './ResultsGrid.css'
 function ResultsGrid({ results, prompt }) {
   const [preview, setPreview] = useState(null)
   const [zipping, setZipping] = useState(false)
+  const [showPromptDetails, setShowPromptDetails] = useState(false)
   const toast = useToast()
+
+  // Same per-image; pull from the first result.
+  const augmentedPrompt = results[0]?.augmentedPrompt
+  const revisedPrompt = results[0]?.revisedPrompt
+  const hasPromptDetails = Boolean(augmentedPrompt || revisedPrompt)
 
   const src = (img) => img.image || img.url
   const name = (img) => img.platformName || img.preset?.name || img.platform
@@ -69,6 +75,31 @@ function ResultsGrid({ results, prompt }) {
         <div>
           <h2 className="rg-title">Generated Images</h2>
           <p className="rg-prompt">"{prompt}"</p>
+          {hasPromptDetails && (
+            <button
+              type="button"
+              className="rg-prompt-toggle"
+              onClick={() => setShowPromptDetails(v => !v)}
+            >
+              {showPromptDetails ? 'Hide' : 'Show'} prompt details
+            </button>
+          )}
+          {showPromptDetails && (
+            <div className="rg-prompt-details">
+              {augmentedPrompt && (
+                <div className="rg-prompt-block">
+                  <span className="rg-prompt-label">Sent to model</span>
+                  <p className="rg-prompt-text">{augmentedPrompt}</p>
+                </div>
+              )}
+              {revisedPrompt && (
+                <div className="rg-prompt-block">
+                  <span className="rg-prompt-label">Model's revised prompt</span>
+                  <p className="rg-prompt-text">{revisedPrompt}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <button className="rg-dl-all" onClick={downloadAllZip} disabled={zipping}>
           {zipping ? (

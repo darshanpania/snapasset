@@ -67,6 +67,7 @@ function Home() {
   const [showSaveTemplate, setShowSaveTemplate] = useState(false)
   const [models, setModels] = useState([])
   const [model, setModel] = useState('dall-e-3')
+  const [augment, setAugment] = useState(true)
 
   useEffect(() => {
     let cancelled = false
@@ -88,7 +89,7 @@ function Home() {
     if (!prompt.trim() || selected.length === 0) return
     setIsGenerating(true)
     try {
-      const response = await generateImages({ prompt: prompt.trim(), presets: selected, model })
+      const response = await generateImages({ prompt: prompt.trim(), presets: selected, model, augment })
       const images = response.images || []
       setResults(images)
       toast.success(`Generated ${images.length} image${images.length > 1 ? 's' : ''}`)
@@ -251,6 +252,16 @@ function Home() {
                 <option key={m.id} value={m.id}>{m.name || m.id}</option>
               ))}
             </select>
+            <label className="augment-toggle">
+              <input
+                type="checkbox"
+                checked={augment}
+                onChange={e => setAugment(e.target.checked)}
+                disabled={isGenerating}
+              />
+              <span>Enhance my prompt automatically</span>
+              <span className="augment-hint" title="Adds quality and composition hints so images crop cleanly to every selected aspect ratio.">?</span>
+            </label>
           </div>
 
           <div className="panel-section">

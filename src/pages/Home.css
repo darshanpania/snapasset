@@ -190,6 +190,32 @@
 }
 .model-picker:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.augment-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+.augment-toggle input[type="checkbox"] { cursor: pointer; }
+.augment-toggle input[type="checkbox"]:disabled { cursor: not-allowed; }
+.augment-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  cursor: help;
+}
+
 .prompt-meta {
   display: flex;
   justify-content: space-between;
