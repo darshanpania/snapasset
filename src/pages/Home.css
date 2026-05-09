@@ -170,6 +170,26 @@
 .prompt-field:disabled { opacity: 0.5; }
 .prompt-field::placeholder { color: var(--text-dimmer); }
 
+.model-section { margin-bottom: 1rem; }
+.model-picker {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.model-picker:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+.model-picker:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .prompt-meta {
   display: flex;
   justify-content: space-between;

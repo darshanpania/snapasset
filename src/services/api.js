@@ -131,8 +131,16 @@ export const projectApi = {
 };
 
 // Image Generation API
-export const generateImages = async ({ prompt, presets }) => {
-  return apiClient.post('/api/generate', { prompt, presets });
+export const generateImages = async ({ prompt, presets, model, quality, style }) => {
+  const body = { prompt, presets };
+  if (model) body.model = model;
+  if (quality) body.quality = quality;
+  if (style) body.style = style;
+  return apiClient.post('/api/generate', body);
+};
+
+export const getImageModels = async () => {
+  return apiClient.get('/api/models');
 };
 
 export default apiClient;

@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { useToast } from '../contexts/ToastContext'
 import ResultsGrid from '../components/ResultsGrid'
-import { generateImages } from '../services/api'
+import { generateImages, getImageModels } from '../services/api'
 import './Home.css'
 
 const PLATFORM_PRESETS = [
@@ -65,6 +65,20 @@ function Home() {
   const [showHistory, setShowHistory] = useState(false)
   const [templates, setTemplates] = useState(loadTemplates)
   const [showSaveTemplate, setShowSaveTemplate] = useState(false)
+  const [models, setModels] = useState([])
+  const [model, setModel] = useState('dall-e-3')
+
+  useEffect(() => {
+    let cancelled = false
+    getImageModels()
+      .then((res) => {
+        if (cancelled || !res?.models) return
+        setModels(res.models)
+        if (res.default) setModel(res.default)
+      })
+      .catch(() => { /* fall back to default; UI still usable */ })
+    return () => { cancelled = true }
+  }, [])
 
   const toggle = (id) => {
     setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
@@ -74,7 +88,7 @@ function Home() {
     if (!prompt.trim() || selected.length === 0) return
     setIsGenerating(true)
     try {
-      const response = await generateImages({ prompt: prompt.trim(), presets: selected })
+      const response = await generateImages({ prompt: prompt.trim(), presets: selected, model })
       const images = response.images || []
       setResults(images)
       toast.success(`Generated ${images.length} image${images.length > 1 ? 's' : ''}`)
@@ -224,6 +238,21 @@ function Home() {
       <main className="workspace">
         {/* Input Panel */}
         <div className="panel input-panel">
+          <div className="panel-section model-section">
+            <label className="field-label" htmlFor="model-picker">Model</label>
+            <select
+              id="model-picker"
+              className="model-picker"
+              value={model}
+              onChange={e => setModel(e.target.value)}
+              disabled={isGenerating}
+            >
+              {(models.length > 0 ? models : [{ id: model, name: model }]).map(m => (
+                <option key={m.id} value={m.id}>{m.name || m.id}</option>
+              ))}
+            </select>
+          </div>
+
           <div className="panel-section">
             <label className="field-label">Describe your image</label>
             <textarea

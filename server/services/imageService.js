@@ -31,12 +31,16 @@ export const PLATFORM_PRESETS = {
 
 // Supported image generation models
 export const IMAGE_MODELS = {
-  'gpt-image-1': { name: 'GPT Image 1', sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'], qualities: ['low', 'medium', 'high', 'auto'], outputFormats: ['png', 'webp', 'jpeg'] },
+  'gpt-image-1': { name: 'GPT Image 1', sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'], qualities: ['low', 'medium', 'high', 'auto'], outputFormats: ['png', 'webp', 'jpeg'], backgrounds: ['transparent', 'opaque', 'auto'] },
+  'gpt-image-1-mini': { name: 'GPT Image 1 Mini', sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'], qualities: ['low', 'medium', 'high', 'auto'], outputFormats: ['png', 'webp', 'jpeg'], backgrounds: ['transparent', 'opaque', 'auto'] },
   'dall-e-3': { name: 'DALL-E 3', sizes: ['1024x1024', '1024x1792', '1792x1024'], qualities: ['standard', 'hd'], styles: ['vivid', 'natural'] },
   'dall-e-2': { name: 'DALL-E 2', sizes: ['256x256', '512x512', '1024x1024'], qualities: ['standard'] },
 };
 
-const DEFAULT_MODEL = 'gpt-image-1';
+// GPT image family shares the same param contract (b64_json output, same sizes/qualities/formats)
+const GPT_IMAGE_MODELS = new Set(['gpt-image-1', 'gpt-image-1-mini']);
+
+const DEFAULT_MODEL = 'dall-e-3';
 
 /**
  * Generate image using OpenAI image generation API
@@ -53,9 +57,11 @@ export async function generateWithDallE(prompt, options = {}, apiKey = null) {
       n: 1,
     };
 
-    if (model === 'gpt-image-1') {
+    if (GPT_IMAGE_MODELS.has(model)) {
       params.size = options.size || 'auto';
       params.quality = options.quality || 'auto';
+      if (options.outputFormat) params.output_format = options.outputFormat;
+      if (options.background) params.background = options.background;
     } else {
       params.size = options.size || '1024x1024';
       params.quality = options.quality || 'standard';

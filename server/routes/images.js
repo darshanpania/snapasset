@@ -28,7 +28,7 @@ router.get('/models', (req, res) => {
   res.json({
     success: true,
     models: Object.entries(IMAGE_MODELS).map(([id, config]) => ({ id, ...config })),
-    default: 'gpt-image-1',
+    default: 'dall-e-3',
   })
 })
 
