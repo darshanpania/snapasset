@@ -22,7 +22,7 @@
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
     "jszip": "^3.10.1",
-    "react": "^18.2.0",
+    "react": "^19.2.6",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.13.1",
     "recharts": "^2.12.0"
@@ -31,7 +31,7 @@
     "@testing-library/jest-dom": "^6.2.0",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.5.2",
-    "@types/react": "^18.2.48",
+    "@types/react": "^19.2.14",
     "@types/react-dom": "^18.2.18",
     "@vitejs/plugin-react": "^4.2.1",
     "eslint": "^8.56.0",
