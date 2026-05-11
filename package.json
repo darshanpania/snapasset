@@ -40,6 +40,6 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "prettier": "^3.2.5",
     "vite": "^5.0.11",
-    "vitest": "^1.2.2"
+    "vitest": "^4.1.5"
   }
 }
