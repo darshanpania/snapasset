@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.3",
-    "axios": "^1.6.7",
+    "axios": "^1.16.0",
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.6.2",
     "compression": "^1.7.4",
