@@ -170,6 +170,52 @@
 .prompt-field:disabled { opacity: 0.5; }
 .prompt-field::placeholder { color: var(--text-dimmer); }
 
+.model-section { margin-bottom: 1rem; }
+.model-picker {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.model-picker:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+.model-picker:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.augment-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+.augment-toggle input[type="checkbox"] { cursor: pointer; }
+.augment-toggle input[type="checkbox"]:disabled { cursor: not-allowed; }
+.augment-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  cursor: help;
+}
+
 .prompt-meta {
   display: flex;
   justify-content: space-between;

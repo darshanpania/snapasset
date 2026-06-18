@@ -31,12 +31,28 @@ export const PLATFORM_PRESETS = {
 
 // Supported image generation models
 export const IMAGE_MODELS = {
-  'gpt-image-1': { name: 'GPT Image 1', sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'], qualities: ['low', 'medium', 'high', 'auto'], outputFormats: ['png', 'webp', 'jpeg'] },
+  'gpt-image-1': { name: 'GPT Image 1', sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'], qualities: ['low', 'medium', 'high', 'auto'], outputFormats: ['png', 'webp', 'jpeg'], backgrounds: ['transparent', 'opaque', 'auto'] },
+  'gpt-image-1-mini': { name: 'GPT Image 1 Mini', sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'], qualities: ['low', 'medium', 'high', 'auto'], outputFormats: ['png', 'webp', 'jpeg'], backgrounds: ['transparent', 'opaque', 'auto'] },
   'dall-e-3': { name: 'DALL-E 3', sizes: ['1024x1024', '1024x1792', '1792x1024'], qualities: ['standard', 'hd'], styles: ['vivid', 'natural'] },
   'dall-e-2': { name: 'DALL-E 2', sizes: ['256x256', '512x512', '1024x1024'], qualities: ['standard'] },
 };
 
-const DEFAULT_MODEL = 'gpt-image-1';
+// GPT image family shares the same param contract (b64_json output, same sizes/qualities/formats)
+const GPT_IMAGE_MODELS = new Set(['gpt-image-1', 'gpt-image-1-mini']);
+
+const DEFAULT_MODEL = 'dall-e-3';
+
+// Lightweight prompt augmentation — nudges the model toward usable
+// social-asset output (centered, well-lit, crops cleanly to multiple
+// aspect ratios) without rewriting the user's intent. Opt-out via
+// the `augment: false` option.
+const AUGMENT_SUFFIX = 'Professional, high-quality composition. Centered subject with breathing room around the edges so the image crops cleanly to square, portrait, and landscape ratios. Sharp focus, balanced lighting.';
+
+export function augmentPrompt(prompt) {
+  const trimmed = (prompt || '').trim();
+  if (!trimmed) return trimmed;
+  return `${trimmed} — ${AUGMENT_SUFFIX}`;
+}
 
 /**
  * Generate image using OpenAI image generation API
@@ -53,9 +69,11 @@ export async function generateWithDallE(prompt, options = {}, apiKey = null) {
       n: 1,
     };
 
-    if (model === 'gpt-image-1') {
+    if (GPT_IMAGE_MODELS.has(model)) {
       params.size = options.size || 'auto';
       params.quality = options.quality || 'auto';
+      if (options.outputFormat) params.output_format = options.outputFormat;
+      if (options.background) params.background = options.background;
     } else {
       params.size = options.size || '1024x1024';
       params.quality = options.quality || 'standard';
@@ -206,8 +224,13 @@ export async function generateImagesFromPrompt(prompt, presetIds, apiKey = null,
     throw new Error('OpenAI API key not configured');
   }
 
+  // Augmentation defaults on; caller can opt out with { augment: false }
+  const shouldAugment = options.augment !== false;
+  const finalPrompt = shouldAugment ? augmentPrompt(prompt) : prompt;
+  const wasAugmented = shouldAugment && finalPrompt !== prompt;
+
   // Generate the base image
-  const generated = await generateWithDallE(prompt, options, apiKey);
+  const generated = await generateWithDallE(finalPrompt, options, apiKey);
 
   // Get image buffer (either from URL download or direct base64)
   const imageBuffer = generated.b64Buffer || await downloadImage(generated.url);
@@ -232,6 +255,7 @@ export async function generateImagesFromPrompt(prompt, presetIds, apiKey = null,
         size: resized.size,
         image: `data:image/png;base64,${base64}`,
         revisedPrompt: generated.revisedPrompt,
+        augmentedPrompt: wasAugmented ? finalPrompt : undefined,
       };
     })
   );
@@ -240,6 +264,7 @@ export async function generateImagesFromPrompt(prompt, presetIds, apiKey = null,
 }
 
 export default {
+  augmentPrompt,
   generateWithDallE,
   downloadImage,
   resizeImage,

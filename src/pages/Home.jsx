@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { useToast } from '../contexts/ToastContext'
 import ResultsGrid from '../components/ResultsGrid'
-import { generateImages } from '../services/api'
+import { generateImages, getImageModels } from '../services/api'
 import './Home.css'
 
 const PLATFORM_PRESETS = [
@@ -65,6 +65,25 @@ function Home() {
   const [showHistory, setShowHistory] = useState(false)
   const [templates, setTemplates] = useState(loadTemplates)
   const [showSaveTemplate, setShowSaveTemplate] = useState(false)
+  const [models, setModels] = useState([])
+  const [model, setModel] = useState('dall-e-3')
+  const [augment, setAugment] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    getImageModels()
+      .then((res) => {
+        if (cancelled || !res?.models) return
+        setModels(res.models)
+        if (res.default) setModel(res.default)
+      })
+      .catch((err) => {
+        // Don't break the UI, but surface the failure so we can debug
+        // CORS / server-down issues instead of silently degrading.
+        console.warn('Could not load image models, falling back to default:', err)
+      })
+    return () => { cancelled = true }
+  }, [])
 
   const toggle = (id) => {
     setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
@@ -74,7 +93,7 @@ function Home() {
     if (!prompt.trim() || selected.length === 0) return
     setIsGenerating(true)
     try {
-      const response = await generateImages({ prompt: prompt.trim(), presets: selected })
+      const response = await generateImages({ prompt: prompt.trim(), presets: selected, model, augment })
       const images = response.images || []
       setResults(images)
       toast.success(`Generated ${images.length} image${images.length > 1 ? 's' : ''}`)
@@ -224,6 +243,31 @@ function Home() {
       <main className="workspace">
         {/* Input Panel */}
         <div className="panel input-panel">
+          <div className="panel-section model-section">
+            <label className="field-label" htmlFor="model-picker">Model</label>
+            <select
+              id="model-picker"
+              className="model-picker"
+              value={model}
+              onChange={e => setModel(e.target.value)}
+              disabled={isGenerating}
+            >
+              {(models.length > 0 ? models : [{ id: model, name: model }]).map(m => (
+                <option key={m.id} value={m.id}>{m.name || m.id}</option>
+              ))}
+            </select>
+            <label className="augment-toggle">
+              <input
+                type="checkbox"
+                checked={augment}
+                onChange={e => setAugment(e.target.checked)}
+                disabled={isGenerating}
+              />
+              <span>Enhance my prompt automatically</span>
+              <span className="augment-hint" title="Adds quality and composition hints so images crop cleanly to every selected aspect ratio.">?</span>
+            </label>
+          </div>
+
           <div className="panel-section">
             <label className="field-label">Describe your image</label>
             <textarea
